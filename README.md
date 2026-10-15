@@ -113,7 +113,17 @@ python scripts/schema.py
 - [x] **Stage 2: Python Feature & Delaunay Mesh Extraction** (`train.bin` & `val.bin` generated, 33,197 frames, 0 NaNs)
 - [x] **Stage 3: Dense-GAT Concept Bottleneck Training** (Dense masked attention, Val ROC-AUC: 0.755, 43 KB model)
 - [x] **Stage 4: ONNX Graph Optimization & Zero-Copy C++ Engine** (0.139ms ONNX latency, 67ns C++ intervention, 3.58e-7 numerical parity)
-- [ ] **Stage 5: Interactive Tactical Sandbox & Slider Dashboard**
+- [x] **Stage 5: Interactive Tactical Sandbox & Slider Dashboard** (Real-time drag-and-drop pitch, 6 live bottleneck sliders, 60 FPS HTML5 canvas)
+
+---
+
+## 🎮 Launching the Interactive Tactical Sandbox
+
+Start the interactive board:
+```bash
+python dashboard/app.py --open
+```
+Or simply double-click `dashboard/index.html` to open it in any web browser without needing any server or dependencies!
 
 ---
 

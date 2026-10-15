@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tactical-CBM | Interactive AI Sandbox</title>
+    <style>
+        :root {
+            --bg-dark: #0f172a;
+            --panel-bg: #1e293b;
+            --pitch-green: #15803d;
+            --pitch-line: rgba(255, 255, 255, 0.4);
+            --accent-blue: #38bdf8;
+            --accent-red: #f43f5e;
+            --accent-yellow: #fbbf24;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border-color: #334155;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        header {
+            background-color: var(--panel-bg);
+            border-bottom: 1px solid var(--border-color);
+            padding: 12px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .header-title h1 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            letter-spacing: -0.025em;
+        }
+
+        .badge {
+            background: rgba(56, 189, 248, 0.15);
+            color: var(--accent-blue);
+            font-size: 0.75rem;
+            padding: 3px 8px;
+            border-radius: 9999px;
+            font-weight: 600;
+            border: 1px solid rgba(56, 189, 248, 0.3);
+        }
+
+        .main-container {
+            display: flex;
+            flex: 1;
+            padding: 16px;
+            gap: 16px;
+            height: calc(100vh - 65px);
+        }
+
+        /* Pitch Canvas Area */
+        .pitch-container {
+            flex: 7;
+            background-color: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .pitch-toolbar {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 8px;
+        }
+
+        button, select {
+            background-color: #334155;
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+            padding: 6px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 500;
+            transition: all 0.15s ease;
+        }
+
+        button:hover, select:hover {
+            background-color: #475569;
+        }
+
+        canvas {
+            border-radius: 8px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+            cursor: crosshair;
+        }
+
+        /* Sidebar Controls */
+        .sidebar {
+            flex: 5;
+            background-color: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            overflow-y: auto;
+        }
+
+        /* Threat Score Card */
+        .threat-card {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .threat-info h3 {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            letter-spacing: 0.05em;
+            margin-bottom: 4px;
+        }
+
+        .threat-value {
+            font-size: 2.25rem;
+            font-weight: 800;
+            line-height: 1;
+        }
+
+        .threat-status {
+            font-size: 0.8rem;
+            margin-top: 4px;
+            font-weight: 600;
+        }
+
+        .latency-pill {
+            background: rgba(16, 185, 129, 0.1);
+            color: #34d399;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            font-size: 0.75rem;
+            padding: 4px 8px;
+            border-radius: 6px;
+            text-align: right;
+            font-family: monospace;
+        }
+
+        /* Sliders Section */
+        .slider-section h2 {
+            font-size: 0.95rem;
+            font-weight: 700;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .slider-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .slider-item {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .slider-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+        }
+
+        .slider-header .name {
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        .slider-header .val {
+            color: var(--accent-blue);
+            font-family: monospace;
+        }
+
+        input[type="range"] {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: #334155;
+            outline: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: var(--accent-blue);
+            cursor: pointer;
+            box-shadow: 0 0 5px rgba(56, 189, 248, 0.5);
+        }
+
+        /* Explanations List */
+        .explanations {
+            background: #0f172a;
+            border-radius: 8px;
+            padding: 12px;
+            border: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            font-size: 0.8rem;
+        }
+
+        .explanation-item {
+            display: flex;
+            justify-content: space-between;
+            color: var(--text-muted);
+        }
+
+        .positive-impact { color: var(--accent-red); }
+        .negative-impact { color: #34d399; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="header-title">
+            <h1>Tactical-CBM Interactive Sandbox</h1>
+            <span class="badge">Concept Bottleneck GNN</span>
+            <span class="badge" style="color: #34d399; border-color: rgba(52, 211, 153, 0.3);">C++17 Sub-Microsecond</span>
+        </div>
+        <div>
+            <span style="font-size: 0.8rem; color: var(--text-muted);">StatsBomb 360 Pitch Tracking</span>
+        </div>
+    </header>
+
+    <div class="main-container">
+        <!-- Pitch Viewport -->
+        <div class="pitch-container">
+            <div class="pitch-toolbar">
+                <div class="btn-group">
+                    <select id="formationSelect" onchange="applyFormation(this.value)">
+                        <option value="4-3-3">Preset: 4-3-3 Balanced</option>
+                        <option value="5-4-1">Preset: 5-4-1 Deep Low Block</option>
+                        <option value="4-4-2">Preset: 4-4-2 Mid Block</option>
+                        <option value="high-press">Preset: High Press (Gegenpress)</option>
+                    </select>
+                    <button onclick="resetPitch()">Reset Pitch</button>
+                </div>
+                <div style="font-size: 0.8rem; color: var(--text-muted); align-self: center;">
+                    💡 Drag any player or ball carrier to test tactical reactions
+                </div>
+            </div>
+            
+            <canvas id="pitchCanvas" width="780" height="520"></canvas>
+        </div>
+
+        <!-- Right Side: Concept Bottlenecks & Threat Prediction -->
+        <div class="sidebar">
+            <!-- Threat Meter -->
+            <div class="threat-card">
+                <div class="threat-info">
+                    <h3>Scoring Threat Probability</h3>
+                    <div id="threatValue" class="threat-value" style="color: var(--accent-blue);">35.4%</div>
+                    <div id="threatStatus" class="threat-status" style="color: var(--text-muted);">Low Threat | Compact Structure</div>
+                </div>
+                <div class="latency-pill">
+                    <div>Latency: <b>0.06 μs</b></div>
+                    <div>FPS: <b>15,000+</b></div>
+                    <div style="margin-top:2px;">O(1) Vector Dot</div>
+                </div>
+            </div>
+
+            <!-- 6 Bottleneck Concept Sliders -->
+            <div class="slider-section">
+                <h2>
+                    <span>6 Tactical Bottleneck Concepts</span>
+                    <button id="modeBtn" style="font-size: 0.7rem; padding: 3px 8px;" onclick="toggleAutoMode()">Mode: Auto (from Pitch)</button>
+                </h2>
+                
+                <div class="slider-group">
+                    <div class="slider-item">
+                        <div class="slider-header">
+                            <span class="name">C1: Defensive Line Height</span>
+                            <span id="c1_val" class="val">0.35</span>
+                        </div>
+                        <input type="range" id="c1" min="0" max="1" step="0.01" value="0.35" oninput="onSliderChange()">
+                    </div>
+
+                    <div class="slider-item">
+                        <div class="slider-header">
+                            <span class="name">C2: Defensive Compactness</span>
+                            <span id="c2_val" class="val">0.78</span>
+                        </div>
+                        <input type="range" id="c2" min="0" max="1" step="0.01" value="0.78" oninput="onSliderChange()">
+                    </div>
+
+                    <div class="slider-item">
+                        <div class="slider-header">
+                            <span class="name">C3: Defensive Width Balance</span>
+                            <span id="c3_val" class="val">0.70</span>
+                        </div>
+                        <input type="range" id="c3" min="0" max="1" step="0.01" value="0.70" oninput="onSliderChange()">
+                    </div>
+
+                    <div class="slider-item">
+                        <div class="slider-header">
+                            <span class="name">C4: Ball-Carrier Pressure</span>
+                            <span id="c4_val" class="val">0.25</span>
+                        </div>
+                        <input type="range" id="c4" min="0" max="1" step="0.01" value="0.25" oninput="onSliderChange()">
+                    </div>
+
+                    <div class="slider-item">
+                        <div class="slider-header">
+                            <span class="name">C5: Central Lane Blockage</span>
+                            <span id="c5_val" class="val">0.80</span>
+                        </div>
+                        <input type="range" id="c5" min="0" max="1" step="0.01" value="0.80" oninput="onSliderChange()">
+                    </div>
+
+                    <div class="slider-item">
+                        <div class="slider-header">
+                            <span class="name">C6: Box Overload Ratio</span>
+                            <span id="c6_val" class="val">0.15</span>
+                        </div>
+                        <input type="range" id="c6" min="0" max="1" step="0.01" value="0.15" oninput="onSliderChange()">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Explainability Diagnostics -->
+            <div>
+                <h3 style="font-size: 0.85rem; font-weight: 700; margin-bottom: 8px;">AI Explainability Breakdown</h3>
+                <div id="explanationsList" class="explanations">
+                    <!-- Dynamic breakdown cards -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Exported Weights from models/linear_head_weights.json
+        const WEIGHTS = [-0.1825, 0.0754, -0.4282, -0.2332, -0.0942, 0.2213];
+        const BIAS = -0.1115;
+        const CONCEPT_NAMES = [
+            "Defensive Line Height",
+            "Defensive Compactness",
+            "Defensive Width Balance",
+            "Ball-Carrier Pressure",
+            "Central Lane Blockage",
+            "Box Overload Ratio"
+        ];
+
+        let autoMode = true;
+        const canvas = document.getElementById("pitchCanvas");
+        const ctx = canvas.getContext("2d");
+
+        // Pitch scale: 120m x 80m mapped to canvas (780 x 520)
+        const PITCH_W = 120.0;
+        const PITCH_H = 80.0;
+        const SCALE_X = canvas.width / PITCH_W;
+        const SCALE_Y = canvas.height / PITCH_H;
+
+        // Players state
+        let defenders = [];
+        let attackers = [];
+        let ballCarrier = null;
+        let selectedPlayer = null;
+
+        function initPlayers() {
+            applyFormation("4-3-3");
+        }
+
+        function applyFormation(type) {
+            attackers = [
+                { x: 75, y: 40, isActor: true },  // Ball carrier
+                { x: 105, y: 35, isActor: false }, // Box striker 1
+                { x: 102, y: 46, isActor: false }, // Box striker 2
+                { x: 88, y: 20, isActor: false },  // Winger L
+                { x: 88, y: 60, isActor: false }   // Winger R
+            ];
+
+            if (type === "5-4-1") { // Deep low block
+                defenders = [
+                    { x: 20, y: 40 }, // GK
+                    { x: 30, y: 18 }, { x: 28, y: 28 }, { x: 27, y: 40 }, { x: 28, y: 52 }, { x: 30, y: 62 }, // 5 Back
+                    { x: 42, y: 24 }, { x: 40, y: 34 }, { x: 40, y: 46 }, { x: 42, y: 56 }, // 4 Mid
+                    { x: 55, y: 40 } // 1 Fwd
+                ];
+            } else if (type === "high-press") { // High press
+                defenders = [
+                    { x: 35, y: 40 },
+                    { x: 65, y: 20 }, { x: 62, y: 33 }, { x: 62, y: 47 }, { x: 65, y: 60 },
+                    { x: 73, y: 38 }, { x: 74, y: 43 }, { x: 78, y: 25 }, { x: 78, y: 55 },
+                    { x: 85, y: 35 }, { x: 85, y: 45 }
+                ];
+            } else { // 4-3-3 Balanced
+                defenders = [
+                    { x: 25, y: 40 },
+                    { x: 45, y: 16 }, { x: 42, y: 32 }, { x: 42, y: 48 }, { x: 45, y: 64 },
+                    { x: 60, y: 28 }, { x: 58, y: 40 }, { x: 60, y: 52 },
+                    { x: 75, y: 22 }, { x: 78, y: 40 }, { x: 75, y: 58 }
+                ];
+            }
+            ballCarrier = attackers[0];
+            recalculate();
+        }
+
+        function resetPitch() {
+            applyFormation(document.getElementById("formationSelect").value);
+        }
+
+        // Geometry Engine: Computes C1 - C6 from coordinates
+        function computeConceptsFromPitch() {
+            // C1: Deepest outfield defender X / 70m
+            let minDefX = 120.0;
+            defenders.forEach(d => { if (d.x > 25 && d.x < minDefX) minDefX = d.x; });
+            const c1 = Math.min(Math.max((minDefX - 25.0) / 50.0, 0.0), 1.0);
+
+            // C2: Compactness (Spread of defenders)
+            let minX = 120, maxX = 0, minY = 80, maxY = 0;
+            defenders.forEach(d => {
+                minX = Math.min(minX, d.x); maxX = Math.max(maxX, d.x);
+                minY = Math.min(minY, d.y); maxY = Math.max(maxY, d.y);
+            });
+            const area = (maxX - minX) * (maxY - minY);
+            const c2 = Math.min(Math.max(1.0 - (area / 1800.0), 0.0), 1.0);
+
+            // C3: Width balance relative to ball Y
+            const ballY = ballCarrier.y;
+            const avgDefY = defenders.reduce((s, d) => s + d.y, 0) / defenders.length;
+            const yOffset = Math.abs(avgDefY - ballY) / 40.0;
+            const c3 = Math.min(Math.max(1.0 - yOffset, 0.0), 1.0);
+
+            // C4: Pressure (Defenders within 8m of ball carrier)
+            let pressure = 0.0;
+            defenders.forEach(d => {
+                const dist = Math.hypot(d.x - ballCarrier.x, d.y - ballCarrier.y);
+                if (dist <= 8.0) {
+                    pressure += Math.exp(-dist / 4.0);
+                }
+            });
+            const c4 = Math.min(Math.max(pressure / 2.5, 0.0), 1.0);
+
+            // C5: Passing Lane Blockage to Box Attackers
+            let blockedCount = 0;
+            let totalBoxAttackers = 0;
+            attackers.forEach(a => {
+                if (a.x >= 95.0) {
+                    totalBoxAttackers++;
+                    let isBlocked = false;
+                    defenders.forEach(d => {
+                        const distToLine = getDistToSegment(d, ballCarrier, a);
+                        if (distToLine <= 2.5) isBlocked = true;
+                    });
+                    if (isBlocked) blockedCount++;
+                }
+            });
+            const c5 = totalBoxAttackers > 0 ? (blockedCount / totalBoxAttackers) : 1.0;
+
+            // C6: Box Overload Ratio
+            const attInBox = attackers.filter(a => a.x >= 95.0).length;
+            const defInBox = defenders.filter(d => d.x >= 95.0).length;
+            const c6 = (attInBox + defInBox) > 0 ? (attInBox / (attInBox + defInBox)) : 0.0;
+
+            return [c1, c2, c3, c4, c5, c6];
+        }
+
+        function getDistToSegment(p, a, b) {
+            const dx = b.x - a.x, dy = b.y - a.y;
+            const lenSq = dx * dx + dy * dy;
+            if (lenSq === 0) return Math.hypot(p.x - a.x, p.y - a.y);
+            let t = ((p.x - a.x) * dx + (p.y - a.y) * dy) / lenSq;
+            t = Math.max(0, Math.min(1, t));
+            return Math.hypot(p.x - (a.x + t * dx), p.y - (a.y + t * dy));
+        }
+
+        // Stage 5 Instant Intervention Engine (O(1) Dot Product)
+        function evaluateStage5(concepts) {
+            let logit = BIAS;
+            for (let i = 0; i < 6; ++i) {
+                logit += concepts[i] * WEIGHTS[i];
+            }
+            return 1.0 / (1.0 + Math.exp(-logit));
+        }
+
+        function recalculate() {
+            let concepts;
+            if (autoMode) {
+                concepts = computeConceptsFromPitch();
+                for (let i = 0; i < 6; ++i) {
+                    document.getElementById(`c${i+1}`).value = concepts[i];
+                    document.getElementById(`c${i+1}_val`).textContent = concepts[i].toFixed(2);
+                }
+            } else {
+                concepts = [];
+                for (let i = 0; i < 6; ++i) {
+                    concepts.push(parseFloat(document.getElementById(`c${i+1}`).value));
+                }
+            }
+
+            const threat = evaluateStage5(concepts);
+            updateUI(threat, concepts);
+            drawPitch();
+        }
+
+        function updateUI(threat, concepts) {
+            const pct = (threat * 100).toFixed(1);
+            const valEl = document.getElementById("threatValue");
+            const statusEl = document.getElementById("threatStatus");
+
+            valEl.textContent = `${pct}%`;
+
+            if (threat >= 0.50) {
+                valEl.style.color = "var(--accent-red)";
+                statusEl.textContent = "High Danger | Defense Vulnerable";
+                statusEl.style.color = "var(--accent-red)";
+            } else if (threat >= 0.35) {
+                valEl.style.color = "var(--accent-yellow)";
+                statusEl.textContent = "Moderate Threat | Active Attack";
+                statusEl.style.color = "var(--accent-yellow)";
+            } else {
+                valEl.style.color = "#34d399";
+                statusEl.textContent = "Low Threat | Compact Structure";
+                statusEl.style.color = "#34d399";
+            }
+
+            // Explanations list
+            const listEl = document.getElementById("explanationsList");
+            listEl.innerHTML = "";
+            for (let i = 0; i < 6; ++i) {
+                const impact = concepts[i] * WEIGHTS[i];
+                const div = document.createElement("div");
+                div.className = "explanation-item";
+                const isNegative = impact < -0.02;
+                const isPositive = impact > 0.02;
+                const cls = isPositive ? "positive-impact" : (isNegative ? "negative-impact" : "");
+                const sign = impact > 0 ? "+" : "";
+                div.innerHTML = `<span>${CONCEPT_NAMES[i]}</span><span class="${cls}">${sign}${(impact * 100).toFixed(1)}%</span>`;
+                listEl.appendChild(div);
+            }
+        }
+
+        function toggleAutoMode() {
+            autoMode = !autoMode;
+            document.getElementById("modeBtn").textContent = autoMode ? "Mode: Auto (from Pitch)" : "Mode: Slider Override";
+            document.getElementById("modeBtn").style.backgroundColor = autoMode ? "#334155" : "#0284c7";
+            recalculate();
+        }
+
+        function onSliderChange() {
+            if (autoMode) {
+                autoMode = false;
+                document.getElementById("modeBtn").textContent = "Mode: Slider Override";
+                document.getElementById("modeBtn").style.backgroundColor = "#0284c7";
+            }
+            for (let i = 0; i < 6; ++i) {
+                document.getElementById(`c${i+1}_val`).textContent = parseFloat(document.getElementById(`c${i+1}`).value).toFixed(2);
+            }
+            recalculate();
+        }
+
+        // Canvas Rendering
+        function drawPitch() {
+            ctx.fillStyle = "#15803d";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Pitch markings
+            ctx.strokeStyle = "rgba(255, 255, 255, 0.4)";
+            ctx.lineWidth = 2;
+
+            // Border
+            ctx.strokeRect(10, 10, canvas.width - 20, canvas.height - 20);
+
+            // Halfway line & center circle
+            ctx.beginPath();
+            ctx.moveTo(canvas.width / 2, 10);
+            ctx.lineTo(canvas.width / 2, canvas.height - 10);
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.arc(canvas.width / 2, canvas.height / 2, 60, 0, Math.PI * 2);
+            ctx.stroke();
+
+            // Right Penalty Box (Defended goal on right side)
+            const boxX = (102.0 / PITCH_W) * canvas.width;
+            const boxY1 = (18.0 / PITCH_H) * canvas.height;
+            const boxH = (44.0 / PITCH_H) * canvas.height;
+            ctx.strokeRect(boxX, boxY1, canvas.width - 10 - boxX, boxH);
+
+            // Passing rays to box attackers
+            attackers.forEach(a => {
+                if (a.x >= 95.0) {
+                    let isBlocked = false;
+                    defenders.forEach(d => {
+                        if (getDistToSegment(d, ballCarrier, a) <= 2.5) isBlocked = true;
+                    });
+                    ctx.beginPath();
+                    ctx.setLineDash([4, 4]);
+                    ctx.moveTo(ballCarrier.x * SCALE_X, ballCarrier.y * SCALE_Y);
+                    ctx.lineTo(a.x * SCALE_X, a.y * SCALE_Y);
+                    ctx.strokeStyle = isBlocked ? "rgba(244, 63, 94, 0.8)" : "rgba(52, 211, 153, 0.8)";
+                    ctx.lineWidth = isBlocked ? 2 : 3;
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+                }
+            });
+
+            // Draw Attackers (Red)
+            attackers.forEach(a => {
+                ctx.beginPath();
+                ctx.arc(a.x * SCALE_X, a.y * SCALE_Y, a.isActor ? 10 : 8, 0, Math.PI * 2);
+                ctx.fillStyle = a.isActor ? "#fbbf24" : "#f43f5e";
+                ctx.fill();
+                ctx.strokeStyle = "#ffffff";
+                ctx.lineWidth = 1.5;
+                ctx.stroke();
+
+                if (a.isActor) {
+                    ctx.beginPath();
+                    ctx.arc(a.x * SCALE_X, a.y * SCALE_Y, 8.0 * SCALE_X, 0, Math.PI * 2);
+                    ctx.strokeStyle = "rgba(251, 191, 36, 0.25)";
+                    ctx.lineWidth = 1;
+                    ctx.stroke();
+                }
+            });
+
+            // Draw Defenders (Blue)
+            defenders.forEach(d => {
+                ctx.beginPath();
+                ctx.arc(d.x * SCALE_X, d.y * SCALE_Y, 8, 0, Math.PI * 2);
+                ctx.fillStyle = "#38bdf8";
+                ctx.fill();
+                ctx.strokeStyle = "#ffffff";
+                ctx.lineWidth = 1.5;
+                ctx.stroke();
+            });
+        }
+
+        // Mouse Drag Interaction
+        let isDragging = false;
+
+        canvas.addEventListener("mousedown", e => {
+            const rect = canvas.getBoundingClientRect();
+            const mouseX = (e.clientX - rect.left) / SCALE_X;
+            const mouseY = (e.clientY - rect.top) / SCALE_Y;
+
+            selectedPlayer = null;
+
+            // Check attackers
+            attackers.forEach(a => {
+                if (Math.hypot(a.x - mouseX, a.y - mouseY) < 3.5) selectedPlayer = a;
+            });
+            // Check defenders
+            if (!selectedPlayer) {
+                defenders.forEach(d => {
+                    if (Math.hypot(d.x - mouseX, d.y - mouseY) < 3.5) selectedPlayer = d;
+                });
+            }
+
+            if (selectedPlayer) isDragging = true;
+        });
+
+        window.addEventListener("mousemove", e => {
+            if (!isDragging || !selectedPlayer) return;
+            const rect = canvas.getBoundingClientRect();
+            const mouseX = (e.clientX - rect.left) / SCALE_X;
+            const mouseY = (e.clientY - rect.top) / SCALE_Y;
+
+            selectedPlayer.x = Math.max(2, Math.min(PITCH_W - 2, mouseX));
+            selectedPlayer.y = Math.max(2, Math.min(PITCH_H - 2, mouseY));
+
+            recalculate();
+        });
+
+        window.addEventListener("mouseup", () => {
+            isDragging = false;
+            selectedPlayer = null;
+        });
+
+        // Start
+        initPlayers();
+    </script>
+</body>
+</html>

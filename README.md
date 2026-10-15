@@ -110,7 +110,7 @@ python scripts/schema.py
 
 ## 🗺️ Roadmap
 - [x] **Stage 1: Data & Schema Lock** (Matched 34,324 freeze-frames, verified 2,588-byte struct parity)
-- [ ] **Stage 2: Python Feature & Delaunay Mesh Extraction** (`train.bin` generator)
+- [x] **Stage 2: Python Feature & Delaunay Mesh Extraction** (`train.bin` & `val.bin` generated, 33,197 frames, 0 NaNs)
 - [ ] **Stage 3: Dense-GAT Concept Bottleneck Training** (Joint Concept MSE + Threat BCE loss)
 - [ ] **Stage 4: ONNX Graph Optimization & Zero-Copy C++ Engine**
 - [ ] **Stage 5: Interactive Tactical Sandbox & Slider Dashboard**

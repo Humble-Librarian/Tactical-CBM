@@ -1,0 +1,36 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.env
+venv/
+.venv/
+env/
+
+# Data Files (Keep structure, ignore large raw JSONs and binary shards)
+data/raw/events/*
+data/raw/three-sixty/*
+data/raw/matches/*
+!data/raw/events/.gitkeep
+!data/raw/three-sixty/.gitkeep
+!data/raw/matches/.gitkeep
+data/processed/*
+!data/processed/.gitkeep
+
+# C++ Build Artifacts
+build/
+bin/
+*.exe
+*.obj
+*.o
+*.dll
+*.so
+*.dylib
+*.onnx
+
+# IDE & Editor
+.vscode/
+.idea/
+*.swp
+*.swo

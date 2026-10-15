@@ -1,0 +1,25 @@
+{
+  "model_architecture": "TacticalCBM_DenseGATv2",
+  "stage5_contract": "Threat = sigmoid(sum(W_i * C_i) + b)",
+  "weights": [
+    -0.1824868768453598,
+    0.07539375871419907,
+    -0.42824986577033997,
+    -0.23316116631031036,
+    -0.09420271962881088,
+    0.22131919860839844
+  ],
+  "bias": -0.11145749688148499,
+  "concepts": [
+    "C1: Defensive Line Height",
+    "C2: Defensive Compactness",
+    "C3: Defensive Width Balance",
+    "C4: Ball-Carrier Pressure",
+    "C5: Central Lane Blockage",
+    "C6: Box Overload Ratio"
+  ],
+  "validation_metrics": {
+    "mean_r2": 0.29281075795491535,
+    "roc_auc": 0.7545642911954793
+  }
+}

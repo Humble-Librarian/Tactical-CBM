@@ -111,7 +111,7 @@ python scripts/schema.py
 ## 🗺️ Roadmap
 - [x] **Stage 1: Data & Schema Lock** (Matched 34,324 freeze-frames, verified 2,588-byte struct parity)
 - [x] **Stage 2: Python Feature & Delaunay Mesh Extraction** (`train.bin` & `val.bin` generated, 33,197 frames, 0 NaNs)
-- [ ] **Stage 3: Dense-GAT Concept Bottleneck Training** (Joint Concept MSE + Threat BCE loss)
+- [x] **Stage 3: Dense-GAT Concept Bottleneck Training** (Dense masked attention, Val ROC-AUC: 0.755, 43 KB model)
 - [ ] **Stage 4: ONNX Graph Optimization & Zero-Copy C++ Engine**
 - [ ] **Stage 5: Interactive Tactical Sandbox & Slider Dashboard**
 

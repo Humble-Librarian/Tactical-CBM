@@ -504,11 +504,19 @@
             applyFormation(document.getElementById("formationSelect").value);
         }
 
+        let openNetHazard = 0.0;
+        let isOpenNet = false;
+
         // Rigorous Tactical Geometry (Matching scripts/geometry.py)
         function computeConceptsFromPitch() {
+            const allDefenders = goalkeeper ? [...defenders, goalkeeper] : defenders;
+
             // C1: Deepest outfield defender from defended goal (X=120)
+            // If ball carrier breaches behind the deepest outfield defender,
+            // the offside line is broken and offers zero depth protection.
             const maxDefX = Math.max(...defenders.map(d => d.x));
-            const distFromGoal = Math.max(0, 120.0 - maxDefX);
+            const effectiveDefX = (ballCarrier && ballCarrier.x > maxDefX) ? ballCarrier.x : maxDefX;
+            const distFromGoal = Math.max(0, 120.0 - effectiveDefX);
             const c1 = Math.min(Math.max(distFromGoal / 55.0, 0.0), 1.0);
 
             // C2: Defensive Compactness (Outfield Bounding Box / Convex Spread)
@@ -528,9 +536,9 @@
             const shiftScore = Math.max(0.0, 1.0 - yOffset);
             const c3 = Math.min(Math.max(0.5 * spreadScore + 0.5 * shiftScore, 0.0), 1.0);
 
-            // C4: Ball-Carrier Pressure (Gegenpress within 8m)
+            // C4: Ball-Carrier Pressure (Gegenpress within 8m, including active goalkeeper)
             let rawPressure = 0.0;
-            defenders.forEach(d => {
+            allDefenders.forEach(d => {
                 const dist = Math.hypot(d.x - ballCarrier.x, d.y - ballCarrier.y);
                 if (dist <= 8.0) {
                     rawPressure += Math.exp(-dist / 2.5);
@@ -538,12 +546,12 @@
             });
             const c4 = Math.min(Math.max(rawPressure / 1.5, 0.0), 1.0);
 
-            // C5: Passing Lane Blockage to Forward Attackers
+            // C5: Passing Lane Blockage to Forward Attackers (including active goalkeeper)
             const forwardAtt = attackers.filter(a => a.x > (ballCarrier.x + 1.0));
             let blockedCount = 0;
             forwardAtt.forEach(a => {
                 let isBlocked = false;
-                defenders.forEach(d => {
+                allDefenders.forEach(d => {
                     const distToRay = getDistToSegment(d, ballCarrier, a);
                     if (distToRay <= 2.2) isBlocked = true;
                 });
@@ -552,9 +560,13 @@
             const c5 = forwardAtt.length > 0 ? (blockedCount / forwardAtt.length) : 1.0;
 
             // C6: Box Overload Ratio (Penalty area X >= 102, Y in [18, 62])
+            // Evaluates attackers vs defenders (INCLUDING goalkeeper) in the 18-yard box
             const attInBox = attackers.filter(a => a.x >= 102.0 && a.y >= 18.0 && a.y <= 62.0).length;
-            const defInBox = defenders.filter(d => d.x >= 102.0 && d.y >= 18.0 && d.y <= 62.0).length;
-            const c6 = (attInBox + defInBox) > 0 ? (attInBox / (attInBox + defInBox)) : 0.0;
+            const defInBox = allDefenders.filter(d => d.x >= 102.0 && d.y >= 18.0 && d.y <= 62.0).length;
+            let c6 = 0.0;
+            if (attInBox > 0) {
+                c6 = defInBox === 0 ? 1.0 : (attInBox / (attInBox + defInBox));
+            }
 
             return [c1, c2, c3, c4, c5, c6];
         }
@@ -568,12 +580,30 @@
             return Math.hypot(p.x - (a.x + t * dx), p.y - (a.y + t * dy));
         }
 
-        // Stage 5 Instant Intervention Engine (O(1) Dot Product)
+        // Stage 5 Instant Intervention Engine (O(1) Dot Product + Open Net Hazard)
         function evaluateStage5(concepts) {
             let logit = BIAS;
             for (let i = 0; i < 6; ++i) {
                 logit += concepts[i] * WEIGHTS[i];
             }
+
+            // Goalkeeper Sweeper / Open Net Hazard
+            openNetHazard = 0.0;
+            isOpenNet = false;
+            if (goalkeeper && ballCarrier) {
+                const gkDistToGoal = Math.hypot(120.0 - goalkeeper.x, 40.0 - goalkeeper.y);
+                const ballDistToGoal = Math.hypot(120.0 - ballCarrier.x, 40.0 - ballCarrier.y);
+                
+                // If ball carrier is in shooting danger range (X >= 80) and goalkeeper is abandoned/behind ball
+                if (ballCarrier.x >= 80.0 && (ballDistToGoal < gkDistToGoal || goalkeeper.x < 100.0)) {
+                    isOpenNet = true;
+                    // Severe open-net hazard: scaling up to +1.6 logit when keeper is at midfield
+                    const displacement = Math.max(0, 102.0 - goalkeeper.x) / 42.0;
+                    openNetHazard = Math.min(Math.max(displacement, 0.35), 1.0) * 1.6;
+                    logit += openNetHazard;
+                }
+            }
+
             return 1.0 / (1.0 + Math.exp(-logit));
         }
 
@@ -604,7 +634,11 @@
 
             valEl.textContent = `${pct}%`;
 
-            if (threat >= 0.50) {
+            if (isOpenNet && threat >= 0.70) {
+                valEl.style.color = "#ef4444";
+                statusEl.textContent = "CRITICAL HAZARD: OPEN GOAL | GOALKEEPER STRANDED AT MIDFIELD";
+                statusEl.style.color = "#ef4444";
+            } else if (threat >= 0.50) {
                 valEl.style.color = "var(--accent-red)";
                 statusEl.textContent = "High Goal Hazard | Open Passing Options";
                 statusEl.style.color = "var(--accent-red)";
@@ -631,6 +665,13 @@
                 const sign = impact > 0 ? "+" : "";
                 const tag = isBeneficial ? " [Safety]" : (isDangerous ? " [Hazard]" : "");
                 div.innerHTML = `<span>${CONCEPT_NAMES[i]}</span><span class="${cls}">${sign}${impact.toFixed(2)} logit${tag}</span>`;
+                listEl.appendChild(div);
+            }
+
+            if (isOpenNet && openNetHazard > 0.05) {
+                const div = document.createElement("div");
+                div.className = "explanation-item";
+                div.innerHTML = `<span>GK Position (Open Net Hazard)</span><span class="positive-impact">+${openNetHazard.toFixed(2)} logit [Fatal]</span>`;
                 listEl.appendChild(div);
             }
         }
@@ -719,11 +760,12 @@
             ctx.font = "10px sans-serif";
             ctx.fillText(`OFFSIDE LINE (${(120 - deepestX).toFixed(1)}m)`, deepestX * SCALE_X - 100, 30);
 
-            // Passing rays to forward attackers
+            // Passing rays to forward attackers (checked against all defenders including goalkeeper)
             attackers.forEach(a => {
                 if (a.x > ballCarrier.x) {
                     let isBlocked = false;
-                    defenders.forEach(d => {
+                    const allDef = goalkeeper ? [...defenders, goalkeeper] : defenders;
+                    allDef.forEach(d => {
                         if (getDistToSegment(d, ballCarrier, a) <= 2.2) isBlocked = true;
                     });
                     ctx.beginPath();
@@ -737,15 +779,36 @@
                 }
             });
 
+            // Draw Open Net Visual Danger Line if Goalkeeper is stranded
+            if (isOpenNet && ballCarrier) {
+                ctx.beginPath();
+                ctx.setLineDash([6, 4]);
+                ctx.moveTo(ballCarrier.x * SCALE_X, ballCarrier.y * SCALE_Y);
+                ctx.lineTo(canvas.width - 15, 40.0 * SCALE_Y);
+                ctx.strokeStyle = "#ef4444";
+                ctx.lineWidth = 2.5;
+                ctx.stroke();
+                ctx.setLineDash([]);
+
+                ctx.fillStyle = "#ef4444";
+                ctx.font = "bold 12px sans-serif";
+                ctx.fillText("UNGUARDED NET", canvas.width - 120, 40.0 * SCALE_Y - 14);
+            }
+
             // Draw Goalkeeper (Purple)
             if (goalkeeper) {
                 ctx.beginPath();
-                ctx.arc(goalkeeper.x * SCALE_X, goalkeeper.y * SCALE_Y, 8, 0, Math.PI * 2);
+                ctx.arc(goalkeeper.x * SCALE_X, goalkeeper.y * SCALE_Y, 9, 0, Math.PI * 2);
                 ctx.fillStyle = "#a855f7";
                 ctx.fill();
                 ctx.strokeStyle = "#ffffff";
-                ctx.lineWidth = 1.5;
+                ctx.lineWidth = 2;
                 ctx.stroke();
+
+                // Goalkeeper label
+                ctx.fillStyle = "#f3e8ff";
+                ctx.font = "bold 9px sans-serif";
+                ctx.fillText("GK", (goalkeeper.x * SCALE_X) - 7, (goalkeeper.y * SCALE_Y) + 3);
             }
 
             // Draw Defenders (Blue)

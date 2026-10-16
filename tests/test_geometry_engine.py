@@ -40,6 +40,12 @@ def test_c1_line_height_boundaries():
     # Empty defenders fallback
     assert compute_c1_line_height(np.empty((0, 2))) == 0.5
 
+    # Breached line: Ball carrier penetrates behind defensive line (ball at X=105, defenders at X=70.5)
+    # Line height must collapse from 0.90 to (120 - 105) / 55 = ~0.27
+    c1_breached = compute_c1_line_height(high_def, ball_loc=np.array([105.0, 40.0]))
+    assert 0.26 <= c1_breached <= 0.28, f"Breached line C1 ({c1_breached}) must reflect penetration"
+    assert c1_breached < c1_high, "Breached line must have strictly lower protective line height than intact line"
+
 def test_c2_compactness_degeneracies():
     """C2 must handle normal blocks, collinear points, and degenerate 1-2 player inputs."""
     # 4 defenders packed in tight 10m x 10m square (area = 100 m^2)

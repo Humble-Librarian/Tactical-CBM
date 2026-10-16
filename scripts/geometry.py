@@ -8,6 +8,7 @@ Pitch Dimensions (StatsBomb 360 standard):
 - Defended Goal: Centered at X = 120.0, Y = 40.0.
 - Penalty Box: X in [102.0, 120.0], Y in [18.0, 62.0].
 """
+from typing import Optional
 import numpy as np
 from scipy.spatial import ConvexHull, Delaunay
 
@@ -16,12 +17,15 @@ PITCH_WIDTH = 80.0
 DEFENDED_GOAL_X = 120.0
 PENALTY_BOX_X_START = 102.0
 
-def compute_c1_line_height(outfield_defenders: np.ndarray) -> float:
+def compute_c1_line_height(outfield_defenders: np.ndarray, ball_loc: Optional[np.ndarray] = None) -> float:
     """
     C1: Defensive Line Height (Offside Trap Line).
     In modern high-pressing tactics (Hansi Flick), line height is measured by 
     the distance of the deepest outfield defender (excluding goalkeeper) 
     from their defended goal line (X = 120.0).
+    
+    If the ball carrier has broken behind the deepest defender (ball_x > max_x),
+    the defensive line is breached and cannot offer depth protection.
     
     - Deep Low Block: Defending deep inside 18-yard box (X >= 105m -> dist <= 15m) -> C1 ~ 0.20-0.30
     - Mid Block:      Defending around 35m from goal (X ~ 85m -> dist ~ 35m)       -> C1 ~ 0.60
@@ -30,8 +34,13 @@ def compute_c1_line_height(outfield_defenders: np.ndarray) -> float:
     if len(outfield_defenders) == 0:
         return 0.5
     # The deepest defender closest to defended goal (X=120) has maximum X
-    max_x = np.max(outfield_defenders[:, 0])
-    distance_from_goal = DEFENDED_GOAL_X - max_x
+    max_x = float(np.max(outfield_defenders[:, 0]))
+    if ball_loc is not None and len(ball_loc) >= 1:
+        effective_x = max(max_x, float(ball_loc[0]))
+    else:
+        effective_x = max_x
+        
+    distance_from_goal = DEFENDED_GOAL_X - effective_x
     
     # High line ceiling is 55m from goal (near midfield line X=60-65m)
     c1 = distance_from_goal / 55.0

@@ -1106,6 +1106,25 @@
                 expList.appendChild(openNetRow);
             }
 
+            const deepestDefX = Math.max(...defenders.map(d => d.x));
+            const offsideLimit = Math.max(deepestDefX, ballCarrier.x);
+            const offsideAttackers = attackers.filter(a => !a.isActor && a.x > offsideLimit + 0.5);
+
+            if (offsideAttackers.length > 0) {
+                const offsideRow = document.createElement("div");
+                offsideRow.className = "exp-row";
+                offsideRow.style.borderColor = "rgba(56, 189, 248, 0.3)";
+                offsideRow.style.background = "rgba(56, 189, 248, 0.08)";
+                offsideRow.innerHTML = `
+                    <span class="exp-label" style="color: var(--accent-blue); font-weight: 600;">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path><line x1="4" y1="22" x2="4" y2="15"></line></svg>
+                        IFAB Offside Trap
+                    </span>
+                    <span class="exp-metric exp-safe">${offsideAttackers.length} Offside (Threat Neutralized)</span>
+                `;
+                expList.appendChild(offsideRow);
+            }
+
             for (let i = 0; i < 6; ++i) {
                 const contrib = concepts[i] * WEIGHTS[i];
                 const row = document.createElement("div");
@@ -1321,17 +1340,23 @@
 
                 attackers.forEach(a => {
                     if (a.x > ballCarrier.x) {
+                        const isOffside = a.x > (Math.max(deepestX, ballCarrier.x) + 0.5);
                         let isBlocked = false;
                         allDef.forEach(d => {
                             if (getDistToSegment(d, ballCarrier, a) <= 2.2) isBlocked = true;
                         });
                         const aPx = toPx(a.x, a.y);
                         ctx.beginPath();
-                        ctx.setLineDash([4, 4]);
+                        ctx.setLineDash(isOffside ? [2, 4] : [4, 4]);
                         ctx.moveTo(bPx.x, bPx.y);
                         ctx.lineTo(aPx.x, aPx.y);
-                        ctx.strokeStyle = isBlocked ? "rgba(244, 63, 94, 0.75)" : "rgba(16, 185, 129, 0.85)";
-                        ctx.lineWidth = isBlocked ? 2 : 2.5;
+                        if (isOffside) {
+                            ctx.strokeStyle = "rgba(239, 68, 68, 0.4)";
+                            ctx.lineWidth = 1.5;
+                        } else {
+                            ctx.strokeStyle = isBlocked ? "rgba(244, 63, 94, 0.75)" : "rgba(16, 185, 129, 0.85)";
+                            ctx.lineWidth = isBlocked ? 2 : 2.5;
+                        }
                         ctx.stroke();
                         ctx.setLineDash([]);
                     }

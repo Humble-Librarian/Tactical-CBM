@@ -121,18 +121,21 @@
         .main-container {
             display: flex;
             flex: 1;
-            padding: 16px;
+            padding: 14px 18px;
             gap: 16px;
             height: calc(100vh - 65px);
+            min-height: 0;
         }
 
-        /* Tactical Pitch Canvas Panel */
+        /* Tactical Pitch Canvas Panel - Maximize available viewport */
         .pitch-container {
-            flex: 7;
+            flex: 1;
+            min-width: 0;
+            min-height: 0;
             background-color: var(--panel-bg);
             border: 1px solid var(--border-color);
             border-radius: 14px;
-            padding: 16px;
+            padding: 14px 18px;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -201,23 +204,26 @@
             align-items: center;
             width: 100%;
             flex: 1;
+            min-height: 0;
+            overflow: hidden;
+            padding: 2px;
         }
 
         canvas {
-            border-radius: 10px;
-            box-shadow: 0 12px 36px rgba(0, 0, 0, 0.65), inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            box-shadow: 0 16px 48px rgba(0, 0, 0, 0.7), inset 0 0 0 1px rgba(255, 255, 255, 0.08);
             cursor: grab;
-            max-width: 100%;
-            height: auto;
+            display: block;
         }
 
         canvas:active {
             cursor: grabbing;
         }
 
-        /* Sidebar Control Center */
+        /* Sidebar Control Center - Dedicated analytical panel */
         .sidebar {
-            flex: 5;
+            width: 380px;
+            flex-shrink: 0;
             background-color: var(--panel-bg);
             border: 1px solid var(--border-color);
             border-radius: 14px;
@@ -542,7 +548,7 @@
             </div>
             
             <div class="pitch-canvas-wrapper">
-                <canvas id="pitchCanvas" width="860" height="560"></canvas>
+                <canvas id="pitchCanvas" width="1200" height="800"></canvas>
             </div>
 
             <!-- Pitch Tactical Legend -->
@@ -668,13 +674,14 @@
         const canvas = document.getElementById("pitchCanvas");
         const ctx = canvas.getContext("2d");
 
-        // Pitch Dimensions & Screen Coordinate Mapping
+        // Pitch Dimensions & Responsive Coordinate Mapping (Maximizes to Container)
         const PITCH_W = 120.0;
         const PITCH_H = 80.0;
-        const MARGIN_X = 22.0;
-        const MARGIN_Y = 20.0;
-        const FIELD_W = canvas.width - (MARGIN_X * 2);
-        const FIELD_H = canvas.height - (MARGIN_Y * 2);
+        let MARGIN_X = 26.0;
+        let MARGIN_Y = 24.0;
+        let FIELD_W = canvas.width - (MARGIN_X * 2);
+        let FIELD_H = canvas.height - (MARGIN_Y * 2);
+        let PLAYER_SCALE = 1.0;
 
         function toPx(x, y) {
             return {
@@ -688,6 +695,45 @@
                 x: Math.max(0, Math.min(PITCH_W, ((px - MARGIN_X) / FIELD_W) * PITCH_W)),
                 y: Math.max(0, Math.min(PITCH_H, ((py - MARGIN_Y) / FIELD_H) * PITCH_H))
             };
+        }
+
+        function resizePitchCanvas() {
+            const wrapper = document.querySelector(".pitch-canvas-wrapper");
+            if (!wrapper) return;
+            const availW = wrapper.clientWidth - 8;
+            const availH = wrapper.clientHeight - 8;
+            if (availW <= 50 || availH <= 50) return;
+
+            // Pitch aspect ratio is 120m / 80m = 1.5
+            const PITCH_ASPECT = 1.5;
+            let displayW, displayH;
+
+            if (availW / availH > PITCH_ASPECT) {
+                // Limited by available container height
+                displayH = Math.floor(availH);
+                displayW = Math.floor(displayH * PITCH_ASPECT);
+            } else {
+                // Limited by available container width
+                displayW = Math.floor(availW);
+                displayH = Math.floor(displayW / PITCH_ASPECT);
+            }
+
+            // High-DPI support (devicePixelRatio capped at 2 for optimal rendering)
+            const dpr = Math.min(window.devicePixelRatio || 1, 2);
+            canvas.width = Math.round(displayW * dpr);
+            canvas.height = Math.round(displayH * dpr);
+            canvas.style.width = `${displayW}px`;
+            canvas.style.height = `${displayH}px`;
+
+            MARGIN_X = 26.0 * dpr;
+            MARGIN_Y = 24.0 * dpr;
+            FIELD_W = canvas.width - (MARGIN_X * 2);
+            FIELD_H = canvas.height - (MARGIN_Y * 2);
+
+            // Scale players proportionally with canvas size (baseline 750px display width)
+            PLAYER_SCALE = Math.max(1.0, (displayW / 750.0)) * dpr;
+
+            drawPitch();
         }
 
         // Tactical Entity State
@@ -1367,6 +1413,9 @@
             ctx.save();
             ctx.translate(x, y);
 
+            const s = PLAYER_SCALE || 1.0;
+            ctx.scale(s, s);
+
             // 1. Turf Drop Shadow
             ctx.beginPath();
             ctx.ellipse(0, 10, isSelected ? 14 : 10, isSelected ? 6 : 4.5, 0, 0, Math.PI * 2);
@@ -1480,23 +1529,27 @@
 
             // 6. Draw 3D Soccer Ball beside Ball Carrier
             if (isCarrier) {
-                drawSoccerBall(ctx, x + 15, y + 8);
+                const s = PLAYER_SCALE || 1.0;
+                drawSoccerBall(ctx, x + (15 * s), y + (8 * s), s);
             }
         }
 
         // Realistic 3D Soccer Ball Renderer
-        function drawSoccerBall(ctx, bx, by) {
+        function drawSoccerBall(ctx, bx, by, scale = 1.0) {
             ctx.save();
+            ctx.translate(bx, by);
+            ctx.scale(scale, scale);
+
             // Ball Grass Shadow
             ctx.beginPath();
-            ctx.ellipse(bx + 1, by + 4, 5, 2.5, 0, 0, Math.PI * 2);
+            ctx.ellipse(1, 4, 5, 2.5, 0, 0, Math.PI * 2);
             ctx.fillStyle = "rgba(0, 0, 0, 0.55)";
             ctx.fill();
 
             // Ball Sphere with Radial Glare
             ctx.beginPath();
-            ctx.arc(bx, by, 5.5, 0, Math.PI * 2);
-            const ballGrad = ctx.createRadialGradient(bx - 1.5, by - 1.5, 0.8, bx, by, 5.5);
+            ctx.arc(0, 0, 5.5, 0, Math.PI * 2);
+            const ballGrad = ctx.createRadialGradient(-1.5, -1.5, 0.8, 0, 0, 5.5);
             ballGrad.addColorStop(0, "#ffffff");
             ballGrad.addColorStop(0.7, "#f1f5f9");
             ballGrad.addColorStop(1, "#94a3b8");
@@ -1510,8 +1563,8 @@
             ctx.beginPath();
             for (let i = 0; i < 5; i++) {
                 const ang = (i * 2 * Math.PI) / 5 - Math.PI / 2;
-                const px = bx + 2.2 * Math.cos(ang);
-                const py = by + 2.2 * Math.sin(ang);
+                const px = 2.2 * Math.cos(ang);
+                const py = 2.2 * Math.sin(ang);
                 if (i === 0) ctx.moveTo(px, py);
                 else ctx.lineTo(px, py);
             }
@@ -1548,9 +1601,9 @@
 
         canvas.addEventListener("mousedown", e => {
             const rect = canvas.getBoundingClientRect();
-            const mousePx = e.clientX - rect.left;
-            const mousePy = e.clientY - rect.top;
-            const pitchPos = fromPx(mousePx, mousePy);
+            const canvasPx = (e.clientX - rect.left) * (canvas.width / rect.width);
+            const canvasPy = (e.clientY - rect.top) * (canvas.height / rect.height);
+            const pitchPos = fromPx(canvasPx, canvasPy);
 
             selectedPlayer = getPlayerAt(pitchPos.x, pitchPos.y);
 
@@ -1562,9 +1615,9 @@
 
         window.addEventListener("mousemove", e => {
             const rect = canvas.getBoundingClientRect();
-            const mousePx = e.clientX - rect.left;
-            const mousePy = e.clientY - rect.top;
-            const pitchPos = fromPx(mousePx, mousePy);
+            const canvasPx = (e.clientX - rect.left) * (canvas.width / rect.width);
+            const canvasPy = (e.clientY - rect.top) * (canvas.height / rect.height);
+            const pitchPos = fromPx(canvasPx, canvasPy);
 
             if (isDragging && selectedPlayer) {
                 selectedPlayer.x = Math.max(1.5, Math.min(PITCH_W - 1.5, pitchPos.x));
@@ -1588,6 +1641,23 @@
                 recalculate();
             }
         });
+
+        function initPlayers() {
+            applyFormation("high-press");
+            resizePitchCanvas();
+            setTimeout(resizePitchCanvas, 60);
+        }
+
+        window.addEventListener("resize", () => {
+            resizePitchCanvas();
+        });
+
+        if (window.ResizeObserver) {
+            const wrapper = document.querySelector(".pitch-canvas-wrapper");
+            if (wrapper) {
+                new ResizeObserver(() => resizePitchCanvas()).observe(wrapper);
+            }
+        }
 
         initPlayers();
     </script>

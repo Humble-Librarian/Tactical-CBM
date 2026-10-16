@@ -884,27 +884,38 @@
             return Math.abs(area) * 0.5;
         }
 
+        // WebAssembly Runtime: Single-source-of-truth dual engine dispatch
+        let wasmGeometry = null;
+        if (typeof window !== 'undefined' && window.WebAssembly) {
+            fetch('tactical_geometry.wasm')
+                .then(res => {
+                    if (res.ok) return res.arrayBuffer();
+                    throw new Error("WASM binary not found");
+                })
+                .then(bytes => WebAssembly.instantiate(bytes))
+                .then(res => {
+                    wasmGeometry = res.instance.exports;
+                    console.log("[WASM Engine] tactical_geometry.wasm loaded! C++ parity active.");
+                })
+                .catch(() => {
+                    console.log("[Dual Engine] Running V8 JIT inline math fallback.");
+                });
+        }
+
         // 6 Canonical Tactical Concept Extractors
         function computeConceptsFromPitch() {
             const allDefenders = goalkeeper ? [...defenders, goalkeeper] : defenders;
 
-            // C1: Defensive Line Height (Deepest Outfield Defender Distance from Own Goal Line at X=120)
+            // Geometry calculations
             const maxDefX = Math.max(...defenders.map(d => d.x));
-            const c1 = Math.min(Math.max((120.0 - maxDefX) / 70.0, 0.0), 1.0);
-
-            // C2: Defensive Compactness (Exact 2D Convex Hull Area)
             const hullArea = computeConvexHullArea(defenders);
-            const c2 = Math.min(Math.max(1.0 - (hullArea / 1200.0), 0.0), 1.0);
-
-            // C3: Defensive Width Balance & Centroid Shift
+            
             let minY = 80, maxY = 0;
             defenders.forEach(d => { minY = Math.min(minY, d.y); maxY = Math.max(maxY, d.y); });
             const avgY = defenders.reduce((s, d) => s + d.y, 0) / defenders.length;
             const spread = maxY - minY;
             const yOffset = Math.abs(avgY - ballCarrier.y) / 35.0;
-            const c3 = Math.min(Math.max((spread / 45.0) * (1.0 - yOffset * 0.5), 0.0), 1.0);
 
-            // C4: Ball-Carrier Immediate Gegenpress
             let minDefDist = 999.0;
             let defendersWithin5m = 0;
             allDefenders.forEach(d => {
@@ -912,7 +923,20 @@
                 if (dist < minDefDist) minDefDist = dist;
                 if (dist <= 6.0) defendersWithin5m++;
             });
-            const c4 = Math.min(Math.max(Math.exp(-minDefDist / 4.0) * 0.7 + (defendersWithin5m / 3.0) * 0.3, 0.0), 1.0);
+
+            // Dual-Engine Execution: WebAssembly C++ engine with transparent JIT fallback
+            let c1, c2, c3, c4;
+            if (wasmGeometry) {
+                c1 = wasmGeometry.c1_line_height(maxDefX);
+                c2 = wasmGeometry.c2_compactness(hullArea);
+                c3 = wasmGeometry.c3_width_balance(spread, avgY, ballCarrier.y);
+                c4 = wasmGeometry.c4_pressure(minDefDist, defendersWithin5m);
+            } else {
+                c1 = Math.min(Math.max((120.0 - maxDefX) / 70.0, 0.0), 1.0);
+                c2 = Math.min(Math.max(1.0 - (hullArea / 1200.0), 0.0), 1.0);
+                c3 = Math.min(Math.max((spread / 45.0) * (1.0 - yOffset * 0.5), 0.0), 1.0);
+                c4 = Math.min(Math.max(Math.exp(-minDefDist / 4.0) * 0.7 + (defendersWithin5m / 3.0) * 0.3, 0.0), 1.0);
+            }
 
             // C5: Central Passing Lane Blockage to Forward Attackers
             const forwardAtt = attackers.filter(a => a.x > ballCarrier.x);

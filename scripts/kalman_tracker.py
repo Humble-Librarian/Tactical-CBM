@@ -72,16 +72,62 @@ class TacticalTrack:
         self.x[0] = np.clip(self.x[0], 0.0, 120.0)
         self.x[1] = np.clip(self.x[1], 0.0, 80.0)
 
-    def update(self, obs_x: float, obs_y: float, timestamp: float):
-        """Standard Kalman measurement update from observed detection."""
-        z = np.array([obs_x, obs_y], dtype=np.float32)
-        H = np.array([
-            [1.0, 0.0, 0.0, 0.0],
-            [0.0, 1.0, 0.0, 0.0]
-        ], dtype=np.float32)
+    def update(
+        self,
+        obs_x: Optional[float],
+        obs_y: Optional[float],
+        timestamp: float,
+        flow_vx: Optional[float] = None,
+        flow_vy: Optional[float] = None,
+        in_scrum: bool = False
+    ):
+        """
+        Fused Kalman measurement update:
+        Supports position-only, optical-flow-only (occluded scrum), or full 4D state updates.
+        Adapts measurement covariance R based on scrum pile-up proximity.
+        """
+        has_pos = (obs_x is not None and obs_y is not None)
+        has_flow = (flow_vx is not None and flow_vy is not None)
         
+        if not has_pos and not has_flow:
+            return
+
+        # Clamp optical flow velocity to physical sprint limit (10.0 m/s)
+        if has_flow:
+            flow_speed = math.hypot(flow_vx, flow_vy)
+            if flow_speed > 10.0:
+                scale = 10.0 / flow_speed
+                flow_vx *= scale
+                flow_vy *= scale
+
+        if has_pos and has_flow:
+            # Full 4D State Observation: [px, py, vx, vy]
+            z = np.array([obs_x, obs_y, flow_vx, flow_vy], dtype=np.float32)
+            H = np.eye(4, dtype=np.float32)
+            # In congested scrums, de-weight centroid positions and rely on optical flow momentum
+            r_pos = 4.0 if in_scrum else 0.25
+            r_flow = 0.4 if in_scrum else 1.0
+            R = np.diag([r_pos, r_pos, r_flow, r_flow]).astype(np.float32)
+        elif has_pos:
+            # Position-Only Observation: [px, py]
+            z = np.array([obs_x, obs_y], dtype=np.float32)
+            H = np.array([
+                [1.0, 0.0, 0.0, 0.0],
+                [0.0, 1.0, 0.0, 0.0]
+            ], dtype=np.float32)
+            r_pos = 3.0 if in_scrum else 0.25
+            R = np.diag([r_pos, r_pos]).astype(np.float32)
+        else:
+            # Optical-Flow-Only Observation (Centroid occluded inside scrum pile-up)
+            z = np.array([flow_vx, flow_vy], dtype=np.float32)
+            H = np.array([
+                [0.0, 0.0, 1.0, 0.0],
+                [0.0, 0.0, 0.0, 1.0]
+            ], dtype=np.float32)
+            R = np.diag([0.5, 0.5]).astype(np.float32)
+
         y = z - (H @ self.x)
-        S = H @ self.P @ H.T + self.R
+        S = H @ self.P @ H.T + R
         K = self.P @ H.T @ np.linalg.inv(S)
         
         self.x = self.x + K @ y
@@ -99,7 +145,8 @@ class TacticalTrack:
 
 class TacticalKalmanTracker:
     """
-    Multi-player tracking manager with temporal smoothing and frustum occlusion recovery.
+    Multi-player tracking manager with temporal smoothing, optical flow fusion,
+    and scrum congestion recovery for dense set-piece pileups.
     """
     def __init__(self, max_association_dist: float = 6.0):
         self.tracks: List[TacticalTrack] = []
@@ -123,11 +170,13 @@ class TacticalKalmanTracker:
         """
         Processes a freeze frame:
         1. Predicts existing tracks forward to current timestamp.
-        2. Associates observations using greedy nearest-neighbor gating.
-        3. Extrapolates occluded tracks up to 2.0s.
+        2. Detects scrum congestion clusters (corner kicks / goalmouth scrums).
+        3. Associates observations using flow-gated nearest-neighbor matching.
+        4. Fuses optical flow vectors to separate clustered players.
+        5. Extrapolates occluded tracks up to 2.0s.
         
         Returns:
-            List of (x, y, is_teammate, is_actor, is_extrapolated)
+            List of (x, y, is_teammate, is_keeper, is_extrapolated)
         """
         # Turnover or long jump reset
         if self.last_possession is not None and possession_id is not None and possession_id != self.last_possession:
@@ -145,7 +194,21 @@ class TacticalKalmanTracker:
         for t in self.tracks:
             t.predict(dt)
 
-        # 2. Greedy association
+        # 2. Detect scrum congestion clusters (3+ players within 2.5m)
+        scrum_flags = [False] * len(detections)
+        coords = [d.get("location") for d in detections]
+        for i in range(len(detections)):
+            if not coords[i] or len(coords[i]) < 2:
+                continue
+            neighbors = 0
+            for j in range(len(detections)):
+                if i != j and coords[j] and len(coords[j]) >= 2:
+                    if math.hypot(coords[i][0] - coords[j][0], coords[i][1] - coords[j][1]) <= 2.5:
+                        neighbors += 1
+            if neighbors >= 2:
+                scrum_flags[i] = True
+
+        # 3. Association with optical flow velocity disambiguation
         unmatched_obs = list(range(len(detections)))
         matched_tracks = set()
 
@@ -158,6 +221,8 @@ class TacticalKalmanTracker:
                 
             ox, oy = float(loc[0]), float(loc[1])
             is_tm = bool(obs.get("teammate", False))
+            flow = obs.get("optical_flow", None)
+            f_vx, f_vy = (float(flow[0]), float(flow[1])) if (flow and len(flow) >= 2) else (None, None)
             
             best_track = None
             best_dist = self.max_association_dist
@@ -171,7 +236,14 @@ class TacticalKalmanTracker:
                     best_track = t
                     
             if best_track is not None:
-                best_track.update(ox, oy, timestamp)
+                best_track.update(
+                    obs_x=ox, 
+                    obs_y=oy, 
+                    timestamp=timestamp, 
+                    flow_vx=f_vx, 
+                    flow_vy=f_vy, 
+                    in_scrum=scrum_flags[obs_idx]
+                )
                 matched_tracks.add(best_track.track_id)
                 unmatched_obs.remove(obs_idx)
 

@@ -60,3 +60,33 @@ def test_kalman_occlusion_recovery_horizon():
     frame3 = []
     res3 = tracker.step(frame3, timestamp=3.5, possession_id=1)
     assert len(res3) == 0, "Track must be pruned when occlusion gap exceeds horizon"
+
+def test_kalman_optical_flow_fusion_in_scrum():
+    """Assert optical flow vectors update track velocity and resolve scrum ambiguity."""
+    track = TacticalTrack(track_id=1, x=105.0, y=35.0, is_teammate=False, is_keeper=False, timestamp=0.0)
+    
+    # In a corner kick scrum, player moves with optical flow vx=-2.0 m/s (clearing ball), vy=1.0 m/s
+    track.update(obs_x=104.5, obs_y=35.2, timestamp=0.2, flow_vx=-2.0, flow_vy=1.0, in_scrum=True)
+    
+    # Velocity must reflect fused optical flow direction
+    assert track.x[2] < 0.0, "X velocity must be negative (clearing out of box)"
+    assert abs(track.x[2] - (-2.0)) < 1.0, "Velocity should fuse optical flow measurement"
+
+def test_kalman_flow_only_update_during_total_occlusion():
+    """Assert optical flow updates track when centroid position is completely occluded in a pileup."""
+    track = TacticalTrack(track_id=1, x=105.0, y=35.0, is_teammate=False, is_keeper=False, timestamp=0.0)
+    
+    # Centroid occluded (None, None), but optical flow tracking patch detects motion vx=3.0, vy=0.0
+    track.update(obs_x=None, obs_y=None, timestamp=0.2, flow_vx=3.0, flow_vy=0.0, in_scrum=True)
+    
+    # Track velocity updated via optical flow
+    assert track.x[2] > 1.0, "Optical flow must update velocity during total position occlusion"
+
+def test_wasm_binary_integrity():
+    """Assert compiled tactical_geometry.wasm exists and has valid WebAssembly magic header."""
+    wasm_path = BASE_DIR / "dashboard" / "tactical_geometry.wasm"
+    assert wasm_path.exists(), "tactical_geometry.wasm must exist"
+    
+    with open(wasm_path, "rb") as f:
+        magic = f.read(8)
+    assert magic == b"\x00asm\x01\x00\x00\x00", "Must have valid WebAssembly 1.0 magic header"

@@ -937,9 +937,28 @@
 
             let c6 = 0.0;
             if (totalAttInBox > 0) {
-                const boxDangerProximity = Math.min(Math.max((ballCarrier.x - 30.0) / 72.0, 0.0), 1.0);
                 const rawRatio = defInBox === 0 ? 1.0 : (totalAttInBox / (totalAttInBox + defInBox));
-                c6 = rawRatio * boxDangerProximity;
+                
+                // If ball carrier is in box OR has an open passing lane to an onside receiver in the box, full danger!
+                let isConnectedToBox = isCarrierInBox;
+                if (!isConnectedToBox) {
+                    attackers.forEach(a => {
+                        if (a.x >= 102.0 && a.y >= 18.0 && a.y <= 62.0 && a.x <= (offsideLineX + 0.5)) {
+                            let blocked = false;
+                            allDefenders.forEach(d => {
+                                if (getDistToSegment(d, ballCarrier, a) <= 2.2) blocked = true;
+                            });
+                            if (!blocked) isConnectedToBox = true;
+                        }
+                    });
+                }
+
+                if (isConnectedToBox) {
+                    c6 = rawRatio;
+                } else {
+                    const boxProximity = Math.min(Math.max((ballCarrier.x - 30.0) / 72.0, 0.0), 1.0);
+                    c6 = rawRatio * (0.4 + 0.6 * boxProximity);
+                }
             }
 
             return [c1, c2, c3, c4, c5, c6];
@@ -954,40 +973,55 @@
             return Math.hypot(p.x - (a.x + t * dx), p.y - (a.y + t * dy));
         }
 
-        // Stage 5 Instant Intervention Engine (O(1) Dot Product + Territorial Scaling + Open Net Hazard)
+        // Stage 5 Instant Intervention Engine (O(1) Dot Product + Effective Attack Distance + Open Net Hazard)
         function evaluateStage5(concepts) {
             let logit = BIAS;
             for (let i = 0; i < 6; ++i) {
                 logit += concepts[i] * WEIGHTS[i];
             }
 
+            // Effective attack distance: either the ball carrier or any open receiver in the box
+            let minDistanceToGoal = Math.hypot(120.0 - ballCarrier.x, 40.0 - ballCarrier.y);
+            const maxDefX = Math.max(...defenders.map(d => d.x));
+            const offsideLineX = Math.max(maxDefX, ballCarrier.x);
+            const allDef = goalkeeper ? [...defenders, goalkeeper] : defenders;
+
+            attackers.forEach(a => {
+                if (a.x > ballCarrier.x && a.x <= offsideLineX + 0.5) {
+                    let blocked = false;
+                    allDef.forEach(d => {
+                        if (getDistToSegment(d, ballCarrier, a) <= 2.2) blocked = true;
+                    });
+                    if (!blocked) {
+                        const aDist = Math.hypot(120.0 - a.x, 40.0 - a.y);
+                        if (aDist < minDistanceToGoal) {
+                            minDistanceToGoal = aDist;
+                        }
+                    }
+                }
+            });
+
             // Open-Net Keeper Displacement Check
             openNetHazard = 0.0;
             isOpenNet = false;
             if (goalkeeper && ballCarrier) {
                 const gkDistToGoal = Math.hypot(120.0 - goalkeeper.x, 40.0 - goalkeeper.y);
-                const ballDistToGoal = Math.hypot(120.0 - ballCarrier.x, 40.0 - ballCarrier.y);
                 
-                // Open net hazard activates when ball is in shooting danger range (X >= 75)
-                // and keeper is caught upfield or behind the ball
-                if (ballCarrier.x >= 75.0 && (ballDistToGoal < gkDistToGoal || goalkeeper.x < 100.0)) {
+                // Open net activates when dangerous attack point is close to goal (<= 45m)
+                // and keeper is displaced or caught upfield
+                if (minDistanceToGoal <= 45.0 && (minDistanceToGoal < gkDistToGoal || goalkeeper.x < 102.0)) {
                     isOpenNet = true;
-                    const displacement = Math.max(0, 102.0 - goalkeeper.x) / 42.0;
-                    openNetHazard = Math.min(Math.max(displacement, 0.35), 1.0) * 1.8;
+                    const displacement = Math.max(0, 108.0 - goalkeeper.x) / 36.0;
+                    openNetHazard = Math.min(Math.max(displacement, 0.4), 1.0) * 1.8;
                     logit += openNetHazard;
                 }
             }
 
             const rawThreat = 1.0 / (1.0 + Math.exp(-logit));
 
-            // Territorial Distance Physics: Probability of a shot within 10 events
-            // scales with distance to target goal (verified on 24,000+ Euro 2020 frames)
-            let territorialScale = 1.0;
-            if (ballCarrier) {
-                const ballDist = Math.hypot(120.0 - ballCarrier.x, 40.0 - ballCarrier.y);
-                const progressRatio = Math.max(0.0, 120.0 - ballDist) / 105.0; // 0 at own box X=15, 1.0 at X=105
-                territorialScale = 0.04 + 0.96 * Math.pow(Math.min(Math.max(progressRatio, 0.0), 1.0), 1.8);
-            }
+            // Territorial Distance Physics: Probability of a shot based on the closest dangerous attacking threat
+            const progressRatio = Math.max(0.0, 120.0 - minDistanceToGoal) / 105.0;
+            const territorialScale = 0.15 + 0.85 * Math.pow(Math.min(Math.max(progressRatio, 0.0), 1.0), 1.25);
 
             return Math.min(Math.max(rawThreat * territorialScale, 0.01), 0.99);
         }
@@ -1609,7 +1643,13 @@
 
             if (selectedPlayer) {
                 isDragging = true;
-                drawPitch();
+                // Clicking or dragging an attacker passes possession to that player
+                if (attackers.includes(selectedPlayer)) {
+                    attackers.forEach(a => a.isActor = false);
+                    selectedPlayer.isActor = true;
+                    ballCarrier = selectedPlayer;
+                }
+                recalculate();
             }
         });
 

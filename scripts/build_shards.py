@@ -61,13 +61,34 @@ def process_match(match_id: int) -> List[np.ndarray]:
             
     records = []
     
+    # State tracking for Bounded Short-Horizon Possession State Cache (BSPSC)
+    last_possession_id = None
+    last_event_time = None
+    cached_opponents = []  # List of ([x, y], is_keeper)
+    
     for frame_id, f in enumerate(frames_360):
         ev_uuid = f.get("event_uuid")
         if ev_uuid not in event_idx_map:
             continue
             
         ev_idx = event_idx_map[ev_uuid]
+        ev = events[ev_idx]
         current_team = event_team_ids[ev_idx]
+        possession_id = ev.get("possession", None)
+        
+        # Parse timestamp for temporal smoothing horizon check
+        ts_str = ev.get("timestamp", "00:00:00.000")
+        try:
+            parts = ts_str.split(":")
+            curr_time = float(parts[0]) * 3600.0 + float(parts[1]) * 60.0 + float(parts[2])
+        except Exception:
+            curr_time = float(ev.get("minute", 0) * 60 + ev.get("second", 0))
+            
+        dt = (curr_time - last_event_time) if (last_event_time is not None and curr_time >= last_event_time) else 999.0
+        
+        # Invalidate cache on possession turnover or if temporal gap exceeds 2.0s
+        if possession_id != last_possession_id or dt > 2.0:
+            cached_opponents = []
         
         # Calculate Y label: Shot occurs within next 10 actions by attacking team
         window_end = min(ev_idx + 10, n_events)
@@ -104,6 +125,37 @@ def process_match(match_id: int) -> List[np.ndarray]:
                 
             if is_actor:
                 actor_loc = [x, y]
+
+        # Bounded Short-Horizon State Cache (BSPSC):
+        # If camera frustum is truncated (fewer than 10 outfield defenders observed)
+        # and we have recently cached defenders from the same possession sequence (dt <= 2.0s),
+        # carry forward unobserved defenders clamped to pitch boundaries [0, 120] x [0, 80].
+        if len(cached_opponents) > 0 and len(outfield_opponent_locs) < 10 and 0.0 < dt <= 2.0:
+            curr_opp_coords = np.array(opponent_locs, dtype=np.float32) if len(opponent_locs) > 0 else np.empty((0, 2), dtype=np.float32)
+            for c_loc, c_is_keeper in cached_opponents:
+                if len(outfield_opponent_locs) >= 10:
+                    break
+                # Only carry over if not already matched near a detected opponent (< 4m)
+                if len(curr_opp_coords) > 0:
+                    dists = np.hypot(curr_opp_coords[:, 0] - c_loc[0], curr_opp_coords[:, 1] - c_loc[1])
+                    if np.min(dists) <= 4.0:
+                        continue
+                cx = float(np.clip(c_loc[0], 0.0, 120.0))
+                cy = float(np.clip(c_loc[1], 0.0, 80.0))
+                opponent_locs.append([cx, cy])
+                if not c_is_keeper:
+                    outfield_opponent_locs.append([cx, cy])
+                players_data.append((cx, cy, False, False))
+
+        # Update cache for next frame
+        last_possession_id = possession_id
+        last_event_time = curr_time
+        cached_opponents = []
+        for p in freeze_frame:
+            if not p.get("teammate", False):
+                loc = p.get("location")
+                if loc and len(loc) >= 2:
+                    cached_opponents.append(([float(loc[0]), float(loc[1])], bool(p.get("keeper", False))))
                 
         # Must have at least 3 opponents to evaluate defensive geometry
         if len(opponent_locs) < 3:
@@ -123,7 +175,7 @@ def process_match(match_id: int) -> List[np.ndarray]:
         
         # Compute the 6 Bottleneck Concepts (C1 - C6) with exact tactical physics
         c1 = compute_c1_line_height(outfield_opponents_np)
-        c2 = compute_c2_compactness(outfield_opponents_np)
+        c2 = compute_c2_compactness(outfield_opponents_np, apply_frustum_scaling=True)
         c3 = compute_c3_width_balance(outfield_opponents_np, actor_loc_np[1])
         c4 = compute_c4_pressure(opponents_np, actor_loc_np)
         c5 = compute_c5_lane_blockage(actor_loc_np, teammates_np, opponents_np)

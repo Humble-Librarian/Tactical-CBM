@@ -68,6 +68,17 @@ def test_c2_compactness_degeneracies():
     assert compute_c2_compactness(np.array([[30.0, 40.0], [35.0, 45.0]])) == 0.5
     assert compute_c2_compactness(np.empty((0, 2))) == 0.5
 
+def test_c2_frustum_scaling():
+    """C2 frustum scaling penalizes partial observations to avoid artificial compactness."""
+    # 5 defenders visible spanning 300 m^2
+    defenders_5 = np.array([[40.0, 30.0], [40.0, 50.0], [55.0, 30.0], [55.0, 50.0], [47.5, 40.0]])
+    c2_unscaled = compute_c2_compactness(defenders_5, apply_frustum_scaling=False)
+    c2_scaled = compute_c2_compactness(defenders_5, apply_frustum_scaling=True)
+    
+    # Scaled area = 300 * sqrt(10 / 5) = 300 * 1.414 = 424.26 m^2 -> compactness is appropriately lower
+    assert c2_scaled < c2_unscaled
+    assert 0.0 <= c2_scaled <= 1.0
+
 def test_c3_width_balance():
     """C3 measures defensive balance relative to ball Y."""
     defenders = np.array([[40.0, 30.0], [40.0, 50.0]])

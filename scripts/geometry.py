@@ -46,18 +46,29 @@ def compute_c1_line_height(outfield_defenders: np.ndarray, ball_loc: Optional[np
     c1 = distance_from_goal / 55.0
     return float(np.clip(c1, 0.0, 1.0))
 
-def compute_c2_compactness(outfield_defenders: np.ndarray) -> float:
+def compute_c2_compactness(outfield_defenders: np.ndarray, apply_frustum_scaling: bool = False) -> float:
     """
     C2: Defensive Compactness (Block Volume).
     Measures how compressed the outfield block is via Convex Hull area.
     Elite compact blocks compress pitch volume to < 600 m^2.
     Stretched, broken blocks span > 1400 m^2.
+    
+    If apply_frustum_scaling=True (e.g. broadcast 360 tracking feeds with partial camera frustum),
+    scales the area by sqrt(10 / max(N_vis, 4)) to prevent camera zoom-ins from artificially
+    inflating compactness scores.
     """
     if len(outfield_defenders) < 3:
         return 0.5
     try:
         hull = ConvexHull(outfield_defenders[:, :2])
         area = hull.volume  # 2D area
+        
+        if apply_frustum_scaling:
+            n_vis = len(outfield_defenders)
+            if n_vis < 10:
+                scale_factor = math.sqrt(10.0 / max(n_vis, 4))
+                area = area * scale_factor
+                
         # 300m^2 is ultra-compact (1.0), 1400m^2 is completely stretched (0.0)
         c2 = 1.0 - (area / 1200.0)
         return float(np.clip(c2, 0.0, 1.0))

@@ -1,5 +1,5 @@
 """
-Test Suite: Tactical Domain Invariants & Hansi Flick Monotonicity Contract
+Test Suite: Tactical Domain Invariants & Counter-Press Monotonicity Contract
 Author: Senior Architect & Ponytail Quality Assurance
 
 Verifies:
@@ -10,8 +10,8 @@ Verifies:
    - Increasing ball-carrier Gegenpress (C4) strictly decreases threat.
    - Increasing central lane blockage (C5) strictly decreases threat.
    - Increasing box overload ratio (C6) strictly increases threat.
-2. Hansi Flick Tactical Presets:
-   - Threat(Flick High-Press) < Threat(Balanced Block) < Threat(Overloaded Breakdown).
+2. Tactical Presets Hierarchy:
+   - Threat(Aggressive High-Press) < Threat(Balanced Block) < Threat(Overloaded Breakdown).
 3. Cross-Runtime Parity:
    - PyTorch predict_threat_from_concepts() == Sidecar JSON dot product == ONNX runtime.
 """
@@ -91,13 +91,13 @@ def test_strict_monotonicity_all_concepts(sidecar_weights):
     c_high = baseline.copy(); c_high[5] = 0.9
     assert (np.dot(c_high, weights) + bias) > (np.dot(c_low, weights) + bias), "Box overload must increase threat"
 
-def test_hansi_flick_preset_hierarchy(sidecar_weights):
-    """Verify tactical threat hierarchy: Hansi Flick Gegenpress < Deep Block < Overloaded Breakdown."""
+def test_tactical_preset_hierarchy(sidecar_weights):
+    """Verify tactical threat hierarchy: Aggressive High-Press < Deep Block < Overloaded Breakdown."""
     weights, bias = sidecar_weights
     
-    # Preset 1: Hansi Flick High Line & Gegenpress
-    c_flick = np.array([0.85, 0.70, 0.80, 0.85, 0.75, 0.05], dtype=np.float32)
-    t_flick = 1.0 / (1.0 + np.exp(-(np.dot(c_flick, weights) + bias)))
+    # Preset 1: Aggressive High Line & Counter-Press
+    c_press = np.array([0.85, 0.70, 0.80, 0.85, 0.75, 0.05], dtype=np.float32)
+    t_press = 1.0 / (1.0 + np.exp(-(np.dot(c_press, weights) + bias)))
     
     # Preset 2: Conservative Deep Block
     c_deep = np.array([0.30, 0.60, 0.50, 0.30, 0.50, 0.30], dtype=np.float32)
@@ -107,7 +107,7 @@ def test_hansi_flick_preset_hierarchy(sidecar_weights):
     c_breakdown = np.array([0.20, 0.35, 0.40, 0.10, 0.20, 0.75], dtype=np.float32)
     t_breakdown = 1.0 / (1.0 + np.exp(-(np.dot(c_breakdown, weights) + bias)))
     
-    assert t_flick < t_deep, f"Flick press ({t_flick:.2%}) should be safer than deep block ({t_deep:.2%})"
+    assert t_press < t_deep, f"High press ({t_press:.2%}) should be safer than deep block ({t_deep:.2%})"
     assert t_deep < t_breakdown, f"Deep block ({t_deep:.2%}) should be safer than overloaded breakdown ({t_breakdown:.2%})"
-    assert t_flick < 0.25, f"Flick system threat should be under 25%, got {t_flick:.2%}"
+    assert t_press < 0.25, f"High press system threat should be under 25%, got {t_press:.2%}"
     assert t_breakdown > 0.70, f"Overloaded breakdown threat should exceed 70%, got {t_breakdown:.2%}"

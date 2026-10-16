@@ -221,6 +221,10 @@ def process_match(match_id: int) -> List[np.ndarray]:
         
     return records
 
+def _process_match_worker(match_id: int) -> Tuple[int, List[np.ndarray]]:
+    """Top-level worker function for parallel multiprocessing pool across matches."""
+    return match_id, process_match(match_id)
+
 def main():
     PROCESSED_DIR.mkdir(parents=True, exist_ok=True)
     
@@ -250,33 +254,61 @@ def main():
     golden_frames = []
     
     def process_and_write(m_list, out_path, is_train=True):
+        import multiprocessing
         total_records = 0
         total_threats = 0
+        num_workers = min(os.cpu_count() or 1, len(m_list), 16)
+        
         with open(out_path, "wb") as f_out:
-            for mid in m_list:
-                recs = process_match(mid)
-                if not recs:
-                    continue
-                arr = np.array(recs, dtype=FRAME_DTYPE)
-                f_out.write(arr.tobytes())
-                
-                count = len(recs)
-                threats = sum(1 for r in recs if r['y_threat'] > 0.5)
-                total_records += count
-                total_threats += threats
-                print(f"  Match {mid}: {count:,} frames processed ({threats} threat frames, {threats/count*100:.1f}%)")
-                
-                if is_train and len(golden_frames) < 10 and len(recs) >= 10:
-                    for i in range(10):
-                        r = recs[i]
-                        golden_frames.append({
-                            "match_id": int(r['match_id']),
-                            "frame_id": int(r['frame_id']),
-                            "c_true": [float(x) for x in r['c_true']],
-                            "y_threat": float(r['y_threat']),
-                            "num_players": int(np.sum(r['player_mask']))
-                        })
+            if num_workers > 1:
+                with multiprocessing.Pool(processes=num_workers) as pool:
+                    for mid, recs in pool.imap(_process_match_worker, m_list):
+                        if not recs:
+                            continue
+                        arr = np.array(recs, dtype=FRAME_DTYPE)
+                        f_out.write(arr.tobytes())
                         
+                        count = len(recs)
+                        threats = sum(1 for r in recs if r['y_threat'] > 0.5)
+                        total_records += count
+                        total_threats += threats
+                        print(f"  Match {mid}: {count:,} frames processed ({threats} threat frames, {threats/count*100:.1f}%) [Multi-Core Pool]")
+                        
+                        if is_train and len(golden_frames) < 10 and len(recs) >= 10:
+                            for i in range(10):
+                                r = recs[i]
+                                golden_frames.append({
+                                    "match_id": int(r['match_id']),
+                                    "frame_id": int(r['frame_id']),
+                                    "c_true": [float(x) for x in r['c_true']],
+                                    "y_threat": float(r['y_threat']),
+                                    "num_players": int(np.sum(r['player_mask']))
+                                })
+            else:
+                for mid in m_list:
+                    recs = process_match(mid)
+                    if not recs:
+                        continue
+                    arr = np.array(recs, dtype=FRAME_DTYPE)
+                    f_out.write(arr.tobytes())
+                    
+                    count = len(recs)
+                    threats = sum(1 for r in recs if r['y_threat'] > 0.5)
+                    total_records += count
+                    total_threats += threats
+                    print(f"  Match {mid}: {count:,} frames processed ({threats} threat frames, {threats/count*100:.1f}%) [Single Core]")
+                    
+                    if is_train and len(golden_frames) < 10 and len(recs) >= 10:
+                        for i in range(10):
+                            r = recs[i]
+                            golden_frames.append({
+                                "match_id": int(r['match_id']),
+                                "frame_id": int(r['frame_id']),
+                                "c_true": [float(x) for x in r['c_true']],
+                                "y_threat": float(r['y_threat']),
+                                "num_players": int(np.sum(r['player_mask']))
+                            })
+                            
         return total_records, total_threats
 
     print("\n--- Writing train.bin ---")

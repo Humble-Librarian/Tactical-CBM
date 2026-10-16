@@ -24,7 +24,21 @@ add_executable(inference_cli src/inference_cli.cpp)
 if(ENABLE_ONNXRUNTIME)
     message(STATUS "Configuring Native ONNX Runtime GNN Engine...")
     
+    # 1. Resolve local path from CMake cache or environment variable (Air-gapped runner priority)
+    if(NOT ONNXRUNTIME_ROOTDIR AND DEFINED ENV{ONNXRUNTIME_ROOTDIR})
+        set(ONNXRUNTIME_ROOTDIR "$ENV{ONNXRUNTIME_ROOTDIR}")
+        message(STATUS "Discovered ONNXRUNTIME_ROOTDIR from environment variable: ${ONNXRUNTIME_ROOTDIR}")
+    endif()
+    
     if(NOT ONNXRUNTIME_ROOTDIR)
+        # 2. Check if running in an air-gapped / disconnected CI environment
+        if(FETCHCONTENT_FULLY_DISCONNECTED)
+            message(FATAL_ERROR 
+                "Air-gapped build detected (FETCHCONTENT_FULLY_DISCONNECTED=ON), but ONNX Runtime is not located.\n"
+                "Remediation: Pass -DONNXRUNTIME_ROOTDIR=/path/to/prebuilt/onnxruntime or set environment variable ONNXRUNTIME_ROOTDIR."
+            )
+        endif()
+
         set(ORT_VERSION "1.20.1")
         include(FetchContent)
         

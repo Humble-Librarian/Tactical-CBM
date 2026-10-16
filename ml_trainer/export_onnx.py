@@ -46,7 +46,9 @@ def export_model_to_onnx():
     
     # 3. Export to ONNX using modern TorchDynamo / TorchExport (dynamo=True)
     print(f"Exporting to {ONNX_MODEL_PATH} (Opset 18)...")
+    exported_via_dynamo = False
     try:
+        # PyTorch 2.5/2.6/2.9+ Modern TorchDynamo Export
         torch.onnx.export(
             model,
             (dummy_node, dummy_adj, dummy_mask),
@@ -57,28 +59,33 @@ def export_model_to_onnx():
             output_names=['tactical_concepts', 'threat_logits'],
             dynamo=True
         )
+        exported_via_dynamo = True
         print("  [SUCCESS] Exported via modern TorchDynamo exporter (dynamo=True)")
-    except Exception as e:
-        print(f"  [FALLBACK] TorchDynamo export encountered: {e}. Using legacy exporter...")
-        torch.onnx.export(
-            model,
-            (dummy_node, dummy_adj, dummy_mask),
-            str(ONNX_MODEL_PATH),
-            export_params=True,
-            opset_version=17,
-            do_constant_folding=True,
-            input_names=['node_features', 'adj_mask', 'player_mask'],
-            output_names=['tactical_concepts', 'threat_logits'],
-            dynamic_axes={
-                'node_features': {0: 'batch_size'},
-                'adj_mask': {0: 'batch_size'},
-                'player_mask': {0: 'batch_size'},
-                'tactical_concepts': {0: 'batch_size'},
-                'threat_logits': {0: 'batch_size'}
-            },
-            dynamo=False
-        )
-        print("  [SUCCESS] Exported via legacy TorchScript exporter (dynamo=False)")
+    except Exception as dynamo_err:
+        print(f"  [NOTE] TorchDynamo export deferred: {dynamo_err}. Engaging legacy fallback...")
+        import warnings
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", category=DeprecationWarning)
+            warnings.filterwarnings("ignore", category=UserWarning)
+            torch.onnx.export(
+                model,
+                (dummy_node, dummy_adj, dummy_mask),
+                str(ONNX_MODEL_PATH),
+                export_params=True,
+                opset_version=17,
+                do_constant_folding=True,
+                input_names=['node_features', 'adj_mask', 'player_mask'],
+                output_names=['tactical_concepts', 'threat_logits'],
+                dynamic_axes={
+                    'node_features': {0: 'batch_size'},
+                    'adj_mask': {0: 'batch_size'},
+                    'player_mask': {0: 'batch_size'},
+                    'tactical_concepts': {0: 'batch_size'},
+                    'threat_logits': {0: 'batch_size'}
+                },
+                dynamo=False
+            )
+        print("  [SUCCESS] Exported via legacy TorchScript exporter (clean fallback)")
     
     onnx_size_kb = ONNX_MODEL_PATH.stat().st_size / 1024
     print(f"ONNX Export Complete! Model Size: {onnx_size_kb:.2f} KB")

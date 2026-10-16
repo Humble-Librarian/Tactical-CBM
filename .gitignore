@@ -29,8 +29,8 @@ bin/
 *.o
 *.dll
 *.so
-*.dylib
 *.onnx
+*.onnx.data
 
 # IDE & Editor
 .vscode/

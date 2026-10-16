@@ -67,6 +67,50 @@ int main() {
               << std::setprecision(1) << ns_per_call << " ns)\n";
     std::cout << "  - Status: SUB-MICROSECOND INTERVENTION VERIFIED! (" 
               << (ns_per_call < 2000.0 ? "SLIDE 5 TARGET PASSED" : "FAST") << ")\n";
+
+#if ENABLE_ONNXRUNTIME
+    std::cout << "\n-----------------------------------------------------------------\n";
+    std::cout << "STAGE 4: AUTONOMOUS NATIVE C++ GNN FORWARD PASS (ONNX Runtime)\n";
+    std::cout << "-----------------------------------------------------------------\n";
+    try {
+        std::string model_path = "models/tactical_cbm.onnx";
+        std::cout << "Loading ONNX GNN Model from: " << model_path << "...\n";
+        tactical::OrtGnnEngine gnn(model_path);
+        
+        // Populate standard sample node features
+        for (size_t i = 0; i < tactical::MAX_PLAYERS; ++i) {
+            state.node_buf[i * tactical::NODE_FEAT_DIM + 0] = 0.5f;
+            state.node_buf[i * tactical::NODE_FEAT_DIM + 1] = 0.5f;
+            state.node_buf[i * tactical::NODE_FEAT_DIM + 2] = 0.2f;
+            state.node_buf[i * tactical::NODE_FEAT_DIM + 3] = 0.5f;
+            state.node_buf[i * tactical::NODE_FEAT_DIM + 4] = (i < 11) ? 1.0f : 0.0f;
+            state.node_buf[i * tactical::NODE_FEAT_DIM + 5] = (i == 0) ? 1.0f : 0.0f;
+            state.player_mask[i] = 1.0f;
+            for (size_t j = 0; j < tactical::MAX_PLAYERS; ++j) {
+                state.adj_buf[i * tactical::MAX_PLAYERS + j] = (i != j) ? 1.0f : 0.0f;
+            }
+        }
+        
+        auto gnn_start = std::chrono::high_resolution_clock::now();
+        gnn.run_inference(state);
+        auto gnn_end = std::chrono::high_resolution_clock::now();
+        double gnn_ms = std::chrono::duration<double, std::milli>(gnn_end - gnn_start).count();
+        
+        std::cout << "Native C++ GNN Execution Succeeded!\n";
+        std::cout << "  - Forward Pass Latency: " << std::fixed << std::setprecision(3) << gnn_ms << " ms\n";
+        std::cout << "  - Inferred Threat Probability: " << std::fixed << std::setprecision(2) << (state.threat_prob * 100.0f) << "%\n";
+        std::cout << "  - Concepts Inferred:\n";
+        std::cout << "      [C1] Line Height:    " << state.concepts[0] << "\n";
+        std::cout << "      [C2] Compactness:    " << state.concepts[1] << "\n";
+        std::cout << "      [C3] Width Shift:    " << state.concepts[2] << "\n";
+        std::cout << "      [C4] Pressure:       " << state.concepts[3] << "\n";
+        std::cout << "      [C5] Lane Cut:       " << state.concepts[4] << "\n";
+        std::cout << "      [C6] Box Overload:   " << state.concepts[5] << "\n";
+    } catch (const std::exception& e) {
+        std::cerr << "ONNX Runtime C++ Session Note: " << e.what() << "\n";
+    }
+#endif
+
     std::cout << "=================================================================\n";
 
     return 0;

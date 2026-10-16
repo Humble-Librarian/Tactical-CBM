@@ -22,24 +22,24 @@ int main() {
               << (reinterpret_cast<uintptr_t>(state.adj_buf.data()) % 32 == 0 ? "ALIGNED" : "MISALIGNED") << "\n";
 
     // 2. Load Stage 5 Weights from Sidecar (Exported from PyTorch)
-    // Concept weights and bias
-    std::array<float, 6> weights = {-0.1825f, 0.0754f, -0.4282f, -0.2332f, -0.0942f, 0.2213f};
-    float bias = -0.1115f;
+    // Concept weights and bias matching models/linear_head_weights.json (Hansi Flick Caliber)
+    std::array<float, 6> weights = {-1.2000f, -0.1500f, -0.5000f, -0.3000f, -0.2000f, 2.0000f};
+    float bias = 0.3823f;
 
-    // Baseline Concept vector (Deep block scenario)
-    std::array<float, 6> baseline_concepts = {0.35f, 0.85f, 0.70f, 0.60f, 0.80f, 0.10f};
-    float base_threat = tactical::evaluate_concept_intervention(baseline_concepts, weights, bias);
+    // Hansi Flick Gegenpress & High Line Scenario
+    std::array<float, 6> flick_concepts = {0.85f, 0.70f, 0.80f, 0.85f, 0.75f, 0.05f};
+    float flick_threat = tactical::evaluate_concept_intervention(flick_concepts, weights, bias);
 
-    std::cout << "\nBaseline Tactical State (Deep Compact Block):\n";
-    std::cout << "  - Line Height: 0.35 | Compactness: 0.85 | Pressure: 0.60 | Lane Block: 0.80\n";
-    std::cout << "  - Threat Probability: " << std::fixed << std::setprecision(2) << (base_threat * 100.0f) << "%\n";
+    std::cout << "\nHansi Flick Gegenpress & Offside Trap State:\n";
+    std::cout << "  - Line Height: 0.85 | Compactness: 0.70 | Width Shift: 0.80 | Pressure: 0.85 | Lane Cut: 0.75 | Box Overload: 0.05\n";
+    std::cout << "  - Threat Probability: " << std::fixed << std::setprecision(2) << (flick_threat * 100.0f) << "%\n";
 
-    // Scenario: High line, open passing lanes, no pressure (Dangerous breakdown)
-    std::array<float, 6> breakdown_concepts = {0.85f, 0.30f, 0.40f, 0.05f, 0.10f, 0.75f};
+    // Scenario: Deep Uncompact Block with Opponent Overload
+    std::array<float, 6> breakdown_concepts = {0.20f, 0.35f, 0.40f, 0.10f, 0.20f, 0.75f};
     float breakdown_threat = tactical::evaluate_concept_intervention(breakdown_concepts, weights, bias);
 
-    std::cout << "\nBreakdown Tactical State (High Line, Zero Pressure, Open Lanes):\n";
-    std::cout << "  - Line Height: 0.85 | Compactness: 0.30 | Pressure: 0.05 | Overload: 0.75\n";
+    std::cout << "\nBreakdown Tactical State (Low Block, Low Pressure, Box Overloaded):\n";
+    std::cout << "  - Line Height: 0.20 | Compactness: 0.35 | Width Shift: 0.40 | Pressure: 0.10 | Lane Cut: 0.20 | Box Overload: 0.75\n";
     std::cout << "  - Threat Probability: " << std::fixed << std::setprecision(2) << (breakdown_threat * 100.0f) << "%\n";
 
     // 3. Stage 5 Sub-Microsecond Benchmark (1,000,000 evaluations)
@@ -52,8 +52,8 @@ int main() {
     
     float volatile dummy_sum = 0.0f;
     for (size_t i = 0; i < ITERATIONS; ++i) {
-        baseline_concepts[3] = static_cast<float>(i % 100) / 100.0f; // Slider move
-        dummy_sum += tactical::evaluate_concept_intervention(baseline_concepts, weights, bias);
+        flick_concepts[3] = static_cast<float>(i % 100) / 100.0f; // Slider move
+        dummy_sum += tactical::evaluate_concept_intervention(flick_concepts, weights, bias);
     }
     
     auto t1 = std::chrono::high_resolution_clock::now();

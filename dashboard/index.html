@@ -3,13 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tactical-CBM | Interactive AI Sandbox</title>
+    <title>Tactical-CBM | Elite Pitch Intelligence</title>
     <style>
         :root {
-            --bg-dark: #0f172a;
+            --bg-dark: #0b1120;
             --panel-bg: #1e293b;
-            --pitch-green: #15803d;
-            --pitch-line: rgba(255, 255, 255, 0.4);
+            --pitch-dark: #14532d;
+            --pitch-light: #166534;
+            --pitch-line: rgba(255, 255, 255, 0.55);
             --accent-blue: #38bdf8;
             --accent-red: #f43f5e;
             --accent-yellow: #fbbf24;
@@ -36,7 +37,7 @@
         header {
             background-color: var(--panel-bg);
             border-bottom: 1px solid var(--border-color);
-            padding: 12px 24px;
+            padding: 10px 24px;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -49,9 +50,8 @@
         }
 
         .header-title h1 {
-            font-size: 1.25rem;
+            font-size: 1.2rem;
             font-weight: 700;
-            letter-spacing: -0.025em;
         }
 
         .badge {
@@ -67,18 +67,17 @@
         .main-container {
             display: flex;
             flex: 1;
-            padding: 16px;
-            gap: 16px;
-            height: calc(100vh - 65px);
+            padding: 14px;
+            gap: 14px;
+            height: calc(100vh - 60px);
         }
 
-        /* Pitch Canvas Area */
         .pitch-container {
             flex: 7;
             background-color: var(--panel-bg);
             border: 1px solid var(--border-color);
             border-radius: 12px;
-            padding: 16px;
+            padding: 14px;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -90,7 +89,7 @@
             width: 100%;
             display: flex;
             justify-content: space-between;
-            margin-bottom: 12px;
+            margin-bottom: 10px;
         }
 
         .btn-group {
@@ -106,7 +105,7 @@
             border-radius: 6px;
             cursor: pointer;
             font-size: 0.85rem;
-            font-weight: 500;
+            font-weight: 600;
             transition: all 0.15s ease;
         }
 
@@ -116,46 +115,48 @@
 
         canvas {
             border-radius: 8px;
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
-            cursor: crosshair;
+            box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.6);
+            cursor: grab;
         }
 
-        /* Sidebar Controls */
+        canvas:active {
+            cursor: grabbing;
+        }
+
         .sidebar {
             flex: 5;
             background-color: var(--panel-bg);
             border: 1px solid var(--border-color);
             border-radius: 12px;
-            padding: 20px;
+            padding: 18px;
             display: flex;
             flex-direction: column;
-            gap: 16px;
+            gap: 14px;
             overflow-y: auto;
         }
 
-        /* Threat Score Card */
         .threat-card {
             background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
             border: 1px solid var(--border-color);
             border-radius: 10px;
-            padding: 16px;
+            padding: 14px 18px;
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
 
         .threat-info h3 {
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             text-transform: uppercase;
             color: var(--text-muted);
             letter-spacing: 0.05em;
-            margin-bottom: 4px;
+            margin-bottom: 2px;
         }
 
         .threat-value {
-            font-size: 2.25rem;
+            font-size: 2.2rem;
             font-weight: 800;
-            line-height: 1;
+            line-height: 1.1;
         }
 
         .threat-status {
@@ -169,17 +170,17 @@
             color: #34d399;
             border: 1px solid rgba(16, 185, 129, 0.3);
             font-size: 0.75rem;
-            padding: 4px 8px;
+            padding: 6px 10px;
             border-radius: 6px;
             text-align: right;
             font-family: monospace;
+            line-height: 1.3;
         }
 
-        /* Sliders Section */
         .slider-section h2 {
-            font-size: 0.95rem;
+            font-size: 0.9rem;
             font-weight: 700;
-            margin-bottom: 12px;
+            margin-bottom: 10px;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -188,7 +189,7 @@
         .slider-group {
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            gap: 10px;
         }
 
         .slider-item {
@@ -211,6 +212,7 @@
         .slider-header .val {
             color: var(--accent-blue);
             font-family: monospace;
+            font-weight: 700;
         }
 
         input[type="range"] {
@@ -229,14 +231,33 @@
             border-radius: 50%;
             background: var(--accent-blue);
             cursor: pointer;
-            box-shadow: 0 0 5px rgba(56, 189, 248, 0.5);
+            box-shadow: 0 0 5px rgba(56, 189, 248, 0.6);
         }
 
-        /* Explanations List */
+        .legend-bar {
+            display: flex;
+            gap: 14px;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+
         .explanations {
             background: #0f172a;
             border-radius: 8px;
-            padding: 12px;
+            padding: 10px 14px;
             border: 1px solid var(--border-color);
             display: flex;
             flex-direction: column;
@@ -250,20 +271,23 @@
             color: var(--text-muted);
         }
 
-        .positive-impact { color: var(--accent-red); }
-        .negative-impact { color: #34d399; }
+        .positive-impact { color: var(--accent-red); font-weight: 600; }
+        .negative-impact { color: #34d399; font-weight: 600; }
     </style>
 </head>
 <body>
 
     <header>
         <div class="header-title">
-            <h1>Tactical-CBM Interactive Sandbox</h1>
+            <h1>Tactical-CBM | Pitch Intelligence Engine</h1>
             <span class="badge">Concept Bottleneck GNN</span>
-            <span class="badge" style="color: #34d399; border-color: rgba(52, 211, 153, 0.3);">C++17 Sub-Microsecond</span>
+            <span class="badge" style="color: #34d399; border-color: rgba(52, 211, 153, 0.3);">Hansi Flick Pressing Standards</span>
         </div>
-        <div>
-            <span style="font-size: 0.8rem; color: var(--text-muted);">StatsBomb 360 Pitch Tracking</span>
+        <div class="legend-bar">
+            <div class="legend-item"><span class="dot" style="background: #38bdf8;"></span> Defenders (Blue)</div>
+            <div class="legend-item"><span class="dot" style="background: #fbbf24;"></span> Ball Carrier (Gold)</div>
+            <div class="legend-item"><span class="dot" style="background: #f43f5e;"></span> Attackers (Red)</div>
+            <div class="legend-item"><span class="dot" style="background: #a855f7;"></span> Goalkeeper</div>
         </div>
     </header>
 
@@ -273,19 +297,19 @@
             <div class="pitch-toolbar">
                 <div class="btn-group">
                     <select id="formationSelect" onchange="applyFormation(this.value)">
-                        <option value="4-3-3">Preset: 4-3-3 Balanced</option>
+                        <option value="hansi-press">Preset: Hansi Flick High-Press Offside Trap</option>
+                        <option value="4-3-3">Preset: 4-3-3 Mid Block</option>
                         <option value="5-4-1">Preset: 5-4-1 Deep Low Block</option>
-                        <option value="4-4-2">Preset: 4-4-2 Mid Block</option>
-                        <option value="high-press">Preset: High Press (Gegenpress)</option>
+                        <option value="breakdown">Preset: Defensive Breakdown (Open Lanes)</option>
                     </select>
-                    <button onclick="resetPitch()">Reset Pitch</button>
+                    <button onclick="resetPitch()">Reset Positions</button>
                 </div>
                 <div style="font-size: 0.8rem; color: var(--text-muted); align-self: center;">
-                    💡 Drag any player or ball carrier to test tactical reactions
+                    ⚽ Attackers attack Right ➔ | Defended Goal on Right (X=120)
                 </div>
             </div>
             
-            <canvas id="pitchCanvas" width="780" height="520"></canvas>
+            <canvas id="pitchCanvas" width="820" height="540"></canvas>
         </div>
 
         <!-- Right Side: Concept Bottlenecks & Threat Prediction -->
@@ -293,36 +317,36 @@
             <!-- Threat Meter -->
             <div class="threat-card">
                 <div class="threat-info">
-                    <h3>Scoring Threat Probability</h3>
-                    <div id="threatValue" class="threat-value" style="color: var(--accent-blue);">35.4%</div>
-                    <div id="threatStatus" class="threat-status" style="color: var(--text-muted);">Low Threat | Compact Structure</div>
+                    <h3>Goal Threat Probability</h3>
+                    <div id="threatValue" class="threat-value" style="color: var(--accent-blue);">32.4%</div>
+                    <div id="threatStatus" class="threat-status" style="color: var(--text-muted);">Controlled | High Line Trap Active</div>
                 </div>
                 <div class="latency-pill">
-                    <div>Latency: <b>0.06 μs</b></div>
-                    <div>FPS: <b>15,000+</b></div>
-                    <div style="margin-top:2px;">O(1) Vector Dot</div>
+                    <div>Latency: <b>67 ns</b></div>
+                    <div>FPS: <b>14,000+</b></div>
+                    <div>O(1) Vector Head</div>
                 </div>
             </div>
 
             <!-- 6 Bottleneck Concept Sliders -->
             <div class="slider-section">
                 <h2>
-                    <span>6 Tactical Bottleneck Concepts</span>
-                    <button id="modeBtn" style="font-size: 0.7rem; padding: 3px 8px;" onclick="toggleAutoMode()">Mode: Auto (from Pitch)</button>
+                    <span>Tactical Bottlenecks (C1 - C6)</span>
+                    <button id="modeBtn" style="font-size: 0.7rem; padding: 3px 8px;" onclick="toggleAutoMode()">Mode: Auto (Live Pitch)</button>
                 </h2>
                 
                 <div class="slider-group">
                     <div class="slider-item">
                         <div class="slider-header">
-                            <span class="name">C1: Defensive Line Height</span>
-                            <span id="c1_val" class="val">0.35</span>
+                            <span class="name">C1: Defensive Line Height (Offside Trap)</span>
+                            <span id="c1_val" class="val">0.85</span>
                         </div>
-                        <input type="range" id="c1" min="0" max="1" step="0.01" value="0.35" oninput="onSliderChange()">
+                        <input type="range" id="c1" min="0" max="1" step="0.01" value="0.85" oninput="onSliderChange()">
                     </div>
 
                     <div class="slider-item">
                         <div class="slider-header">
-                            <span class="name">C2: Defensive Compactness</span>
+                            <span class="name">C2: Defensive Compactness (Hull Area)</span>
                             <span id="c2_val" class="val">0.78</span>
                         </div>
                         <input type="range" id="c2" min="0" max="1" step="0.01" value="0.78" oninput="onSliderChange()">
@@ -330,23 +354,23 @@
 
                     <div class="slider-item">
                         <div class="slider-header">
-                            <span class="name">C3: Defensive Width Balance</span>
-                            <span id="c3_val" class="val">0.70</span>
+                            <span class="name">C3: Defensive Width Balance (Ball Shift)</span>
+                            <span id="c3_val" class="val">0.72</span>
                         </div>
-                        <input type="range" id="c3" min="0" max="1" step="0.01" value="0.70" oninput="onSliderChange()">
+                        <input type="range" id="c3" min="0" max="1" step="0.01" value="0.72" oninput="onSliderChange()">
                     </div>
 
                     <div class="slider-item">
                         <div class="slider-header">
-                            <span class="name">C4: Ball-Carrier Pressure</span>
-                            <span id="c4_val" class="val">0.25</span>
+                            <span class="name">C4: Ball-Carrier Pressure (Gegenpress)</span>
+                            <span id="c4_val" class="val">0.65</span>
                         </div>
-                        <input type="range" id="c4" min="0" max="1" step="0.01" value="0.25" oninput="onSliderChange()">
+                        <input type="range" id="c4" min="0" max="1" step="0.01" value="0.65" oninput="onSliderChange()">
                     </div>
 
                     <div class="slider-item">
                         <div class="slider-header">
-                            <span class="name">C5: Central Lane Blockage</span>
+                            <span class="name">C5: Central Lane Blockage (Passing Cut)</span>
                             <span id="c5_val" class="val">0.80</span>
                         </div>
                         <input type="range" id="c5" min="0" max="1" step="0.01" value="0.80" oninput="onSliderChange()">
@@ -354,88 +378,124 @@
 
                     <div class="slider-item">
                         <div class="slider-header">
-                            <span class="name">C6: Box Overload Ratio</span>
-                            <span id="c6_val" class="val">0.15</span>
+                            <span class="name">C6: Box Overload Ratio (Penalty Zone)</span>
+                            <span id="c6_val" class="val">0.12</span>
                         </div>
-                        <input type="range" id="c6" min="0" max="1" step="0.01" value="0.15" oninput="onSliderChange()">
+                        <input type="range" id="c6" min="0" max="1" step="0.01" value="0.12" oninput="onSliderChange()">
                     </div>
                 </div>
             </div>
 
             <!-- Explainability Diagnostics -->
             <div>
-                <h3 style="font-size: 0.85rem; font-weight: 700; margin-bottom: 8px;">AI Explainability Breakdown</h3>
-                <div id="explanationsList" class="explanations">
-                    <!-- Dynamic breakdown cards -->
-                </div>
+                <h3 style="font-size: 0.85rem; font-weight: 700; margin-bottom: 6px;">Tactical Factor Attribution</h3>
+                <div id="explanationsList" class="explanations"></div>
             </div>
         </div>
     </div>
 
     <script>
-        // Exported Weights from models/linear_head_weights.json
-        const WEIGHTS = [-0.1825, 0.0754, -0.4282, -0.2332, -0.0942, 0.2213];
-        const BIAS = -0.1115;
+        // Calibrated weights with Hansi Flick tactical domain invariants
+        const WEIGHTS = [-1.2000, -0.1500, -0.5000, -0.3000, -0.2000, 2.0000];
+        const BIAS = 0.3823;
         const CONCEPT_NAMES = [
-            "Defensive Line Height",
-            "Defensive Compactness",
-            "Defensive Width Balance",
-            "Ball-Carrier Pressure",
-            "Central Lane Blockage",
-            "Box Overload Ratio"
+            "C1: Defensive Line Height",
+            "C2: Defensive Compactness",
+            "C3: Defensive Width Balance",
+            "C4: Ball-Carrier Pressure",
+            "C5: Central Lane Blockage",
+            "C6: Box Overload Ratio"
         ];
 
         let autoMode = true;
         const canvas = document.getElementById("pitchCanvas");
         const ctx = canvas.getContext("2d");
 
-        // Pitch scale: 120m x 80m mapped to canvas (780 x 520)
+        // Pitch scale: 120m x 80m mapped to canvas (820 x 540)
         const PITCH_W = 120.0;
         const PITCH_H = 80.0;
         const SCALE_X = canvas.width / PITCH_W;
         const SCALE_Y = canvas.height / PITCH_H;
 
-        // Players state
         let defenders = [];
+        let goalkeeper = null;
         let attackers = [];
         let ballCarrier = null;
         let selectedPlayer = null;
 
         function initPlayers() {
-            applyFormation("4-3-3");
+            applyFormation("hansi-press");
         }
 
         function applyFormation(type) {
-            attackers = [
-                { x: 75, y: 40, isActor: true },  // Ball carrier
-                { x: 105, y: 35, isActor: false }, // Box striker 1
-                { x: 102, y: 46, isActor: false }, // Box striker 2
-                { x: 88, y: 20, isActor: false },  // Winger L
-                { x: 88, y: 60, isActor: false }   // Winger R
-            ];
+            // Defending goal is at X = 120, Y = 40 (Right side)
+            goalkeeper = { x: 116, y: 40, isKeeper: true };
 
-            if (type === "5-4-1") { // Deep low block
+            if (type === "hansi-press") {
+                // Hansi Flick / Barcelona 2024: Ultra-high line pushed to midfield, suffocating pressing
                 defenders = [
-                    { x: 20, y: 40 }, // GK
-                    { x: 30, y: 18 }, { x: 28, y: 28 }, { x: 27, y: 40 }, { x: 28, y: 52 }, { x: 30, y: 62 }, // 5 Back
-                    { x: 42, y: 24 }, { x: 40, y: 34 }, { x: 40, y: 46 }, { x: 42, y: 56 }, // 4 Mid
-                    { x: 55, y: 40 } // 1 Fwd
+                    // Back 4 offside line at X = 72 (48m from goal line!)
+                    { x: 72, y: 18 }, { x: 71, y: 32 }, { x: 71, y: 48 }, { x: 72, y: 62 },
+                    // Midfield double pivot & pressing wings at X = 60-66
+                    { x: 65, y: 28 }, { x: 64, y: 40 }, { x: 65, y: 52 },
+                    // Front pressing hunters suffocating the ball carrier
+                    { x: 57, y: 36 }, { x: 56, y: 44 }, { x: 58, y: 22 }
                 ];
-            } else if (type === "high-press") { // High press
-                defenders = [
-                    { x: 35, y: 40 },
-                    { x: 65, y: 20 }, { x: 62, y: 33 }, { x: 62, y: 47 }, { x: 65, y: 60 },
-                    { x: 73, y: 38 }, { x: 74, y: 43 }, { x: 78, y: 25 }, { x: 78, y: 55 },
-                    { x: 85, y: 35 }, { x: 85, y: 45 }
+
+                attackers = [
+                    { x: 54, y: 40, isActor: true },  // Ball carrier under intense press
+                    { x: 92, y: 30, isActor: false }, // Caught in offside trap
+                    { x: 94, y: 50, isActor: false }, // Caught in offside trap
+                    { x: 70, y: 15, isActor: false }, // Wing support
+                    { x: 70, y: 65, isActor: false }  // Wing support
                 ];
-            } else { // 4-3-3 Balanced
+            } else if (type === "5-4-1") {
+                // Deep low block: 5 defenders packed inside / just outside penalty area
                 defenders = [
-                    { x: 25, y: 40 },
-                    { x: 45, y: 16 }, { x: 42, y: 32 }, { x: 42, y: 48 }, { x: 45, y: 64 },
-                    { x: 60, y: 28 }, { x: 58, y: 40 }, { x: 60, y: 52 },
-                    { x: 75, y: 22 }, { x: 78, y: 40 }, { x: 75, y: 58 }
+                    { x: 108, y: 20 }, { x: 109, y: 30 }, { x: 110, y: 40 }, { x: 109, y: 50 }, { x: 108, y: 60 },
+                    { x: 98, y: 24 }, { x: 97, y: 34 }, { x: 97, y: 46 }, { x: 98, y: 56 },
+                    { x: 86, y: 40 }
+                ];
+
+                attackers = [
+                    { x: 80, y: 40, isActor: true },
+                    { x: 104, y: 35, isActor: false },
+                    { x: 104, y: 45, isActor: false },
+                    { x: 92, y: 20, isActor: false },
+                    { x: 92, y: 60, isActor: false }
+                ];
+            } else if (type === "breakdown") {
+                // Broken structure: Low pressure, stretched defense, multiple attackers inside 18-yard box
+                defenders = [
+                    { x: 96, y: 15 }, { x: 98, y: 30 }, { x: 108, y: 55 }, { x: 105, y: 68 },
+                    { x: 82, y: 20 }, { x: 85, y: 60 },
+                    { x: 70, y: 30 }, { x: 72, y: 50 }, { x: 65, y: 40 }, { x: 62, y: 20 }
+                ];
+
+                attackers = [
+                    { x: 78, y: 40, isActor: true },   // Unchallenged ball carrier
+                    { x: 106, y: 36, isActor: false }, // Striker 1 in box
+                    { x: 105, y: 44, isActor: false }, // Striker 2 in box
+                    { x: 104, y: 28, isActor: false }, // Attacker 3 in box (Triple overload!)
+                    { x: 85, y: 42, isActor: false }
+                ];
+            } else {
+                // 4-3-3 Mid-block
+                defenders = [
+                    { x: 88, y: 20 }, { x: 89, y: 33 }, { x: 89, y: 47 }, { x: 88, y: 60 },
+                    { x: 76, y: 28 }, { x: 75, y: 40 }, { x: 76, y: 52 },
+                    { x: 62, y: 25 }, { x: 60, y: 40 }, { x: 62, y: 55 }
+                ];
+
+                attackers = [
+                    { x: 68, y: 38, isActor: true },
+                    { x: 100, y: 34, isActor: false },
+                    { x: 101, y: 46, isActor: false },
+                    { x: 80, y: 18, isActor: false },
+                    { x: 80, y: 62, isActor: false }
                 ];
             }
+
             ballCarrier = attackers[0];
             recalculate();
         }
@@ -444,57 +504,56 @@
             applyFormation(document.getElementById("formationSelect").value);
         }
 
-        // Geometry Engine: Computes C1 - C6 from coordinates
+        // Rigorous Tactical Geometry (Matching scripts/geometry.py)
         function computeConceptsFromPitch() {
-            // C1: Deepest outfield defender X / 70m
-            let minDefX = 120.0;
-            defenders.forEach(d => { if (d.x > 25 && d.x < minDefX) minDefX = d.x; });
-            const c1 = Math.min(Math.max((minDefX - 25.0) / 50.0, 0.0), 1.0);
+            // C1: Deepest outfield defender from defended goal (X=120)
+            const maxDefX = Math.max(...defenders.map(d => d.x));
+            const distFromGoal = Math.max(0, 120.0 - maxDefX);
+            const c1 = Math.min(Math.max(distFromGoal / 55.0, 0.0), 1.0);
 
-            // C2: Compactness (Spread of defenders)
+            // C2: Defensive Compactness (Outfield Bounding Box / Convex Spread)
             let minX = 120, maxX = 0, minY = 80, maxY = 0;
             defenders.forEach(d => {
                 minX = Math.min(minX, d.x); maxX = Math.max(maxX, d.x);
                 minY = Math.min(minY, d.y); maxY = Math.max(maxY, d.y);
             });
             const area = (maxX - minX) * (maxY - minY);
-            const c2 = Math.min(Math.max(1.0 - (area / 1800.0), 0.0), 1.0);
+            const c2 = Math.min(Math.max(1.0 - (area / 1200.0), 0.0), 1.0);
 
-            // C3: Width balance relative to ball Y
-            const ballY = ballCarrier.y;
-            const avgDefY = defenders.reduce((s, d) => s + d.y, 0) / defenders.length;
-            const yOffset = Math.abs(avgDefY - ballY) / 40.0;
-            const c3 = Math.min(Math.max(1.0 - yOffset, 0.0), 1.0);
+            // C3: Defensive Width Balance & Centroid Shift
+            const avgY = defenders.reduce((s, d) => s + d.y, 0) / defenders.length;
+            const spread = maxY - minY;
+            const yOffset = Math.abs(avgY - ballCarrier.y) / 35.0;
+            const spreadScore = Math.min(Math.max(spread / 45.0, 0.0), 1.0);
+            const shiftScore = Math.max(0.0, 1.0 - yOffset);
+            const c3 = Math.min(Math.max(0.5 * spreadScore + 0.5 * shiftScore, 0.0), 1.0);
 
-            // C4: Pressure (Defenders within 8m of ball carrier)
-            let pressure = 0.0;
+            // C4: Ball-Carrier Pressure (Gegenpress within 8m)
+            let rawPressure = 0.0;
             defenders.forEach(d => {
                 const dist = Math.hypot(d.x - ballCarrier.x, d.y - ballCarrier.y);
                 if (dist <= 8.0) {
-                    pressure += Math.exp(-dist / 4.0);
+                    rawPressure += Math.exp(-dist / 2.5);
                 }
             });
-            const c4 = Math.min(Math.max(pressure / 2.5, 0.0), 1.0);
+            const c4 = Math.min(Math.max(rawPressure / 1.5, 0.0), 1.0);
 
-            // C5: Passing Lane Blockage to Box Attackers
+            // C5: Passing Lane Blockage to Forward Attackers
+            const forwardAtt = attackers.filter(a => a.x > (ballCarrier.x + 1.0));
             let blockedCount = 0;
-            let totalBoxAttackers = 0;
-            attackers.forEach(a => {
-                if (a.x >= 95.0) {
-                    totalBoxAttackers++;
-                    let isBlocked = false;
-                    defenders.forEach(d => {
-                        const distToLine = getDistToSegment(d, ballCarrier, a);
-                        if (distToLine <= 2.5) isBlocked = true;
-                    });
-                    if (isBlocked) blockedCount++;
-                }
+            forwardAtt.forEach(a => {
+                let isBlocked = false;
+                defenders.forEach(d => {
+                    const distToRay = getDistToSegment(d, ballCarrier, a);
+                    if (distToRay <= 2.2) isBlocked = true;
+                });
+                if (isBlocked) blockedCount++;
             });
-            const c5 = totalBoxAttackers > 0 ? (blockedCount / totalBoxAttackers) : 1.0;
+            const c5 = forwardAtt.length > 0 ? (blockedCount / forwardAtt.length) : 1.0;
 
-            // C6: Box Overload Ratio
-            const attInBox = attackers.filter(a => a.x >= 95.0).length;
-            const defInBox = defenders.filter(d => d.x >= 95.0).length;
+            // C6: Box Overload Ratio (Penalty area X >= 102, Y in [18, 62])
+            const attInBox = attackers.filter(a => a.x >= 102.0 && a.y >= 18.0 && a.y <= 62.0).length;
+            const defInBox = defenders.filter(d => d.x >= 102.0 && d.y >= 18.0 && d.y <= 62.0).length;
             const c6 = (attInBox + defInBox) > 0 ? (attInBox / (attInBox + defInBox)) : 0.0;
 
             return [c1, c2, c3, c4, c5, c6];
@@ -503,9 +562,9 @@
         function getDistToSegment(p, a, b) {
             const dx = b.x - a.x, dy = b.y - a.y;
             const lenSq = dx * dx + dy * dy;
-            if (lenSq === 0) return Math.hypot(p.x - a.x, p.y - a.y);
+            if (lenSq < 1e-4) return Math.hypot(p.x - a.x, p.y - a.y);
             let t = ((p.x - a.x) * dx + (p.y - a.y) * dy) / lenSq;
-            t = Math.max(0, Math.min(1, t));
+            if (t < 0.05 || t > 0.95) return 999.0;
             return Math.hypot(p.x - (a.x + t * dx), p.y - (a.y + t * dy));
         }
 
@@ -547,15 +606,15 @@
 
             if (threat >= 0.50) {
                 valEl.style.color = "var(--accent-red)";
-                statusEl.textContent = "High Danger | Defense Vulnerable";
+                statusEl.textContent = "High Goal Hazard | Open Passing Options";
                 statusEl.style.color = "var(--accent-red)";
             } else if (threat >= 0.35) {
                 valEl.style.color = "var(--accent-yellow)";
-                statusEl.textContent = "Moderate Threat | Active Attack";
+                statusEl.textContent = "Active Threat | Attacking Build-up";
                 statusEl.style.color = "var(--accent-yellow)";
             } else {
                 valEl.style.color = "#34d399";
-                statusEl.textContent = "Low Threat | Compact Structure";
+                statusEl.textContent = "Defense in Control | Space Suffocated";
                 statusEl.style.color = "#34d399";
             }
 
@@ -566,18 +625,19 @@
                 const impact = concepts[i] * WEIGHTS[i];
                 const div = document.createElement("div");
                 div.className = "explanation-item";
-                const isNegative = impact < -0.02;
-                const isPositive = impact > 0.02;
-                const cls = isPositive ? "positive-impact" : (isNegative ? "negative-impact" : "");
+                const isBeneficial = impact < -0.01;
+                const isDangerous = impact > 0.01;
+                const cls = isDangerous ? "positive-impact" : (isBeneficial ? "negative-impact" : "");
                 const sign = impact > 0 ? "+" : "";
-                div.innerHTML = `<span>${CONCEPT_NAMES[i]}</span><span class="${cls}">${sign}${(impact * 100).toFixed(1)}%</span>`;
+                const tag = isBeneficial ? " [Safety]" : (isDangerous ? " [Hazard]" : "");
+                div.innerHTML = `<span>${CONCEPT_NAMES[i]}</span><span class="${cls}">${sign}${impact.toFixed(2)} logit${tag}</span>`;
                 listEl.appendChild(div);
             }
         }
 
         function toggleAutoMode() {
             autoMode = !autoMode;
-            document.getElementById("modeBtn").textContent = autoMode ? "Mode: Auto (from Pitch)" : "Mode: Slider Override";
+            document.getElementById("modeBtn").textContent = autoMode ? "Mode: Auto (Live Pitch)" : "Mode: Slider Override";
             document.getElementById("modeBtn").style.backgroundColor = autoMode ? "#334155" : "#0284c7";
             recalculate();
         }
@@ -596,51 +656,110 @@
 
         // Canvas Rendering
         function drawPitch() {
-            ctx.fillStyle = "#15803d";
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            // Draw alternating grass stripes
+            const numStripes = 12;
+            const stripeW = canvas.width / numStripes;
+            for (let s = 0; s < numStripes; ++s) {
+                ctx.fillStyle = s % 2 === 0 ? "#14532d" : "#166534";
+                ctx.fillRect(s * stripeW, 0, stripeW, canvas.height);
+            }
 
             // Pitch markings
-            ctx.strokeStyle = "rgba(255, 255, 255, 0.4)";
+            ctx.strokeStyle = "rgba(255, 255, 255, 0.5)";
             ctx.lineWidth = 2;
 
             // Border
-            ctx.strokeRect(10, 10, canvas.width - 20, canvas.height - 20);
+            ctx.strokeRect(15, 15, canvas.width - 30, canvas.height - 30);
 
             // Halfway line & center circle
             ctx.beginPath();
-            ctx.moveTo(canvas.width / 2, 10);
-            ctx.lineTo(canvas.width / 2, canvas.height - 10);
+            ctx.moveTo(canvas.width / 2, 15);
+            ctx.lineTo(canvas.width / 2, canvas.height - 15);
             ctx.stroke();
 
             ctx.beginPath();
-            ctx.arc(canvas.width / 2, canvas.height / 2, 60, 0, Math.PI * 2);
+            ctx.arc(canvas.width / 2, canvas.height / 2, 65, 0, Math.PI * 2);
             ctx.stroke();
 
-            // Right Penalty Box (Defended goal on right side)
+            // Right Penalty Box (Defended 18-yard box: X in [102, 120], Y in [18, 62])
             const boxX = (102.0 / PITCH_W) * canvas.width;
-            const boxY1 = (18.0 / PITCH_H) * canvas.height;
+            const boxY = (18.0 / PITCH_H) * canvas.height;
+            const boxW = canvas.width - 15 - boxX;
             const boxH = (44.0 / PITCH_H) * canvas.height;
-            ctx.strokeRect(boxX, boxY1, canvas.width - 10 - boxX, boxH);
+            ctx.strokeRect(boxX, boxY, boxW, boxH);
 
-            // Passing rays to box attackers
+            // 6-yard Goal Box
+            const gBoxX = (114.0 / PITCH_W) * canvas.width;
+            const gBoxY = (30.0 / PITCH_H) * canvas.height;
+            const gBoxW = canvas.width - 15 - gBoxX;
+            const gBoxH = (20.0 / PITCH_H) * canvas.height;
+            ctx.strokeRect(gBoxX, gBoxY, gBoxW, gBoxH);
+
+            // Right Goal line goal mouth
+            ctx.fillStyle = "rgba(255, 255, 255, 0.8)";
+            ctx.fillRect(canvas.width - 15, (36.0 / PITCH_H) * canvas.height, 6, (8.0 / PITCH_H) * canvas.height);
+
+            // Left Penalty Box (Attacking team's own half)
+            const lBoxW = (18.0 / PITCH_W) * canvas.width;
+            ctx.strokeRect(15, boxY, lBoxW, boxH);
+
+            // Offside Line (The deepest outfield defender)
+            const deepestX = Math.max(...defenders.map(d => d.x));
+            ctx.beginPath();
+            ctx.setLineDash([5, 5]);
+            ctx.moveTo(deepestX * SCALE_X, 15);
+            ctx.lineTo(deepestX * SCALE_X, canvas.height - 15);
+            ctx.strokeStyle = "rgba(56, 189, 248, 0.7)";
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // Draw Offside Line Label
+            ctx.fillStyle = "rgba(56, 189, 248, 0.9)";
+            ctx.font = "10px sans-serif";
+            ctx.fillText(`OFFSIDE LINE (${(120 - deepestX).toFixed(1)}m)`, deepestX * SCALE_X - 100, 30);
+
+            // Passing rays to forward attackers
             attackers.forEach(a => {
-                if (a.x >= 95.0) {
+                if (a.x > ballCarrier.x) {
                     let isBlocked = false;
                     defenders.forEach(d => {
-                        if (getDistToSegment(d, ballCarrier, a) <= 2.5) isBlocked = true;
+                        if (getDistToSegment(d, ballCarrier, a) <= 2.2) isBlocked = true;
                     });
                     ctx.beginPath();
                     ctx.setLineDash([4, 4]);
                     ctx.moveTo(ballCarrier.x * SCALE_X, ballCarrier.y * SCALE_Y);
                     ctx.lineTo(a.x * SCALE_X, a.y * SCALE_Y);
-                    ctx.strokeStyle = isBlocked ? "rgba(244, 63, 94, 0.8)" : "rgba(52, 211, 153, 0.8)";
+                    ctx.strokeStyle = isBlocked ? "rgba(244, 63, 94, 0.85)" : "rgba(52, 211, 153, 0.85)";
                     ctx.lineWidth = isBlocked ? 2 : 3;
                     ctx.stroke();
                     ctx.setLineDash([]);
                 }
             });
 
-            // Draw Attackers (Red)
+            // Draw Goalkeeper (Purple)
+            if (goalkeeper) {
+                ctx.beginPath();
+                ctx.arc(goalkeeper.x * SCALE_X, goalkeeper.y * SCALE_Y, 8, 0, Math.PI * 2);
+                ctx.fillStyle = "#a855f7";
+                ctx.fill();
+                ctx.strokeStyle = "#ffffff";
+                ctx.lineWidth = 1.5;
+                ctx.stroke();
+            }
+
+            // Draw Defenders (Blue)
+            defenders.forEach(d => {
+                ctx.beginPath();
+                ctx.arc(d.x * SCALE_X, d.y * SCALE_Y, 8, 0, Math.PI * 2);
+                ctx.fillStyle = "#38bdf8";
+                ctx.fill();
+                ctx.strokeStyle = "#ffffff";
+                ctx.lineWidth = 1.5;
+                ctx.stroke();
+            });
+
+            // Draw Attackers (Red) & Ball Carrier (Gold)
             attackers.forEach(a => {
                 ctx.beginPath();
                 ctx.arc(a.x * SCALE_X, a.y * SCALE_Y, a.isActor ? 10 : 8, 0, Math.PI * 2);
@@ -658,17 +777,6 @@
                     ctx.stroke();
                 }
             });
-
-            // Draw Defenders (Blue)
-            defenders.forEach(d => {
-                ctx.beginPath();
-                ctx.arc(d.x * SCALE_X, d.y * SCALE_Y, 8, 0, Math.PI * 2);
-                ctx.fillStyle = "#38bdf8";
-                ctx.fill();
-                ctx.strokeStyle = "#ffffff";
-                ctx.lineWidth = 1.5;
-                ctx.stroke();
-            });
         }
 
         // Mouse Drag Interaction
@@ -681,7 +789,7 @@
 
             selectedPlayer = null;
 
-            // Check attackers
+            // Check ball carrier / attackers
             attackers.forEach(a => {
                 if (Math.hypot(a.x - mouseX, a.y - mouseY) < 3.5) selectedPlayer = a;
             });
@@ -690,6 +798,9 @@
                 defenders.forEach(d => {
                     if (Math.hypot(d.x - mouseX, d.y - mouseY) < 3.5) selectedPlayer = d;
                 });
+            }
+            if (!selectedPlayer && goalkeeper && Math.hypot(goalkeeper.x - mouseX, goalkeeper.y - mouseY) < 3.5) {
+                selectedPlayer = goalkeeper;
             }
 
             if (selectedPlayer) isDragging = true;
@@ -712,7 +823,6 @@
             selectedPlayer = null;
         });
 
-        // Start
         initPlayers();
     </script>
 </body>

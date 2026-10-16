@@ -27,17 +27,17 @@ int main() {
     std::cout << "  [PASS] alignas(32) AVX2 stack alignment verified.\n";
 
     // 3. Test evaluate_concept_intervention accuracy
-    std::array<float, 6> weights = {-0.1825f, 0.0754f, -0.4282f, -0.2332f, -0.0942f, 0.2213f};
-    float bias = -0.1115f;
+    std::array<float, 6> weights = {-1.2000f, -0.1500f, -0.5000f, -0.3000f, -0.2000f, 2.0000f};
+    float bias = 0.3823f;
 
-    // Zero vector test: sigmoid(bias) = 1 / (1 + exp(0.1115)) = ~0.47217
+    // Zero vector test: sigmoid(bias)
     std::array<float, 6> zeros = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
     float threat_zero = tactical::evaluate_concept_intervention(zeros, weights, bias);
     float expected_zero = 1.0f / (1.0f + std::exp(-bias));
     assert(std::abs(threat_zero - expected_zero) < 1e-6f);
     std::cout << "  [PASS] Zero concept vector evaluation matches expected sigmoid.\n";
 
-    // Monotonicity test: Increasing box overload (positive weight) MUST strictly increase threat
+    // Monotonicity test 1: Increasing box overload (positive weight) MUST strictly increase threat
     std::array<float, 6> c_low = {0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.1f};
     std::array<float, 6> c_high = {0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.9f};
     float t_low = tactical::evaluate_concept_intervention(c_low, weights, bias);
@@ -45,13 +45,29 @@ int main() {
     assert(t_high > t_low);
     std::cout << "  [PASS] Concept sensitivity & monotonicity verified (Overload increases danger).\n";
 
-    // Monotonicity test: Increasing pressure (negative weight) MUST strictly decrease threat
+    // Monotonicity test 2: Increasing pressure (negative weight) MUST strictly decrease threat
     std::array<float, 6> c_press_low = {0.5f, 0.5f, 0.5f, 0.1f, 0.5f, 0.5f};
     std::array<float, 6> c_press_high = {0.5f, 0.5f, 0.5f, 0.9f, 0.5f, 0.5f};
     float t_press_low = tactical::evaluate_concept_intervention(c_press_low, weights, bias);
     float t_press_high = tactical::evaluate_concept_intervention(c_press_high, weights, bias);
     assert(t_press_high < t_press_low);
     std::cout << "  [PASS] Concept sensitivity & monotonicity verified (Pressure reduces danger).\n";
+
+    // Monotonicity test 3: Pushing high line (negative weight) MUST strictly decrease threat
+    std::array<float, 6> c_line_low = {0.1f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f};
+    std::array<float, 6> c_line_high = {0.9f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f};
+    float t_line_low = tactical::evaluate_concept_intervention(c_line_low, weights, bias);
+    float t_line_high = tactical::evaluate_concept_intervention(c_line_high, weights, bias);
+    assert(t_line_high < t_line_low);
+    std::cout << "  [PASS] Concept sensitivity & monotonicity verified (High Line suppresses threat).\n";
+
+    // Monotonicity test 4: Lane blockage (negative weight) MUST strictly decrease threat
+    std::array<float, 6> c_lane_low = {0.5f, 0.5f, 0.5f, 0.5f, 0.1f, 0.5f};
+    std::array<float, 6> c_lane_high = {0.5f, 0.5f, 0.5f, 0.5f, 0.9f, 0.5f};
+    float t_lane_low = tactical::evaluate_concept_intervention(c_lane_low, weights, bias);
+    float t_lane_high = tactical::evaluate_concept_intervention(c_lane_high, weights, bias);
+    assert(t_lane_high < t_lane_low);
+    std::cout << "  [PASS] Concept sensitivity & monotonicity verified (Passing lanes cut reduces threat).\n";
 
     std::cout << "\nALL C++ INVARIANTS AND TESTS PASSED SUCCESSFULLY!\n";
     return 0;

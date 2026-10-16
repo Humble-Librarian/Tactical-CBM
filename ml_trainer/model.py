@@ -62,9 +62,11 @@ class TacticalCBM(nn.Module):
         self.gat2 = DenseGATLayer(hidden_dim, hidden_dim)
         self.act2 = nn.ReLU()
         
-        # Stage 1 Bottleneck Head (Graph Latent -> 6 Concepts)
+        # Stage 1 Bottleneck Head (Team-conditioned Defense + Attack -> 6 Concepts)
         self.concept_head = nn.Sequential(
-            nn.Linear(hidden_dim, 16),
+            nn.Linear(hidden_dim * 2, 32),
+            nn.ReLU(),
+            nn.Linear(32, 16),
             nn.ReLU(),
             nn.Linear(16, num_concepts),
             nn.Sigmoid()  # Guarantees strictly [0, 1] output
@@ -84,10 +86,16 @@ class TacticalCBM(nn.Module):
         h = h + self.act1(self.gat1(h, adj_mask))
         h = h + self.act2(self.gat2(h, adj_mask))
         
-        # 3. Masked Mean Pooling over visible players
-        h_masked = h * player_mask  # [B, 22, hidden_dim]
-        num_visible = torch.clamp(player_mask.sum(dim=1), min=1.0)  # [B, 1]
-        graph_latent = h_masked.sum(dim=1) / num_visible  # [B, hidden_dim]
+        # 3. Team-Conditioned Masked Pooling
+        # Feature 4 is is_teammate (1.0 = attacker, 0.0 = defender)
+        is_attacker = node_features[:, :, 4:5]
+        mask_att = player_mask * is_attacker
+        mask_def = player_mask * (1.0 - is_attacker)
+        
+        h_def = (h * mask_def).sum(dim=1) / torch.clamp(mask_def.sum(dim=1), min=1.0)
+        h_att = (h * mask_att).sum(dim=1) / torch.clamp(mask_att.sum(dim=1), min=1.0)
+        
+        graph_latent = torch.cat([h_def, h_att], dim=-1)  # [B, hidden_dim * 2]
         
         # 4. Predict Concepts C1 - C6
         concepts = self.concept_head(graph_latent)  # [B, 6]

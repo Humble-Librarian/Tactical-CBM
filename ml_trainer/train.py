@@ -12,6 +12,7 @@ import torch.nn as nn
 from pathlib import Path
 from torch.utils.data import DataLoader
 from sklearn.metrics import roc_auc_score, r2_score
+from scipy.optimize import minimize
 import numpy as np
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -170,20 +171,72 @@ def main(epochs: int = 5, batch_size: int = 128, lr: float = 1e-3):
     for c_name, r2_val in best_metrics['r2_scores'].items():
         print(f"    - {c_name:<30}: R2 = {r2_val:.3f}")
         
-    # Export Sidecar for Stage 5 Instant Slider Recomputation
-    model.load_state_dict(torch.load(MODELS_DIR / "tactical_cbm.pt"))
-    linear_w = model.linear_head.weight.detach().cpu().squeeze().tolist()
-    linear_b = float(model.linear_head.bias.detach().cpu().item())
+    # Hansi Flick Tactical Calibration
+    # Guarantees defensive monotonicity (C1..C5 suppress threat, C6 amplifies threat)
+    print("\n" + "-" * 65)
+    print("CALIBRATING LINEAR HEAD WITH HANSI FLICK TACTICAL INVARIANTS")
+    print("-" * 65)
     
+    model.load_state_dict(torch.load(MODELS_DIR / "tactical_cbm.pt"))
+    model.eval()
+    
+    def get_cy(loader):
+        all_c, all_y = [], []
+        with torch.no_grad():
+            for b in loader:
+                cp, _ = model(b['node_features'].to(device), b['adj_mask'].to(device), b['player_mask'].to(device))
+                all_c.append(cp.cpu())
+                all_y.append(b['y_threat'].cpu())
+        return torch.cat(all_c, dim=0).numpy(), torch.cat(all_y, dim=0).numpy()
+
+    C_train, Y_train = get_cy(train_loader)
+    C_val, Y_val = get_cy(val_loader)
+
+    pos_w = 8.0
+    def loss_fn(params):
+        w = params[:6]
+        b = params[6]
+        logits = np.dot(C_train, w) + b
+        p = 1.0 / (1.0 + np.exp(-np.clip(logits, -20, 20)))
+        bce = - (pos_w * Y_train * np.log(p + 1e-7) + (1.0 - Y_train) * np.log(1.0 - p + 1e-7))
+        return np.mean(bce)
+
+    bounds = [
+        (-1.20, -0.50),  # C1 Line Height (Suppresses threat via offside trap)
+        (-0.50, -0.15),  # C2 Compactness (Suppresses threat via space compression)
+        (-0.50, -0.15),  # C3 Width Balance (Suppresses threat via lateral shift)
+        (-0.80, -0.30),  # C4 Gegenpress (Suppresses threat via ball-carrier pressure)
+        (-0.60, -0.20),  # C5 Lane Blockage (Suppresses threat via passing lane cut)
+        (1.00, 2.00),    # C6 Box Overload (Amplifies threat via numerical dominance)
+        (-0.50, 0.50)    # Bias
+    ]
+    x0 = [-0.80, -0.25, -0.30, -0.50, -0.30, 1.40, 0.10]
+    res = minimize(loss_fn, x0, bounds=bounds, method='L-BFGS-B')
+
+    calib_w = [float(x) for x in res.x[:6]]
+    calib_b = float(res.x[6])
+
+    val_logits = np.dot(C_val, calib_w) + calib_b
+    val_preds = 1.0 / (1.0 + np.exp(-val_logits))
+    calib_auc = float(roc_auc_score(Y_val, val_preds))
+
+    with torch.no_grad():
+        model.linear_head.weight.copy_(torch.tensor(calib_w, dtype=torch.float32).unsqueeze(0))
+        model.linear_head.bias.copy_(torch.tensor([calib_b], dtype=torch.float32))
+
+    torch.save(model.state_dict(), MODELS_DIR / "tactical_cbm.pt")
+    print(f"Hansi Flick Calibrated Val ROC-AUC: {calib_auc:.4f}")
+    
+    # Export Sidecar for Stage 5 Instant Slider Recomputation
     sidecar_data = {
         "model_architecture": "TacticalCBM_DenseGATv2",
         "stage5_contract": "Threat = sigmoid(sum(W_i * C_i) + b)",
-        "weights": linear_w,
-        "bias": linear_b,
+        "weights": calib_w,
+        "bias": calib_b,
         "concepts": CONCEPT_NAMES,
         "validation_metrics": {
             "mean_r2": best_metrics['mean_r2'],
-            "roc_auc": best_metrics['roc_auc']
+            "roc_auc": calib_auc
         }
     }
     
@@ -192,8 +245,8 @@ def main(epochs: int = 5, batch_size: int = 128, lr: float = 1e-3):
         json.dump(sidecar_data, f, indent=2)
         
     print(f"\nExported linear head sidecar to: {sidecar_path}")
-    print("Linear Head Weights (w1 ... w6):", [f"{w:.4f}" for w in linear_w])
-    print(f"Linear Head Bias (b):            {linear_b:.4f}")
+    print("Linear Head Weights (w1 ... w6):", [f"{w:.4f}" for w in calib_w])
+    print(f"Linear Head Bias (b):            {calib_b:.4f}")
     print("=" * 65)
 
 if __name__ == "__main__":

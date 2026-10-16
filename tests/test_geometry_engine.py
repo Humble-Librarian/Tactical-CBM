@@ -22,19 +22,19 @@ from scripts.geometry import (
 )
 
 def test_c1_line_height_boundaries():
-    """C1 must be normalized to [0, 1] and react inversely to defensive depth."""
-    # Deep low block (at X=14m): 14 / 70 = 0.20
-    deep_def = np.array([[14.0, 30.0], [15.0, 40.0], [14.0, 50.0]])
+    """C1 must be normalized to [0, 1] relative to defended goal at X=120."""
+    # Deep low block (defenders at X=109m, 11m from own goal): 11 / 55 = 0.20
+    deep_def = np.array([[109.0, 30.0], [108.0, 40.0], [109.0, 50.0]])
     c1_deep = compute_c1_line_height(deep_def)
     assert 0.19 <= c1_deep <= 0.21
     
-    # High press line (at X=63m): 63 / 70 = 0.90
-    high_def = np.array([[63.0, 30.0], [64.0, 40.0], [65.0, 50.0]])
+    # High press line (defenders at X=70.5m, 49.5m from own goal): 49.5 / 55 = 0.90
+    high_def = np.array([[70.5, 30.0], [70.0, 40.0], [69.5, 50.0]])
     c1_high = compute_c1_line_height(high_def)
     assert 0.89 <= c1_high <= 0.91
     
-    # Over-field clamp (> 70m)
-    ultra_high = np.array([[85.0, 40.0]])
+    # Over-field clamp (defenders pushed to X=50m, 70m from goal > 55m)
+    ultra_high = np.array([[50.0, 40.0]])
     assert compute_c1_line_height(ultra_high) == 1.0
     
     # Empty defenders fallback
@@ -111,10 +111,10 @@ def test_c5_lane_blockage_interception():
     assert c5_open == 0.0
 
 def test_c6_box_overload_ratio():
-    """C6 evaluates attacker-to-defender ratio in the danger zone (X >= 95)."""
+    """C6 evaluates attacker-to-defender ratio in the 18-yard penalty box (X >= 102)."""
     # 3 attackers and 1 defender in box -> 3 / 4 = 0.75
-    attackers = np.array([[98.0, 35.0], [102.0, 40.0], [100.0, 45.0]])
-    defenders = np.array([[105.0, 40.0]])
+    attackers = np.array([[104.0, 35.0], [105.0, 40.0], [106.0, 45.0]])
+    defenders = np.array([[108.0, 40.0]])
     c6_overload = compute_c6_box_overload(attackers, defenders)
     assert c6_overload == 0.75
     

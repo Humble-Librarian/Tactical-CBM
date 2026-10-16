@@ -81,6 +81,7 @@ def process_match(match_id: int) -> List[np.ndarray]:
         # Parse players
         teammate_locs = []
         opponent_locs = []
+        outfield_opponent_locs = []
         players_data = []
         actor_loc = None
         
@@ -91,17 +92,20 @@ def process_match(match_id: int) -> List[np.ndarray]:
             x, y = float(loc[0]), float(loc[1])
             is_teammate = bool(p.get("teammate", False))
             is_actor = bool(p.get("actor", False))
+            is_keeper = bool(p.get("keeper", False))
             
             players_data.append((x, y, is_teammate, is_actor))
             if is_teammate:
                 teammate_locs.append([x, y])
             else:
                 opponent_locs.append([x, y])
+                if not is_keeper:
+                    outfield_opponent_locs.append([x, y])
                 
             if is_actor:
                 actor_loc = [x, y]
                 
-        # Must have at least 3 opponents (defenders) to calculate defense geometry
+        # Must have at least 3 opponents to evaluate defensive geometry
         if len(opponent_locs) < 3:
             continue
             
@@ -113,13 +117,14 @@ def process_match(match_id: int) -> List[np.ndarray]:
                 actor_loc = [60.0, 40.0]
                 
         opponents_np = np.array(opponent_locs, dtype=np.float32)
+        outfield_opponents_np = np.array(outfield_opponent_locs, dtype=np.float32) if len(outfield_opponent_locs) >= 2 else opponents_np
         teammates_np = np.array(teammate_locs, dtype=np.float32) if len(teammate_locs) > 0 else np.empty((0, 2), dtype=np.float32)
         actor_loc_np = np.array(actor_loc, dtype=np.float32)
         
-        # Compute the 6 Bottleneck Concepts (C1 - C6)
-        c1 = compute_c1_line_height(opponents_np)
-        c2 = compute_c2_compactness(opponents_np)
-        c3 = compute_c3_width_balance(opponents_np, actor_loc_np[1])
+        # Compute the 6 Bottleneck Concepts (C1 - C6) with exact tactical physics
+        c1 = compute_c1_line_height(outfield_opponents_np)
+        c2 = compute_c2_compactness(outfield_opponents_np)
+        c3 = compute_c3_width_balance(outfield_opponents_np, actor_loc_np[1])
         c4 = compute_c4_pressure(opponents_np, actor_loc_np)
         c5 = compute_c5_lane_blockage(actor_loc_np, teammates_np, opponents_np)
         c6 = compute_c6_box_overload(teammates_np, opponents_np)

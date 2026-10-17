@@ -23,8 +23,10 @@ class BinaryShardDataset(Dataset):
         file_size = self.bin_path.stat().st_size
         self.num_frames = file_size // FRAME_BYTE_SIZE
         
-        # Zero-copy memory map
-        self.data = np.memmap(self.bin_path, dtype=FRAME_DTYPE, mode='r')
+        # Zero-copy memory map with Copy-on-Write (mode='c')
+        # Ensures NumPy array flags are writeable so PyTorch creates direct views
+        # without emitting UserWarning or requiring expensive .copy() heap allocations.
+        self.data = np.memmap(self.bin_path, dtype=FRAME_DTYPE, mode='c')
 
     def __len__(self):
         return self.num_frames
@@ -32,10 +34,11 @@ class BinaryShardDataset(Dataset):
     def __getitem__(self, idx: int):
         rec = self.data[idx]
         
-        node_features = torch.from_numpy(rec['node_features'].copy())  # [22, 6]
-        adj_mask = torch.from_numpy(rec['adj_mask'].copy())            # [22, 22]
-        player_mask = torch.from_numpy(rec['player_mask'].copy()).unsqueeze(-1) # [22, 1]
-        c_true = torch.from_numpy(rec['c_true'].copy())                # [6]
+        # True zero-copy: direct torch tensor views over the memory-mapped buffer
+        node_features = torch.from_numpy(rec['node_features'])  # [22, 6]
+        adj_mask = torch.from_numpy(rec['adj_mask'])            # [22, 22]
+        player_mask = torch.from_numpy(rec['player_mask']).unsqueeze(-1) # [22, 1]
+        c_true = torch.from_numpy(rec['c_true'])                # [6]
         y_threat = torch.tensor(rec['y_threat'], dtype=torch.float32)  # scalar
         
         return {

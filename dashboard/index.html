@@ -925,17 +925,18 @@
             });
 
             // Dual-Engine Execution: WebAssembly C++ engine with transparent JIT fallback
+            const effectiveDefX = (ballCarrier && ballCarrier.x > maxDefX) ? ballCarrier.x : maxDefX;
             let c1, c2, c3, c4;
             if (wasmGeometry) {
-                c1 = wasmGeometry.c1_line_height(maxDefX);
+                c1 = wasmGeometry.c1_line_height(effectiveDefX);
                 c2 = wasmGeometry.c2_compactness(hullArea);
                 c3 = wasmGeometry.c3_width_balance(spread, avgY, ballCarrier.y);
                 c4 = wasmGeometry.c4_pressure(minDefDist, defendersWithin5m);
             } else {
-                c1 = Math.min(Math.max((120.0 - maxDefX) / 70.0, 0.0), 1.0);
+                c1 = Math.min(Math.max((120.0 - effectiveDefX) / 70.0, 0.0), 1.0);
                 c2 = Math.min(Math.max(1.0 - (hullArea / 1200.0), 0.0), 1.0);
                 c3 = Math.min(Math.max((spread / 45.0) * (1.0 - yOffset * 0.5), 0.0), 1.0);
-                c4 = Math.min(Math.max(Math.exp(-minDefDist / 4.0) * 0.7 + (defendersWithin5m / 3.0) * 0.3, 0.0), 1.0);
+                c4 = Math.min(Math.max(Math.exp(-minDefDist / 4.0) * 0.7 + (Math.min(defendersWithin5m, 3) / 3.0) * 0.3, 0.0), 1.0);
             }
 
             // C5: Central Passing Lane Blockage to Forward Attackers

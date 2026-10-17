@@ -8,6 +8,7 @@ Pitch Dimensions (StatsBomb 360 standard):
 - Defended Goal: Centered at X = 120.0, Y = 40.0.
 - Penalty Box: X in [102.0, 120.0], Y in [18.0, 62.0].
 """
+import math
 from typing import Optional
 import numpy as np
 from scipy.spatial import ConvexHull, Delaunay
@@ -42,8 +43,8 @@ def compute_c1_line_height(outfield_defenders: np.ndarray, ball_loc: Optional[np
         
     distance_from_goal = DEFENDED_GOAL_X - effective_x
     
-    # High line ceiling is 55m from goal (near midfield line X=60-65m)
-    c1 = distance_from_goal / 55.0
+    # Standardized high line ceiling is 70m from goal (X=50m, well into opponent half)
+    c1 = distance_from_goal / 70.0
     return float(np.clip(c1, 0.0, 1.0))
 
 def compute_c2_compactness(outfield_defenders: np.ndarray, apply_frustum_scaling: bool = False) -> float:
@@ -81,41 +82,36 @@ def compute_c3_width_balance(outfield_defenders: np.ndarray, ball_y: float) -> f
     C3: Defensive Width Balance & Ball-Oriented Shifting.
     Measures if the defensive block properly shifts laterally toward the ball corridor
     while preserving adequate team spread.
+    Multiplicative formula standardized across C++, WebAssembly, JS, and Python.
     """
     if len(outfield_defenders) < 2:
         return 0.5
     y_vals = outfield_defenders[:, 1]
-    lateral_spread = np.max(y_vals) - np.min(y_vals)
+    lateral_spread = float(np.max(y_vals) - np.min(y_vals))
     
     # Defensive centroid offset from ball's Y
-    centroid_y = np.mean(y_vals)
-    y_offset = abs(centroid_y - ball_y) / 35.0  # Normalized offset
+    centroid_y = float(np.mean(y_vals))
+    y_offset = abs(centroid_y - ball_y) / 35.0  # Normalized offset [0, 1]
     
-    # Ideal lateral spread is 25m - 50m
-    spread_score = np.clip(lateral_spread / 45.0, 0.0, 1.0)
-    shift_score = 1.0 - np.clip(y_offset, 0.0, 1.0)
-    
-    c3 = 0.5 * spread_score + 0.5 * shift_score
+    # Standardized: (spread / 45.0) * (1.0 - y_offset * 0.5)
+    c3 = (lateral_spread / 45.0) * (1.0 - y_offset * 0.5)
     return float(np.clip(c3, 0.0, 1.0))
 
 def compute_c4_pressure(defenders: np.ndarray, ball_loc: np.ndarray) -> float:
     """
     C4: Ball-Carrier Pressure (Gegenpressing Intensity).
-    Uses exponential distance decay with a sharp drop-off:
-    - Defender at 1.5m: ~0.55 pressure
-    - Defender at 3.0m: ~0.30 pressure
-    - Defender at 6.0m: ~0.09 pressure
-    - Defenders > 8m have 0 pressure.
-    Sum of pressures is normalized so a coordinated double-team equals 1.0.
+    Standardized hybrid formulation: immediate nearest-defender exponential decay (70%)
+    plus local swarm count within 6m radius (30%).
+    Matches C++, WebAssembly, and browser JavaScript exactly.
     """
     if len(defenders) == 0:
         return 0.0
-    dists = np.linalg.norm(defenders[:, :2] - ball_loc[:2], axis=1)
-    close_mask = dists <= 8.0
-    if not np.any(close_mask):
-        return 0.0
-    raw_pressure = np.sum(np.exp(-dists[close_mask] / 2.5))
-    return float(np.clip(raw_pressure / 1.5, 0.0, 1.0))
+    dists = np.hypot(defenders[:, 0] - ball_loc[0], defenders[:, 1] - ball_loc[1])
+    min_dist = float(np.min(dists))
+    within_6m = int(np.sum(dists <= 6.0))
+    
+    c4 = math.exp(-min_dist / 4.0) * 0.7 + (min(within_6m, 3) / 3.0) * 0.3
+    return float(np.clip(c4, 0.0, 1.0))
 
 def compute_c5_lane_blockage(ball_loc: np.ndarray, attackers: np.ndarray, defenders: np.ndarray) -> float:
     """

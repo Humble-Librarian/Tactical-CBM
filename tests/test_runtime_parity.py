@@ -113,16 +113,54 @@ def test_convex_hull_algorithm_parity(tactical_presets):
         assert diff < 1e-4, f"Convex Hull area diverged in preset {preset['name']}: SciPy={scipy_area}, JS={js_area}"
 
 def test_concept_c1_line_height_parity(tactical_presets):
-    """Verify C1 Defensive Line Height calculation parity."""
+    """Verify C1 Defensive Line Height calculation parity between Python and JS."""
     for preset in tactical_presets:
         defs = preset["defenders"]
         carrier = preset["carrier"]
         
-        max_def_x = float(np.max(defs[:, 0]))
-        js_c1 = min(max((120.0 - max_def_x) / 70.0, 0.0), 1.0)
+        py_c1 = compute_c1_line_height(defs, ball_loc=carrier)
         
-        # High line ceiling comparison
-        assert 0.0 <= js_c1 <= 1.0
+        max_def_x = float(np.max(defs[:, 0]))
+        effective_x = max(max_def_x, float(carrier[0]))
+        js_c1 = min(max((120.0 - effective_x) / 70.0, 0.0), 1.0)
+        
+        diff = abs(py_c1 - js_c1)
+        assert diff < 1e-5, f"C1 diverged in {preset['name']}: py={py_c1}, js={js_c1}"
+
+def test_concept_c3_width_balance_parity(tactical_presets):
+    """Verify C3 Defensive Width Balance calculation parity between Python and JS."""
+    for preset in tactical_presets:
+        defs = preset["defenders"]
+        carrier = preset["carrier"]
+        
+        py_c3 = compute_c3_width_balance(defs, float(carrier[1]))
+        
+        # JS equivalent
+        y_vals = defs[:, 1]
+        spread = float(np.max(y_vals) - np.min(y_vals))
+        avg_y = float(np.mean(y_vals))
+        y_offset = abs(avg_y - float(carrier[1])) / 35.0
+        js_c3 = min(max((spread / 45.0) * (1.0 - y_offset * 0.5), 0.0), 1.0)
+        
+        diff = abs(py_c3 - js_c3)
+        assert diff < 1e-5, f"C3 diverged in {preset['name']}: py={py_c3}, js={js_c3}"
+
+def test_concept_c4_pressure_parity(tactical_presets):
+    """Verify C4 Gegenpress Pressure calculation parity between Python and JS."""
+    for preset in tactical_presets:
+        defs = preset["defenders"]
+        carrier = preset["carrier"]
+        
+        py_c4 = compute_c4_pressure(defs, carrier)
+        
+        # JS equivalent
+        dists = np.hypot(defs[:, 0] - carrier[0], defs[:, 1] - carrier[1])
+        min_dist = float(np.min(dists))
+        within_6m = int(np.sum(dists <= 6.0))
+        js_c4 = min(max(math.exp(-min_dist / 4.0) * 0.7 + (min(within_6m, 3) / 3.0) * 0.3, 0.0), 1.0)
+        
+        diff = abs(py_c4 - js_c4)
+        assert diff < 1e-5, f"C4 diverged in {preset['name']}: py={py_c4}, js={js_c4}"
 
 def test_linear_head_dot_product_parity():
     """Verify dot product parity across Python float, C++ float, and JS float."""

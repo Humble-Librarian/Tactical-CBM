@@ -52,3 +52,35 @@ def test_val_dataset_concept_ranges():
         if i >= 5: break  # Sample first 5 batches
         c = batch['c_true']
         assert torch.all(c >= 0.0) and torch.all(c <= 1.0), "Concepts outside [0, 1] range"
+
+def test_zero_copy_pointer_sharing():
+    """Verify that PyTorch tensors share the exact physical memory pointer with the memmap buffer."""
+    ds = BinaryShardDataset(TRAIN_BIN)
+    rec = ds.data[0]
+    sample = ds[0]
+    
+    # Assert physical pointer equality (true zero-copy)
+    assert sample['node_features'].data_ptr() == rec['node_features'].ctypes.data, "node_features must share memory pointer"
+    assert sample['adj_mask'].data_ptr() == rec['adj_mask'].ctypes.data, "adj_mask must share memory pointer"
+    assert sample['c_true'].data_ptr() == rec['c_true'].ctypes.data, "c_true must share memory pointer"
+
+def test_zero_copy_memory_allocation():
+    """Verify that iterating through 5,000 frames produces near-zero heap memory allocations."""
+    import tracemalloc
+    ds = BinaryShardDataset(TRAIN_BIN)
+    
+    tracemalloc.start()
+    snapshot1 = tracemalloc.take_snapshot()
+    
+    # Iterate through 5,000 frames
+    for i in range(5000):
+        _ = ds[i]
+        
+    snapshot2 = tracemalloc.take_snapshot()
+    tracemalloc.stop()
+    
+    stats = snapshot2.compare_to(snapshot1, 'lineno')
+    total_allocated = sum(s.size_diff for s in stats if s.size_diff > 0)
+    
+    # Total heap allocation for 5,000 frames must be < 500 KB (with .copy() it was > 40 MB)
+    assert total_allocated < 500 * 1024, f"Allocated {total_allocated / 1024:.2f} KB, expected < 500 KB (Zero-Copy violation)"

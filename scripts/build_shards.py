@@ -219,30 +219,76 @@ def process_match(match_id: int) -> List[np.ndarray]:
         
         records.append(rec)
         
+    del events
+    del frames_360
+    import gc
+    gc.collect()
     return records
 
 def _process_match_worker(match_id: int) -> Tuple[int, List[np.ndarray]]:
     """Top-level worker function for parallel multiprocessing pool across matches."""
-    return match_id, process_match(match_id)
+    try:
+        return match_id, process_match(match_id)
+    except Exception as e:
+        print(f"  [ERROR] Failed processing match {match_id}: {e}", flush=True)
+        return match_id, []
 
 def main():
+    import argparse
+    from collections import defaultdict
+    
+    parser = argparse.ArgumentParser(description="Tactical CBM Shard Builder")
+    parser.add_argument("--manifest", type=str, default="data/raw/matches/modern_dataset_manifest.json",
+                        help="Path to dataset manifest JSON")
+    parser.add_argument("--limit", type=int, default=None, help="Limit number of matches to process")
+    parser.add_argument("--split-ratio", type=float, default=0.8, help="Train/val split ratio (default: 0.8)")
+    parser.add_argument("--workers", type=int, default=None, help="Worker pool processes")
+    args = parser.parse_args()
+
     PROCESSED_DIR.mkdir(parents=True, exist_ok=True)
+    manifest_path = Path(args.manifest)
     
-    event_files = sorted(list(EVENTS_DIR.glob("*.json")))
-    match_ids = [int(f.stem) for f in event_files]
+    train_matches = []
+    val_matches = []
     
-    print(f"Total available matches: {len(match_ids)}")
-    if len(match_ids) < 2:
-        print("Error: Need at least 2 matches for train/val split!")
-        return
+    if manifest_path.exists():
+        print(f"Loading matches from manifest: {manifest_path}")
+        with open(manifest_path, "r", encoding="utf-8") as f:
+            manifest_data = json.load(f)
+            
+        # Group by competition tag for stratified splitting
+        tagged_matches = defaultdict(list)
+        for m in manifest_data:
+            mid = int(m["match_id"])
+            # Ensure both event and 360 files exist on disk
+            if (EVENTS_DIR / f"{mid}.json").exists() and (THREESIXTY_DIR / f"{mid}.json").exists():
+                tag = m.get("tag", m.get("competition", "general"))
+                tagged_matches[tag].append(mid)
+                
+        print(f"\nStratified Match Ingestion ({sum(len(v) for v in tagged_matches.values())} total verified matches):")
+        for tag, m_list in sorted(tagged_matches.items()):
+            n = len(m_list)
+            split_idx = max(1, int(round(n * args.split_ratio)))
+            t_m = m_list[:split_idx]
+            v_m = m_list[split_idx:]
+            train_matches.extend(t_m)
+            val_matches.extend(v_m)
+            print(f"  {tag:<24}: {len(t_m):2d} train | {len(v_m):2d} val (total: {n})")
+    else:
+        print("Manifest not found, falling back to globbing events directory...")
+        event_files = sorted(list(EVENTS_DIR.glob("*.json")))
+        match_ids = [int(f.stem) for f in event_files if (THREESIXTY_DIR / f.name).exists()]
+        split_idx = max(1, int(len(match_ids) * args.split_ratio))
+        train_matches = match_ids[:split_idx]
+        val_matches = match_ids[split_idx:]
+
+    if args.limit:
+        train_matches = train_matches[:args.limit]
+        val_matches = val_matches[:max(1, int(args.limit * (1.0 - args.split_ratio)))]
         
-    # Match-level split: 80% train, 20% validation
-    split_idx = max(1, int(len(match_ids) * 0.8))
-    train_matches = match_ids[:split_idx]
-    val_matches = match_ids[split_idx:]
-    
-    print(f"Train matches ({len(train_matches)}): {train_matches}")
-    print(f"Val matches   ({len(val_matches)}): {val_matches}")
+    print(f"\nFinal Split Configuration:")
+    print(f"  Train matches ({len(train_matches)}): {train_matches[:10]} ... [total: {len(train_matches)}]")
+    print(f"  Val matches   ({len(val_matches)}): {val_matches[:10]} ... [total: {len(val_matches)}]")
     
     train_bin_path = PROCESSED_DIR / "train.bin"
     val_bin_path = PROCESSED_DIR / "val.bin"
@@ -257,11 +303,11 @@ def main():
         import multiprocessing
         total_records = 0
         total_threats = 0
-        num_workers = min(os.cpu_count() or 1, len(m_list), 16)
+        num_workers = args.workers if args.workers else min(os.cpu_count() or 1, len(m_list), 8)
         
         with open(out_path, "wb") as f_out:
             if num_workers > 1:
-                with multiprocessing.Pool(processes=num_workers) as pool:
+                with multiprocessing.Pool(processes=num_workers, maxtasksperchild=4) as pool:
                     for mid, recs in pool.imap(_process_match_worker, m_list):
                         if not recs:
                             continue
@@ -272,7 +318,7 @@ def main():
                         threats = sum(1 for r in recs if r['y_threat'] > 0.5)
                         total_records += count
                         total_threats += threats
-                        print(f"  Match {mid}: {count:,} frames processed ({threats} threat frames, {threats/count*100:.1f}%) [Multi-Core Pool]")
+                        print(f"  Match {mid}: {count:,} frames processed ({threats} threat frames, {threats/count*100:.1f}%) [Multi-Core Pool]", flush=True)
                         
                         if is_train and len(golden_frames) < 10 and len(recs) >= 10:
                             for i in range(10):

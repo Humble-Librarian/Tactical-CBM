@@ -65,13 +65,14 @@ inline float clamp01(float v) noexcept {
     return (v < 0.0f) ? 0.0f : ((v > 1.0f) ? 1.0f : v);
 }
 
-inline float compute_c1_line_height(const std::vector<Point2D>& defenders) noexcept {
+inline float compute_c1_line_height(const std::vector<Point2D>& defenders, const Point2D* ball = nullptr) noexcept {
     if (defenders.empty()) return 0.5f;
     float max_x = 0.0f;
     for (const auto& d : defenders) {
         if (d.x > max_x) max_x = d.x;
     }
-    float c1 = (120.0f - max_x) / 70.0f;
+    float effective_x = (ball != nullptr && ball->x > max_x) ? ball->x : max_x;
+    float c1 = (120.0f - effective_x) / 70.0f;
     return clamp01(c1);
 }
 

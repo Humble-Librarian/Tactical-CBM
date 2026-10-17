@@ -22,28 +22,28 @@ from scripts.geometry import (
 )
 
 def test_c1_line_height_boundaries():
-    """C1 must be normalized to [0, 1] relative to defended goal at X=120."""
-    # Deep low block (defenders at X=109m, 11m from own goal): 11 / 55 = 0.20
+    """C1 must be normalized to [0, 1] relative to defended goal at X=120 with 70m ceiling."""
+    # Deep low block (defenders at X=109m, 11m from own goal): 11 / 70 = ~0.157
     deep_def = np.array([[109.0, 30.0], [108.0, 40.0], [109.0, 50.0]])
     c1_deep = compute_c1_line_height(deep_def)
-    assert 0.19 <= c1_deep <= 0.21
+    assert 0.15 <= c1_deep <= 0.17
     
-    # High press line (defenders at X=70.5m, 49.5m from own goal): 49.5 / 55 = 0.90
-    high_def = np.array([[70.5, 30.0], [70.0, 40.0], [69.5, 50.0]])
+    # High press line (defenders at X=71m, 49m from own goal): 49 / 70 = 0.70
+    high_def = np.array([[71.0, 30.0], [70.0, 40.0], [69.5, 50.0]])
     c1_high = compute_c1_line_height(high_def)
-    assert 0.89 <= c1_high <= 0.91
+    assert 0.69 <= c1_high <= 0.71
     
-    # Over-field clamp (defenders pushed to X=50m, 70m from goal > 55m)
-    ultra_high = np.array([[50.0, 40.0]])
+    # Over-field clamp (defenders pushed to X=40m, 80m from goal > 70m ceiling)
+    ultra_high = np.array([[40.0, 40.0]])
     assert compute_c1_line_height(ultra_high) == 1.0
     
     # Empty defenders fallback
     assert compute_c1_line_height(np.empty((0, 2))) == 0.5
 
-    # Breached line: Ball carrier penetrates behind defensive line (ball at X=105, defenders at X=70.5)
-    # Line height must collapse from 0.90 to (120 - 105) / 55 = ~0.27
+    # Breached line: Ball carrier penetrates behind defensive line (ball at X=105, defenders at X=71)
+    # Line height must collapse from 0.70 to (120 - 105) / 70 = ~0.214
     c1_breached = compute_c1_line_height(high_def, ball_loc=np.array([105.0, 40.0]))
-    assert 0.26 <= c1_breached <= 0.28, f"Breached line C1 ({c1_breached}) must reflect penetration"
+    assert 0.20 <= c1_breached <= 0.23, f"Breached line C1 ({c1_breached}) must reflect penetration"
     assert c1_breached < c1_high, "Breached line must have strictly lower protective line height than intact line"
 
 def test_c2_compactness_degeneracies():
@@ -100,16 +100,15 @@ def test_c4_pressure_decay():
     near_def = np.array([[60.5, 40.0]])
     c4_near = compute_c4_pressure(near_def, ball)
     
-    # 1 defender 7m away
-    far_def = np.array([[67.0, 40.0]])
+    # 1 defender 5m away
+    far_def = np.array([[65.0, 40.0]])
     c4_far = compute_c4_pressure(far_def, ball)
     
-    # 1 defender outside 8m radius (12m away)
-    outside_def = np.array([[72.0, 40.0]])
-    c4_outside = compute_c4_pressure(outside_def, ball)
+    # 1 defender 15m away
+    very_far_def = np.array([[75.0, 40.0]])
+    c4_very_far = compute_c4_pressure(very_far_def, ball)
     
-    assert c4_near > c4_far
-    assert c4_outside == 0.0
+    assert c4_near > c4_far > c4_very_far
     assert 0.0 <= c4_near <= 1.0
 
 def test_c5_lane_blockage_interception():

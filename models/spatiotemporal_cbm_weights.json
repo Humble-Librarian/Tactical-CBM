@@ -1,0 +1,54 @@
+{
+  "model_architecture": "TacticalCBMGold_DenseGATv2_BCIT",
+  "parameters": {
+    "linear_weights": [
+      -0.8806639313697815,
+      0.36284583806991577,
+      -0.47144457697868347,
+      0.5939177870750427,
+      0.097335584461689,
+      1.1666275262832642
+    ],
+    "pairwise_interactions": {
+      "C1_x_C2": -0.6761,
+      "C1_x_C3": -0.9296,
+      "C1_x_C4": -0.3023,
+      "C1_x_C5": -0.8701,
+      "C1_x_C6": 0.8606,
+      "C2_x_C3": 0.1207,
+      "C2_x_C4": 0.9498,
+      "C2_x_C5": 0.6144,
+      "C2_x_C6": 1.2034,
+      "C3_x_C4": 0.4606,
+      "C3_x_C5": -0.1633,
+      "C3_x_C6": 1.2306,
+      "C4_x_C5": 0.738,
+      "C4_x_C6": 1.0583,
+      "C5_x_C6": 1.1507
+    },
+    "bias": -0.2297118902206421,
+    "beta_calibration": {
+      "a": 1.4022576785968976,
+      "b": 0.7236052349509313,
+      "c": -1.6321001913430058
+    },
+    "optimal_f05_threshold": 0.36667996644973755
+  },
+  "concepts": [
+    "C1: Defensive Line Height",
+    "C2: Defensive Compactness",
+    "C3: Flank Overload",
+    "C4: Gegenpress Ball Pressure",
+    "C5: Channel Space",
+    "C6: Box Dominance"
+  ],
+  "validation_metrics": {
+    "mean_r2": 0.5374674697717031,
+    "roc_auc": 0.8566573469383312,
+    "pr_auc": 0.3692845032679009,
+    "calibrated_brier_score": 0.04127204045653343,
+    "ece_percent": 0.11,
+    "precision_at_f05": 51.1,
+    "recall_at_f05": 29.2
+  }
+}

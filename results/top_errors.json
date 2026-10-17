@@ -1,0 +1,1761 @@
+{
+  "n_validation_frames": 112178,
+  "optimal_threshold": 0.22291302887132727,
+  "confusion_matrix": {
+    "TN": 102325,
+    "FP": 3719,
+    "FN": 4271,
+    "TP": 1863
+  },
+  "default_confusion_matrix": {
+    "TN": 105868,
+    "FP": 176,
+    "FN": 5914,
+    "TP": 220
+  },
+  "top_fp_categories": {
+    "Flank Overload / 2v1 Dynamic": 36,
+    "Open Half-Space Channel Penetration": 14
+  },
+  "top_fn_categories": {
+    "High Line Vulnerability (Deep Space Exposed)": 47,
+    "Flank Overload / 2v1 Dynamic": 3
+  },
+  "visibility_stats": {
+    "avg_vis_correct_frames": 16.93,
+    "avg_vis_false_positives": 17.03,
+    "avg_vis_false_negatives": 16.28
+  },
+  "bcit_weights": {
+    "linear_weights": {
+      "C1": -1.7327103564366013,
+      "C2": 1.2490887966194293,
+      "C3": -0.32272362681167305,
+      "C4": 0.45712915044774277,
+      "C5": 0.22285069392094747,
+      "C6": 0.6763453183498974
+    },
+    "pairwise_interactions": {
+      "C1 x C2": -0.44894800290763454,
+      "C1 x C3": -1.0602650971227623,
+      "C1 x C4": 0.18075972668276852,
+      "C1 x C5": -0.898512487662034,
+      "C1 x C6": -0.7116061440217242,
+      "C2 x C3": 0.21799188637489775,
+      "C2 x C4": 0.18087667112123262,
+      "C2 x C5": -0.04102132976260943,
+      "C2 x C6": 0.18786717142228357,
+      "C3 x C4": 0.5460138189766935,
+      "C3 x C5": 0.0549426832615646,
+      "C3 x C6": 0.2258235921831008,
+      "C4 x C5": 0.4956874535252065,
+      "C4 x C6": -0.27800097420756814,
+      "C5 x C6": 0.7560972396193901
+    },
+    "bias": -2.235891062734438
+  },
+  "top_50_false_positives": [
+    {
+      "frame_idx": 105863,
+      "error_type": "False Positive",
+      "calibrated_prob": 0.7315,
+      "raw_prob": 0.6807,
+      "true_label": 0,
+      "n_visible_players": 18,
+      "tactical_phase": "Flank Overload / 2v1 Dynamic",
+      "concepts": {
+        "C1_LineHeight": 0.037,
+        "C2_Compactness": 0.805,
+        "C3_Overload": 0.695,
+        "C4_Gegenpress": 1.0,
+        "C5_ChannelSpace": 1.0,
+        "C6_Dominance": 0.357
+      }
+    },
+    {
+      "frame_idx": 42526,
+      "error_type": "False Positive",
+      "calibrated_prob": 0.7282,
+      "raw_prob": 0.6773,
+      "true_label": 0,
+      "n_visible_players": 18,
+      "tactical_phase": "Flank Overload / 2v1 Dynamic",
+      "concepts": {
+        "C1_LineHeight": 0.056,
+        "C2_Compactness": 0.878,
+        "C3_Overload": 0.712,
+        "C4_Gegenpress": 1.0,
+        "C5_ChannelSpace": 1.0,
+        "C6_Dominance": 0.312
+      }
+    },
+    {
+      "frame_idx": 111862,
+      "error_type": "False Positive",
+      "calibrated_prob": 0.7231,
+      "raw_prob": 0.672,
+      "true_label": 0,
+      "n_visible_players": 19,
+      "tactical_phase": "Flank Overload / 2v1 Dynamic",
+      "concepts": {
+        "C1_LineHeight": 0.078,
+        "C2_Compactness": 0.877,
+        "C3_Overload": 0.717,
+        "C4_Gegenpress": 1.0,
+        "C5_ChannelSpace": 1.0,
+        "C6_Dominance": 0.353
+      }
+    },
+    {
+      "frame_idx": 111861,
+      "error_type": "False Positive",
+      "calibrated_prob": 0.7231,
+      "raw_prob": 0.672,
+      "true_label": 0,
+      "n_visible_players": 19,
+      "tactical_phase": "Flank Overload / 2v1 Dynamic",
+      "concepts": {
+        "C1_LineHeight": 0.078,
+        "C2_Compactness": 0.877,
+        "C3_Overload": 0.717,
+        "C4_Gegenpress": 1.0,
+        "C5_ChannelSpace": 1.0,
+        "C6_Dominance": 0.353
+      }
+    },
+    {
+      "frame_idx": 111863,
+      "error_type": "False Positive",
+      "calibrated_prob": 0.7231,
+      "raw_prob": 0.672,
+      "true_label": 0,
+      "n_visible_players": 19,
+      "tactical_phase": "Flank Overload / 2v1 Dynamic",
+      "concepts": {
+        "C1_LineHeight": 0.078,
+        "C2_Compactness": 0.877,
+        "C3_Overload": 0.717,
+        "C4_Gegenpress": 1.0,
+        "C5_ChannelSpace": 1.0,
+        "C6_Dominance": 0.353
+      }
+    },
+    {
+      "frame_idx": 36231,
+      "error_type": "False Positive",
+      "calibrated_prob": 0.7188,
+      "raw_prob": 0.6675,
+      "true_label": 0,
+      "n_visible_players": 20,
+      "tactical_phase": "Open Half-Space Channel Penetration",
+      "concepts": {
+        "C1_LineHeight": 0.09,
+        "C2_Compactness": 0.895,
+        "C3_Overload": 0.649,
+        "C4_Gegenpress": 1.0,
+        "C5_ChannelSpace": 1.0,
+        "C6_Dominance": 0.375
+      }
+    },
+    {
+      "frame_idx": 38552,
+      "error_type": "False Positive",
+      "calibrated_prob": 0.7161,
+      "raw_prob": 0.6648,
+      "true_label": 0,
+      "n_visible_players": 19,
+      "tactical_phase": "Flank Overload / 2v1 Dynamic",
+      "concepts": {
+        "C1_LineHeight": 0.033,
+        "C2_Compactness": 0.788,
+        "C3_Overload": 0.811,
+        "C4_Gegenpress": 0.943,
+        "C5_ChannelSpace": 1.0,
+        "C6_Dominance": 0.333
+      }
+    },
+    {
+      "frame_idx": 93443,
+      "error_type": "False Positive",
+      "calibrated_prob": 0.716,
+      "raw_prob": 0.6647,
+      "true_label": 0,
+      "n_visible_players": 17,
+      "tactical_phase": "Flank Overload / 2v1 Dynamic",
+      "concepts": {
+        "C1_LineHeight": 0.024,
+        "C2_Compactness": 0.591,
+        "C3_Overload": 0.844,
+        "C4_Gegenpress": 1.0,
+        "C5_ChannelSpace": 1.0,
+        "C6_Dominance": 0.462
+      }
+    },
+    {
+      "frame_idx": 90349,
+      "error_type": "False Positive",
+      "calibrated_prob": 0.7146,
+      "raw_prob": 0.6633,
+      "true_label": 0,
+      "n_visible_players": 19,
+      "tactical_phase": "Open Half-Space Channel Penetration",
+      "concepts": {
+        "C1_LineHeight": 0.036,
+        "C2_Compactness": 0.901,
+        "C3_Overload": 0.572,
+        "C4_Gegenpress": 1.0,
+        "C5_ChannelSpace": 0.75,
+        "C6_Dominance": 0.412
+      }
+    },
+    {
+      "frame_idx": 37640,
+      "error_type": "False Positive",
+      "calibrated_prob": 0.7145,
+      "raw_prob": 0.6632,
+      "true_label": 0,
+      "n_visible_players": 18,
+      "tactical_phase": "Flank Overload / 2v1 Dynamic",
+      "concepts": {
+        "C1_LineHeight": 0.017,
+        "C2_Compactness": 0.744,
+        "C3_Overload": 0.756,
+        "C4_Gegenpress": 0.94,
+        "C5_ChannelSpace": 1.0,
+        "C6_Dominance": 0.357
+      }
+    },
+    {
+      "frame_idx": 36276,
+      "error_type": "False Positive",
+      "calibrated_prob": 0.7123,
+      "raw_prob": 0.6609,
+      "true_label": 0,
+      "n_visible_players": 19,
+      "tactical_phase": "Flank Overload / 2v1 Dynamic",
+      "concepts": {
+        "C1_LineHeight": 0.061,
+        "C2_Compactness": 0.827,
+        "C3_Overload": 0.765,
+        "C4_Gegenpress": 1.0,
+        "C5_ChannelSpace": 1.0,
+        "C6_Dominance": 0.312
+      }
+    },
+    {
+      "frame_idx": 36275,
+      "error_type": "False Positive",
+      "calibrated_prob": 0.7123,
+      "raw_prob": 0.6609,
+      "true_label": 0,
+      "n_visible_players": 19,
+      "tactical_phase": "Flank Overload / 2v1 Dynamic",
+      "concepts": {
+        "C1_LineHeight": 0.061,
+        "C2_Compactness": 0.827,
+        "C3_Overload": 0.765,
+        "C4_Gegenpress": 1.0,
+        "C5_ChannelSpace": 1.0,
+        "C6_Dominance": 0.312
+      }
+    },
+    {
+      "frame_idx": 36277,
+      "error_type": "False Positive",
+      "calibrated_prob": 0.7123,
+      "raw_prob": 0.6609,
+      "true_label": 0,
+      "n_visible_players": 19,
+      "tactical_phase": "Flank Overload / 2v1 Dynamic",
+      "concepts": {
+        "C1_LineHeight": 0.061,
+        "C2_Compactness": 0.827,
+        "C3_Overload": 0.765,
+        "C4_Gegenpress": 1.0,
+        "C5_ChannelSpace": 1.0,
+        "C6_Dominance": 0.312
+      }
+    },
+    {
+      "frame_idx": 40764,
+      "error_type": "False Positive",
+      "calibrated_prob": 0.7117,
+      "raw_prob": 0.6602,
+      "true_label": 0,
+      "n_visible_players": 19,
+      "tactical_phase": "Flank Overload / 2v1 Dynamic",
+      "concepts": {
+        "C1_LineHeight": 0.099,
+        "C2_Compactness": 0.902,
+        "C3_Overload": 0.697,
+        "C4_Gegenpress": 1.0,
+        "C5_ChannelSpace": 1.0,
+        "C6_Dominance": 0.353
+      }
+    },
+    {
+      "frame_idx": 11455,
+      "error_type": "False Positive",
+      "calibrated_prob": 0.7049,
+      "raw_prob": 0.6533,
+      "true_label": 0,
+      "n_visible_players": 17,
+      "tactical_phase": "Flank Overload / 2v1 Dynamic",
+      "concepts": {
+        "C1_LineHeight": 0.13,
+        "C2_Compactness": 0.873,
+        "C3_Overload": 0.7,
+        "C4_Gegenpress": 0.987,
+        "C5_ChannelSpace": 1.0,
+        "C6_Dominance": 0.462
+      }
+    },
+    {
+      "frame_idx": 92315,
+      "error_type": "False Positive",
+      "calibrated_prob": 0.6997,
+      "raw_prob": 0.648,
+      "true_label": 0,
+      "n_visible_players": 17,
+      "tactical_phase": "Open Half-Space Channel Penetration",
+      "concepts": {
+        "C1_LineHeight": 0.028,
+        "C2_Compactness": 0.5,
+        "C3_Overload": 0.649,
+        "C4_Gegenpress": 0.942,
+        "C5_ChannelSpace": 1.0,
+        "C6_Dominance": 0.647
+      }
+    },
+    {
+      "frame_idx": 64844,
+      "error_type": "False Positive",
+      "calibrated_prob": 0.697,
+      "raw_prob": 0.6452,
+      "true_label": 0,
+      "n_visible_players": 18,
+      "tactical_phase": "Flank Overload / 2v1 Dynamic",
+      "concepts": {
+        "C1_LineHeight": 0.076,
+        "C2_Compactness": 0.5,
+        "C3_Overload": 0.882,
+        "C4_Gegenpress": 1.0,
+        "C5_ChannelSpace": 1.0,
+        "C6_Dominance": 0.643
+      }
+    },
+    {
+      "frame_idx": 93444,
+      "error_type": "False Positive",
+      "calibrated_prob": 0.6967,
+      "raw_prob": 0.6449,
+      "true_label": 0,
+      "n_visible_players": 14,
+      "tactical_phase": "Flank Overload / 2v1 Dynamic",
+      "concepts": {
+        "C1_LineHeight": 0.0,
+        "C2_Compactness": 0.5,
+        "C3_Overload": 0.788,
+        "C4_Gegenpress": 1.0,
+        "C5_ChannelSpace": 1.0,
+        "C6_Dominance": 0.462
+      }
+    },
+    {
+      "frame_idx": 38178,
+      "error_type": "False Positive",
+      "calibrated_prob": 0.6931,
+      "raw_prob": 0.6412,
+      "true_label": 0,
+      "n_visible_players": 19,
+      "tactical_phase": "Flank Overload / 2v1 Dynamic",
+      "concepts": {
+        "C1_LineHeight": 0.035,
+        "C2_Compactness": 0.751,
+        "C3_Overload": 0.748,
+        "C4_Gegenpress": 1.0,
+        "C5_ChannelSpace": 0.875,
+        "C6_Dominance": 0.357
+      }
+    },
+    {
+      "frame_idx": 96095,
+      "error_type": "False Positive",
+      "calibrated_prob": 0.6872,
+      "raw_prob": 0.6352,
+      "true_label": 0,
+      "n_visible_players": 20,
+      "tactical_phase": "Flank Overload / 2v1 Dynamic",
+      "concepts": {
+        "C1_LineHeight": 0.083,
+        "C2_Compactness": 0.92,
+        "C3_Overload": 0.686,
+        "C4_Gegenpress": 1.0,
+        "C5_ChannelSpace": 0.667,
+        "C6_Dominance": 0.444
+      }
+    },
+    {
+      "frame_idx": 38179,
+      "error_type": "False Positive",
+      "calibrated_prob": 0.6869,
+      "raw_prob": 0.6349,
+      "true_label": 0,
+      "n_visible_players": 19,
+      "tactical_phase": "Flank Overload / 2v1 Dynamic",
+      "concepts": {
+        "C1_LineHeight": 0.043,
+        "C2_Compactness": 0.751,
+        "C3_Overload": 0.748,
+        "C4_Gegenpress": 1.0,
+        "C5_ChannelSpace": 0.875,
+        "C6_Dominance": 0.357
+      }
+    },
+    {
+      "frame_idx": 20868,
+      "error_type": "False Positive",
+      "calibrated_prob": 0.6814,
+      "raw_prob": 0.6293,
+      "true_label": 0,
+      "n_visible_players": 20,
+      "tactical_phase": "Open Half-Space Channel Penetration",
+      "concepts": {
+        "C1_LineHeight": 0.134,
+        "C2_Compactness": 0.902,
+        "C3_Overload": 0.622,
+        "C4_Gegenpress": 1.0,
+        "C5_ChannelSpace": 1.0,
+        "C6_Dominance": 0.375
+      }
+    },
+    {
+      "frame_idx": 20869,
+      "error_type": "False Positive",
+      "calibrated_prob": 0.6814,
+      "raw_prob": 0.6293,
+      "true_label": 0,
+      "n_visible_players": 20,
+      "tactical_phase": "Open Half-Space Channel Penetration",
+      "concepts": {
+        "C1_LineHeight": 0.134,
+        "C2_Compactness": 0.902,
+        "C3_Overload": 0.622,
+        "C4_Gegenpress": 1.0,
+        "C5_ChannelSpace": 1.0,
+        "C6_Dominance": 0.375
+      }
+    },
+    {
+      "frame_idx": 20870,
+      "error_type": "False Positive",
+      "calibrated_prob": 0.6814,
+      "raw_prob": 0.6293,
+      "true_label": 0,
+      "n_visible_players": 20,
+      "tactical_phase": "Open Half-Space Channel Penetration",
+      "concepts": {
+        "C1_LineHeight": 0.134,
+        "C2_Compactness": 0.902,
+        "C3_Overload": 0.622,
+        "C4_Gegenpress": 1.0,
+        "C5_ChannelSpace": 1.0,
+        "C6_Dominance": 0.375
+      }
+    },
+    {
+      "frame_idx": 32854,
+      "error_type": "False Positive",
+      "calibrated_prob": 0.6796,
+      "raw_prob": 0.6276,
+      "true_label": 0,
+      "n_visible_players": 20,
+      "tactical_phase": "Flank Overload / 2v1 Dynamic",
+      "concepts": {
+        "C1_LineHeight": 0.074,
+        "C2_Compactness": 0.824,
+        "C3_Overload": 0.719,
+        "C4_Gegenpress": 1.0,
+        "C5_ChannelSpace": 0.889,
+        "C6_Dominance": 0.333
+      }
+    },
+    {
+      "frame_idx": 11454,
+      "error_type": "False Positive",
+      "calibrated_prob": 0.6755,
+      "raw_prob": 0.6234,
+      "true_label": 0,
+      "n_visible_players": 17,
+      "tactical_phase": "Flank Overload / 2v1 Dynamic",
+      "concepts": {
+        "C1_LineHeight": 0.154,
+        "C2_Compactness": 0.873,
+        "C3_Overload": 0.715,
+        "C4_Gegenpress": 1.0,
+        "C5_ChannelSpace": 1.0,
+        "C6_Dominance": 0.417
+      }
+    },
+    {
+      "frame_idx": 11453,
+      "error_type": "False Positive",
+      "calibrated_prob": 0.6755,
+      "raw_prob": 0.6234,
+      "true_label": 0,
+      "n_visible_players": 17,
+      "tactical_phase": "Flank Overload / 2v1 Dynamic",
+      "concepts": {
+        "C1_LineHeight": 0.154,
+        "C2_Compactness": 0.873,
+        "C3_Overload": 0.715,
+        "C4_Gegenpress": 1.0,
+        "C5_ChannelSpace": 1.0,
+        "C6_Dominance": 0.417
+      }
+    },
+    {
+      "frame_idx": 93445,
+      "error_type": "False Positive",
+      "calibrated_prob": 0.6748,
+      "raw_prob": 0.6227,
+      "true_label": 0,
+      "n_visible_players": 14,
+      "tactical_phase": "Flank Overload / 2v1 Dynamic",
+      "concepts": {
+        "C1_LineHeight": 0.024,
+        "C2_Compactness": 0.5,
+        "C3_Overload": 0.774,
+        "C4_Gegenpress": 1.0,
+        "C5_ChannelSpace": 1.0,
+        "C6_Dominance": 0.462
+      }
+    },
+    {
+      "frame_idx": 7911,
+      "error_type": "False Positive",
+      "calibrated_prob": 0.6719,
+      "raw_prob": 0.6198,
+      "true_label": 0,
+      "n_visible_players": 19,
+      "tactical_phase": "Flank Overload / 2v1 Dynamic",
+      "concepts": {
+        "C1_LineHeight": 0.053,
+        "C2_Compactness": 0.888,
+        "C3_Overload": 0.661,
+        "C4_Gegenpress": 0.937,
+        "C5_ChannelSpace": 0.75,
+        "C6_Dominance": 0.353
+      }
+    },
+    {
+      "frame_idx": 95666,
+      "error_type": "False Positive",
+      "calibrated_prob": 0.6705,
+      "raw_prob": 0.6184,
+      "true_label": 0,
+      "n_visible_players": 18,
+      "tactical_phase": "Open Half-Space Channel Penetration",
+      "concepts": {
+        "C1_LineHeight": 0.075,
+        "C2_Compactness": 0.885,
+        "C3_Overload": 0.58,
+        "C4_Gegenpress": 0.899,
+        "C5_ChannelSpace": 1.0,
+        "C6_Dominance": 0.312
+      }
+    },
+    {
+      "frame_idx": 7912,
+      "error_type": "False Positive",
+      "calibrated_prob": 0.6694,
+      "raw_prob": 0.6172,
+      "true_label": 0,
+      "n_visible_players": 19,
+      "tactical_phase": "Flank Overload / 2v1 Dynamic",
+      "concepts": {
+        "C1_LineHeight": 0.067,
+        "C2_Compactness": 0.893,
+        "C3_Overload": 0.662,
+        "C4_Gegenpress": 0.96,
+        "C5_ChannelSpace": 0.75,
+        "C6_Dominance": 0.353
+      }
+    },
+    {
+      "frame_idx": 95667,
+      "error_type": "False Positive",
+      "calibrated_prob": 0.6673,
+      "raw_prob": 0.6152,
+      "true_label": 0,
+      "n_visible_players": 18,
+      "tactical_phase": "Flank Overload / 2v1 Dynamic",
+      "concepts": {
+        "C1_LineHeight": 0.147,
+        "C2_Compactness": 0.892,
+        "C3_Overload": 0.69,
+        "C4_Gegenpress": 1.0,
+        "C5_ChannelSpace": 1.0,
+        "C6_Dominance": 0.357
+      }
+    },
+    {
+      "frame_idx": 59579,
+      "error_type": "False Positive",
+      "calibrated_prob": 0.6618,
+      "raw_prob": 0.6096,
+      "true_label": 0,
+      "n_visible_players": 19,
+      "tactical_phase": "Flank Overload / 2v1 Dynamic",
+      "concepts": {
+        "C1_LineHeight": 0.064,
+        "C2_Compactness": 0.808,
+        "C3_Overload": 0.695,
+        "C4_Gegenpress": 1.0,
+        "C5_ChannelSpace": 0.75,
+        "C6_Dominance": 0.375
+      }
+    },
+    {
+      "frame_idx": 43814,
+      "error_type": "False Positive",
+      "calibrated_prob": 0.6609,
+      "raw_prob": 0.6087,
+      "true_label": 0,
+      "n_visible_players": 19,
+      "tactical_phase": "Flank Overload / 2v1 Dynamic",
+      "concepts": {
+        "C1_LineHeight": 0.119,
+        "C2_Compactness": 0.889,
+        "C3_Overload": 0.712,
+        "C4_Gegenpress": 0.946,
+        "C5_ChannelSpace": 1.0,
+        "C6_Dominance": 0.312
+      }
+    },
+    {
+      "frame_idx": 96096,
+      "error_type": "False Positive",
+      "calibrated_prob": 0.6583,
+      "raw_prob": 0.6062,
+      "true_label": 0,
+      "n_visible_players": 20,
+      "tactical_phase": "Flank Overload / 2v1 Dynamic",
+      "concepts": {
+        "C1_LineHeight": 0.099,
+        "C2_Compactness": 0.92,
+        "C3_Overload": 0.686,
+        "C4_Gegenpress": 1.0,
+        "C5_ChannelSpace": 0.667,
+        "C6_Dominance": 0.389
+      }
+    },
+    {
+      "frame_idx": 59575,
+      "error_type": "False Positive",
+      "calibrated_prob": 0.6555,
+      "raw_prob": 0.6034,
+      "true_label": 0,
+      "n_visible_players": 18,
+      "tactical_phase": "Open Half-Space Channel Penetration",
+      "concepts": {
+        "C1_LineHeight": 0.072,
+        "C2_Compactness": 0.858,
+        "C3_Overload": 0.607,
+        "C4_Gegenpress": 1.0,
+        "C5_ChannelSpace": 0.714,
+        "C6_Dominance": 0.375
+      }
+    },
+    {
+      "frame_idx": 43105,
+      "error_type": "False Positive",
+      "calibrated_prob": 0.6524,
+      "raw_prob": 0.6002,
+      "true_label": 0,
+      "n_visible_players": 18,
+      "tactical_phase": "Flank Overload / 2v1 Dynamic",
+      "concepts": {
+        "C1_LineHeight": 0.041,
+        "C2_Compactness": 0.87,
+        "C3_Overload": 0.716,
+        "C4_Gegenpress": 0.71,
+        "C5_ChannelSpace": 0.857,
+        "C6_Dominance": 0.412
+      }
+    },
+    {
+      "frame_idx": 31763,
+      "error_type": "False Positive",
+      "calibrated_prob": 0.6504,
+      "raw_prob": 0.5983,
+      "true_label": 0,
+      "n_visible_players": 20,
+      "tactical_phase": "Flank Overload / 2v1 Dynamic",
+      "concepts": {
+        "C1_LineHeight": 0.055,
+        "C2_Compactness": 0.742,
+        "C3_Overload": 0.749,
+        "C4_Gegenpress": 1.0,
+        "C5_ChannelSpace": 0.778,
+        "C6_Dominance": 0.357
+      }
+    },
+    {
+      "frame_idx": 96092,
+      "error_type": "False Positive",
+      "calibrated_prob": 0.6458,
+      "raw_prob": 0.5937,
+      "true_label": 0,
+      "n_visible_players": 20,
+      "tactical_phase": "Open Half-Space Channel Penetration",
+      "concepts": {
+        "C1_LineHeight": 0.117,
+        "C2_Compactness": 0.909,
+        "C3_Overload": 0.635,
+        "C4_Gegenpress": 0.855,
+        "C5_ChannelSpace": 1.0,
+        "C6_Dominance": 0.353
+      }
+    },
+    {
+      "frame_idx": 64843,
+      "error_type": "False Positive",
+      "calibrated_prob": 0.6457,
+      "raw_prob": 0.5936,
+      "true_label": 0,
+      "n_visible_players": 18,
+      "tactical_phase": "Open Half-Space Channel Penetration",
+      "concepts": {
+        "C1_LineHeight": 0.0,
+        "C2_Compactness": 0.5,
+        "C3_Overload": 0.638,
+        "C4_Gegenpress": 1.0,
+        "C5_ChannelSpace": 1.0,
+        "C6_Dominance": 0.357
+      }
+    },
+    {
+      "frame_idx": 43812,
+      "error_type": "False Positive",
+      "calibrated_prob": 0.6444,
+      "raw_prob": 0.5923,
+      "true_label": 0,
+      "n_visible_players": 19,
+      "tactical_phase": "Flank Overload / 2v1 Dynamic",
+      "concepts": {
+        "C1_LineHeight": 0.101,
+        "C2_Compactness": 0.873,
+        "C3_Overload": 0.715,
+        "C4_Gegenpress": 0.865,
+        "C5_ChannelSpace": 1.0,
+        "C6_Dominance": 0.312
+      }
+    },
+    {
+      "frame_idx": 43813,
+      "error_type": "False Positive",
+      "calibrated_prob": 0.6444,
+      "raw_prob": 0.5923,
+      "true_label": 0,
+      "n_visible_players": 19,
+      "tactical_phase": "Flank Overload / 2v1 Dynamic",
+      "concepts": {
+        "C1_LineHeight": 0.101,
+        "C2_Compactness": 0.873,
+        "C3_Overload": 0.715,
+        "C4_Gegenpress": 0.865,
+        "C5_ChannelSpace": 1.0,
+        "C6_Dominance": 0.312
+      }
+    },
+    {
+      "frame_idx": 96093,
+      "error_type": "False Positive",
+      "calibrated_prob": 0.6425,
+      "raw_prob": 0.5904,
+      "true_label": 0,
+      "n_visible_players": 20,
+      "tactical_phase": "Open Half-Space Channel Penetration",
+      "concepts": {
+        "C1_LineHeight": 0.121,
+        "C2_Compactness": 0.909,
+        "C3_Overload": 0.635,
+        "C4_Gegenpress": 0.855,
+        "C5_ChannelSpace": 1.0,
+        "C6_Dominance": 0.353
+      }
+    },
+    {
+      "frame_idx": 96094,
+      "error_type": "False Positive",
+      "calibrated_prob": 0.6425,
+      "raw_prob": 0.5904,
+      "true_label": 0,
+      "n_visible_players": 20,
+      "tactical_phase": "Open Half-Space Channel Penetration",
+      "concepts": {
+        "C1_LineHeight": 0.121,
+        "C2_Compactness": 0.909,
+        "C3_Overload": 0.635,
+        "C4_Gegenpress": 0.855,
+        "C5_ChannelSpace": 1.0,
+        "C6_Dominance": 0.353
+      }
+    },
+    {
+      "frame_idx": 44543,
+      "error_type": "False Positive",
+      "calibrated_prob": 0.6381,
+      "raw_prob": 0.5861,
+      "true_label": 0,
+      "n_visible_players": 19,
+      "tactical_phase": "Open Half-Space Channel Penetration",
+      "concepts": {
+        "C1_LineHeight": 0.026,
+        "C2_Compactness": 0.904,
+        "C3_Overload": 0.546,
+        "C4_Gegenpress": 0.763,
+        "C5_ChannelSpace": 0.75,
+        "C6_Dominance": 0.353
+      }
+    },
+    {
+      "frame_idx": 44542,
+      "error_type": "False Positive",
+      "calibrated_prob": 0.6381,
+      "raw_prob": 0.5861,
+      "true_label": 0,
+      "n_visible_players": 19,
+      "tactical_phase": "Open Half-Space Channel Penetration",
+      "concepts": {
+        "C1_LineHeight": 0.026,
+        "C2_Compactness": 0.904,
+        "C3_Overload": 0.546,
+        "C4_Gegenpress": 0.763,
+        "C5_ChannelSpace": 0.75,
+        "C6_Dominance": 0.353
+      }
+    },
+    {
+      "frame_idx": 59035,
+      "error_type": "False Positive",
+      "calibrated_prob": 0.6356,
+      "raw_prob": 0.5835,
+      "true_label": 0,
+      "n_visible_players": 18,
+      "tactical_phase": "Flank Overload / 2v1 Dynamic",
+      "concepts": {
+        "C1_LineHeight": 0.177,
+        "C2_Compactness": 0.857,
+        "C3_Overload": 0.789,
+        "C4_Gegenpress": 1.0,
+        "C5_ChannelSpace": 1.0,
+        "C6_Dominance": 0.357
+      }
+    },
+    {
+      "frame_idx": 59034,
+      "error_type": "False Positive",
+      "calibrated_prob": 0.6356,
+      "raw_prob": 0.5835,
+      "true_label": 0,
+      "n_visible_players": 18,
+      "tactical_phase": "Flank Overload / 2v1 Dynamic",
+      "concepts": {
+        "C1_LineHeight": 0.177,
+        "C2_Compactness": 0.857,
+        "C3_Overload": 0.789,
+        "C4_Gegenpress": 1.0,
+        "C5_ChannelSpace": 1.0,
+        "C6_Dominance": 0.357
+      }
+    },
+    {
+      "frame_idx": 105864,
+      "error_type": "False Positive",
+      "calibrated_prob": 0.6264,
+      "raw_prob": 0.5745,
+      "true_label": 0,
+      "n_visible_players": 17,
+      "tactical_phase": "Flank Overload / 2v1 Dynamic",
+      "concepts": {
+        "C1_LineHeight": 0.026,
+        "C2_Compactness": 0.5,
+        "C3_Overload": 0.671,
+        "C4_Gegenpress": 1.0,
+        "C5_ChannelSpace": 1.0,
+        "C6_Dominance": 0.357
+      }
+    },
+    {
+      "frame_idx": 13018,
+      "error_type": "False Positive",
+      "calibrated_prob": 0.6244,
+      "raw_prob": 0.5726,
+      "true_label": 0,
+      "n_visible_players": 16,
+      "tactical_phase": "Flank Overload / 2v1 Dynamic",
+      "concepts": {
+        "C1_LineHeight": 0.062,
+        "C2_Compactness": 0.5,
+        "C3_Overload": 0.707,
+        "C4_Gegenpress": 1.0,
+        "C5_ChannelSpace": 1.0,
+        "C6_Dominance": 0.438
+      }
+    }
+  ],
+  "top_50_false_negatives": [
+    {
+      "frame_idx": 52968,
+      "error_type": "False Negative",
+      "calibrated_prob": 0.0035,
+      "raw_prob": 0.0036,
+      "true_label": 1,
+      "n_visible_players": 20,
+      "tactical_phase": "High Line Vulnerability (Deep Space Exposed)",
+      "concepts": {
+        "C1_LineHeight": 1.0,
+        "C2_Compactness": 0.0,
+        "C3_Overload": 0.895,
+        "C4_Gegenpress": 0.123,
+        "C5_ChannelSpace": 1.0,
+        "C6_Dominance": 0.0
+      }
+    },
+    {
+      "frame_idx": 25303,
+      "error_type": "False Negative",
+      "calibrated_prob": 0.0038,
+      "raw_prob": 0.0039,
+      "true_label": 1,
+      "n_visible_players": 21,
+      "tactical_phase": "High Line Vulnerability (Deep Space Exposed)",
+      "concepts": {
+        "C1_LineHeight": 1.0,
+        "C2_Compactness": 0.0,
+        "C3_Overload": 0.963,
+        "C4_Gegenpress": 0.0,
+        "C5_ChannelSpace": 0.4,
+        "C6_Dominance": 0.0
+      }
+    },
+    {
+      "frame_idx": 63710,
+      "error_type": "False Negative",
+      "calibrated_prob": 0.004,
+      "raw_prob": 0.0041,
+      "true_label": 1,
+      "n_visible_players": 21,
+      "tactical_phase": "High Line Vulnerability (Deep Space Exposed)",
+      "concepts": {
+        "C1_LineHeight": 0.984,
+        "C2_Compactness": 0.015,
+        "C3_Overload": 0.976,
+        "C4_Gegenpress": 0.0,
+        "C5_ChannelSpace": 0.4,
+        "C6_Dominance": 0.0
+      }
+    },
+    {
+      "frame_idx": 25302,
+      "error_type": "False Negative",
+      "calibrated_prob": 0.0042,
+      "raw_prob": 0.0042,
+      "true_label": 1,
+      "n_visible_players": 21,
+      "tactical_phase": "High Line Vulnerability (Deep Space Exposed)",
+      "concepts": {
+        "C1_LineHeight": 1.0,
+        "C2_Compactness": 0.0,
+        "C3_Overload": 0.95,
+        "C4_Gegenpress": 0.0,
+        "C5_ChannelSpace": 0.3,
+        "C6_Dominance": 0.0
+      }
+    },
+    {
+      "frame_idx": 25301,
+      "error_type": "False Negative",
+      "calibrated_prob": 0.0042,
+      "raw_prob": 0.0042,
+      "true_label": 1,
+      "n_visible_players": 21,
+      "tactical_phase": "High Line Vulnerability (Deep Space Exposed)",
+      "concepts": {
+        "C1_LineHeight": 1.0,
+        "C2_Compactness": 0.0,
+        "C3_Overload": 0.95,
+        "C4_Gegenpress": 0.0,
+        "C5_ChannelSpace": 0.3,
+        "C6_Dominance": 0.0
+      }
+    },
+    {
+      "frame_idx": 102854,
+      "error_type": "False Negative",
+      "calibrated_prob": 0.0047,
+      "raw_prob": 0.0047,
+      "true_label": 1,
+      "n_visible_players": 15,
+      "tactical_phase": "High Line Vulnerability (Deep Space Exposed)",
+      "concepts": {
+        "C1_LineHeight": 1.0,
+        "C2_Compactness": 0.5,
+        "C3_Overload": 0.887,
+        "C4_Gegenpress": 0.0,
+        "C5_ChannelSpace": 1.0,
+        "C6_Dominance": 0.0
+      }
+    },
+    {
+      "frame_idx": 19100,
+      "error_type": "False Negative",
+      "calibrated_prob": 0.0049,
+      "raw_prob": 0.0049,
+      "true_label": 1,
+      "n_visible_players": 21,
+      "tactical_phase": "High Line Vulnerability (Deep Space Exposed)",
+      "concepts": {
+        "C1_LineHeight": 1.0,
+        "C2_Compactness": 0.0,
+        "C3_Overload": 0.774,
+        "C4_Gegenpress": 0.0,
+        "C5_ChannelSpace": 0.429,
+        "C6_Dominance": 0.0
+      }
+    },
+    {
+      "frame_idx": 19099,
+      "error_type": "False Negative",
+      "calibrated_prob": 0.0049,
+      "raw_prob": 0.0049,
+      "true_label": 1,
+      "n_visible_players": 21,
+      "tactical_phase": "High Line Vulnerability (Deep Space Exposed)",
+      "concepts": {
+        "C1_LineHeight": 1.0,
+        "C2_Compactness": 0.0,
+        "C3_Overload": 0.774,
+        "C4_Gegenpress": 0.0,
+        "C5_ChannelSpace": 0.429,
+        "C6_Dominance": 0.0
+      }
+    },
+    {
+      "frame_idx": 70890,
+      "error_type": "False Negative",
+      "calibrated_prob": 0.005,
+      "raw_prob": 0.005,
+      "true_label": 1,
+      "n_visible_players": 19,
+      "tactical_phase": "High Line Vulnerability (Deep Space Exposed)",
+      "concepts": {
+        "C1_LineHeight": 0.981,
+        "C2_Compactness": 0.327,
+        "C3_Overload": 0.814,
+        "C4_Gegenpress": 0.032,
+        "C5_ChannelSpace": 1.0,
+        "C6_Dominance": 0.0
+      }
+    },
+    {
+      "frame_idx": 69225,
+      "error_type": "False Negative",
+      "calibrated_prob": 0.005,
+      "raw_prob": 0.005,
+      "true_label": 1,
+      "n_visible_players": 19,
+      "tactical_phase": "Flank Overload / 2v1 Dynamic",
+      "concepts": {
+        "C1_LineHeight": 1.0,
+        "C2_Compactness": 0.0,
+        "C3_Overload": 0.897,
+        "C4_Gegenpress": 0.334,
+        "C5_ChannelSpace": 1.0,
+        "C6_Dominance": 0.0
+      }
+    },
+    {
+      "frame_idx": 69224,
+      "error_type": "False Negative",
+      "calibrated_prob": 0.005,
+      "raw_prob": 0.005,
+      "true_label": 1,
+      "n_visible_players": 19,
+      "tactical_phase": "Flank Overload / 2v1 Dynamic",
+      "concepts": {
+        "C1_LineHeight": 1.0,
+        "C2_Compactness": 0.0,
+        "C3_Overload": 0.897,
+        "C4_Gegenpress": 0.334,
+        "C5_ChannelSpace": 1.0,
+        "C6_Dominance": 0.0
+      }
+    },
+    {
+      "frame_idx": 73183,
+      "error_type": "False Negative",
+      "calibrated_prob": 0.0051,
+      "raw_prob": 0.0051,
+      "true_label": 1,
+      "n_visible_players": 15,
+      "tactical_phase": "High Line Vulnerability (Deep Space Exposed)",
+      "concepts": {
+        "C1_LineHeight": 1.0,
+        "C2_Compactness": 0.5,
+        "C3_Overload": 0.834,
+        "C4_Gegenpress": 0.0,
+        "C5_ChannelSpace": 1.0,
+        "C6_Dominance": 0.0
+      }
+    },
+    {
+      "frame_idx": 25305,
+      "error_type": "False Negative",
+      "calibrated_prob": 0.0051,
+      "raw_prob": 0.0051,
+      "true_label": 1,
+      "n_visible_players": 21,
+      "tactical_phase": "High Line Vulnerability (Deep Space Exposed)",
+      "concepts": {
+        "C1_LineHeight": 1.0,
+        "C2_Compactness": 0.0,
+        "C3_Overload": 0.877,
+        "C4_Gegenpress": 0.0,
+        "C5_ChannelSpace": 0.143,
+        "C6_Dominance": 0.0
+      }
+    },
+    {
+      "frame_idx": 25304,
+      "error_type": "False Negative",
+      "calibrated_prob": 0.0051,
+      "raw_prob": 0.0051,
+      "true_label": 1,
+      "n_visible_players": 21,
+      "tactical_phase": "High Line Vulnerability (Deep Space Exposed)",
+      "concepts": {
+        "C1_LineHeight": 1.0,
+        "C2_Compactness": 0.0,
+        "C3_Overload": 0.877,
+        "C4_Gegenpress": 0.0,
+        "C5_ChannelSpace": 0.143,
+        "C6_Dominance": 0.0
+      }
+    },
+    {
+      "frame_idx": 64019,
+      "error_type": "False Negative",
+      "calibrated_prob": 0.0053,
+      "raw_prob": 0.0053,
+      "true_label": 1,
+      "n_visible_players": 20,
+      "tactical_phase": "High Line Vulnerability (Deep Space Exposed)",
+      "concepts": {
+        "C1_LineHeight": 1.0,
+        "C2_Compactness": 0.0,
+        "C3_Overload": 0.972,
+        "C4_Gegenpress": 0.067,
+        "C5_ChannelSpace": 0.0,
+        "C6_Dominance": 0.0
+      }
+    },
+    {
+      "frame_idx": 21808,
+      "error_type": "False Negative",
+      "calibrated_prob": 0.0053,
+      "raw_prob": 0.0053,
+      "true_label": 1,
+      "n_visible_players": 18,
+      "tactical_phase": "High Line Vulnerability (Deep Space Exposed)",
+      "concepts": {
+        "C1_LineHeight": 1.0,
+        "C2_Compactness": 0.0,
+        "C3_Overload": 0.879,
+        "C4_Gegenpress": 0.088,
+        "C5_ChannelSpace": 0.25,
+        "C6_Dominance": 0.0
+      }
+    },
+    {
+      "frame_idx": 52926,
+      "error_type": "False Negative",
+      "calibrated_prob": 0.0055,
+      "raw_prob": 0.0055,
+      "true_label": 1,
+      "n_visible_players": 20,
+      "tactical_phase": "High Line Vulnerability (Deep Space Exposed)",
+      "concepts": {
+        "C1_LineHeight": 0.985,
+        "C2_Compactness": 0.039,
+        "C3_Overload": 0.587,
+        "C4_Gegenpress": 0.102,
+        "C5_ChannelSpace": 1.0,
+        "C6_Dominance": 0.0
+      }
+    },
+    {
+      "frame_idx": 52927,
+      "error_type": "False Negative",
+      "calibrated_prob": 0.0055,
+      "raw_prob": 0.0055,
+      "true_label": 1,
+      "n_visible_players": 20,
+      "tactical_phase": "High Line Vulnerability (Deep Space Exposed)",
+      "concepts": {
+        "C1_LineHeight": 0.985,
+        "C2_Compactness": 0.039,
+        "C3_Overload": 0.587,
+        "C4_Gegenpress": 0.102,
+        "C5_ChannelSpace": 1.0,
+        "C6_Dominance": 0.0
+      }
+    },
+    {
+      "frame_idx": 22760,
+      "error_type": "False Negative",
+      "calibrated_prob": 0.0056,
+      "raw_prob": 0.0056,
+      "true_label": 1,
+      "n_visible_players": 18,
+      "tactical_phase": "High Line Vulnerability (Deep Space Exposed)",
+      "concepts": {
+        "C1_LineHeight": 1.0,
+        "C2_Compactness": 0.0,
+        "C3_Overload": 0.88,
+        "C4_Gegenpress": 0.0,
+        "C5_ChannelSpace": 0.0,
+        "C6_Dominance": 0.0
+      }
+    },
+    {
+      "frame_idx": 52928,
+      "error_type": "False Negative",
+      "calibrated_prob": 0.0056,
+      "raw_prob": 0.0056,
+      "true_label": 1,
+      "n_visible_players": 20,
+      "tactical_phase": "High Line Vulnerability (Deep Space Exposed)",
+      "concepts": {
+        "C1_LineHeight": 0.982,
+        "C2_Compactness": 0.039,
+        "C3_Overload": 0.587,
+        "C4_Gegenpress": 0.102,
+        "C5_ChannelSpace": 1.0,
+        "C6_Dominance": 0.0
+      }
+    },
+    {
+      "frame_idx": 29337,
+      "error_type": "False Negative",
+      "calibrated_prob": 0.0057,
+      "raw_prob": 0.0056,
+      "true_label": 1,
+      "n_visible_players": 19,
+      "tactical_phase": "High Line Vulnerability (Deep Space Exposed)",
+      "concepts": {
+        "C1_LineHeight": 1.0,
+        "C2_Compactness": 0.297,
+        "C3_Overload": 0.688,
+        "C4_Gegenpress": 0.073,
+        "C5_ChannelSpace": 1.0,
+        "C6_Dominance": 0.0
+      }
+    },
+    {
+      "frame_idx": 73182,
+      "error_type": "False Negative",
+      "calibrated_prob": 0.0057,
+      "raw_prob": 0.0057,
+      "true_label": 1,
+      "n_visible_players": 19,
+      "tactical_phase": "High Line Vulnerability (Deep Space Exposed)",
+      "concepts": {
+        "C1_LineHeight": 1.0,
+        "C2_Compactness": 0.605,
+        "C3_Overload": 0.82,
+        "C4_Gegenpress": 0.0,
+        "C5_ChannelSpace": 1.0,
+        "C6_Dominance": 0.0
+      }
+    },
+    {
+      "frame_idx": 104940,
+      "error_type": "False Negative",
+      "calibrated_prob": 0.0057,
+      "raw_prob": 0.0057,
+      "true_label": 1,
+      "n_visible_players": 20,
+      "tactical_phase": "High Line Vulnerability (Deep Space Exposed)",
+      "concepts": {
+        "C1_LineHeight": 1.0,
+        "C2_Compactness": 0.247,
+        "C3_Overload": 0.788,
+        "C4_Gegenpress": 0.184,
+        "C5_ChannelSpace": 1.0,
+        "C6_Dominance": 0.0
+      }
+    },
+    {
+      "frame_idx": 104939,
+      "error_type": "False Negative",
+      "calibrated_prob": 0.0057,
+      "raw_prob": 0.0057,
+      "true_label": 1,
+      "n_visible_players": 20,
+      "tactical_phase": "High Line Vulnerability (Deep Space Exposed)",
+      "concepts": {
+        "C1_LineHeight": 1.0,
+        "C2_Compactness": 0.247,
+        "C3_Overload": 0.788,
+        "C4_Gegenpress": 0.184,
+        "C5_ChannelSpace": 1.0,
+        "C6_Dominance": 0.0
+      }
+    },
+    {
+      "frame_idx": 98603,
+      "error_type": "False Negative",
+      "calibrated_prob": 0.0058,
+      "raw_prob": 0.0057,
+      "true_label": 1,
+      "n_visible_players": 16,
+      "tactical_phase": "High Line Vulnerability (Deep Space Exposed)",
+      "concepts": {
+        "C1_LineHeight": 0.991,
+        "C2_Compactness": 0.0,
+        "C3_Overload": 0.644,
+        "C4_Gegenpress": 0.0,
+        "C5_ChannelSpace": 0.5,
+        "C6_Dominance": 0.0
+      }
+    },
+    {
+      "frame_idx": 70892,
+      "error_type": "False Negative",
+      "calibrated_prob": 0.0058,
+      "raw_prob": 0.0058,
+      "true_label": 1,
+      "n_visible_players": 20,
+      "tactical_phase": "High Line Vulnerability (Deep Space Exposed)",
+      "concepts": {
+        "C1_LineHeight": 0.924,
+        "C2_Compactness": 0.294,
+        "C3_Overload": 0.843,
+        "C4_Gegenpress": 0.037,
+        "C5_ChannelSpace": 1.0,
+        "C6_Dominance": 0.0
+      }
+    },
+    {
+      "frame_idx": 70891,
+      "error_type": "False Negative",
+      "calibrated_prob": 0.0059,
+      "raw_prob": 0.0058,
+      "true_label": 1,
+      "n_visible_players": 18,
+      "tactical_phase": "High Line Vulnerability (Deep Space Exposed)",
+      "concepts": {
+        "C1_LineHeight": 0.981,
+        "C2_Compactness": 0.5,
+        "C3_Overload": 0.818,
+        "C4_Gegenpress": 0.032,
+        "C5_ChannelSpace": 1.0,
+        "C6_Dominance": 0.0
+      }
+    },
+    {
+      "frame_idx": 29799,
+      "error_type": "False Negative",
+      "calibrated_prob": 0.0059,
+      "raw_prob": 0.0059,
+      "true_label": 1,
+      "n_visible_players": 19,
+      "tactical_phase": "High Line Vulnerability (Deep Space Exposed)",
+      "concepts": {
+        "C1_LineHeight": 1.0,
+        "C2_Compactness": 0.0,
+        "C3_Overload": 0.771,
+        "C4_Gegenpress": 0.052,
+        "C5_ChannelSpace": 0.25,
+        "C6_Dominance": 0.0
+      }
+    },
+    {
+      "frame_idx": 111083,
+      "error_type": "False Negative",
+      "calibrated_prob": 0.0059,
+      "raw_prob": 0.0059,
+      "true_label": 1,
+      "n_visible_players": 20,
+      "tactical_phase": "High Line Vulnerability (Deep Space Exposed)",
+      "concepts": {
+        "C1_LineHeight": 1.0,
+        "C2_Compactness": 0.5,
+        "C3_Overload": 0.934,
+        "C4_Gegenpress": 0.157,
+        "C5_ChannelSpace": 1.0,
+        "C6_Dominance": 0.0
+      }
+    },
+    {
+      "frame_idx": 52969,
+      "error_type": "False Negative",
+      "calibrated_prob": 0.0062,
+      "raw_prob": 0.0061,
+      "true_label": 1,
+      "n_visible_players": 19,
+      "tactical_phase": "Flank Overload / 2v1 Dynamic",
+      "concepts": {
+        "C1_LineHeight": 0.994,
+        "C2_Compactness": 0.141,
+        "C3_Overload": 0.921,
+        "C4_Gegenpress": 0.343,
+        "C5_ChannelSpace": 0.889,
+        "C6_Dominance": 0.0
+      }
+    },
+    {
+      "frame_idx": 58341,
+      "error_type": "False Negative",
+      "calibrated_prob": 0.0062,
+      "raw_prob": 0.0062,
+      "true_label": 1,
+      "n_visible_players": 17,
+      "tactical_phase": "High Line Vulnerability (Deep Space Exposed)",
+      "concepts": {
+        "C1_LineHeight": 1.0,
+        "C2_Compactness": 0.131,
+        "C3_Overload": 0.984,
+        "C4_Gegenpress": 0.097,
+        "C5_ChannelSpace": 0.0,
+        "C6_Dominance": 0.0
+      }
+    },
+    {
+      "frame_idx": 58781,
+      "error_type": "False Negative",
+      "calibrated_prob": 0.0063,
+      "raw_prob": 0.0062,
+      "true_label": 1,
+      "n_visible_players": 20,
+      "tactical_phase": "High Line Vulnerability (Deep Space Exposed)",
+      "concepts": {
+        "C1_LineHeight": 0.952,
+        "C2_Compactness": 0.139,
+        "C3_Overload": 0.911,
+        "C4_Gegenpress": 0.0,
+        "C5_ChannelSpace": 0.2,
+        "C6_Dominance": 0.0
+      }
+    },
+    {
+      "frame_idx": 19101,
+      "error_type": "False Negative",
+      "calibrated_prob": 0.0063,
+      "raw_prob": 0.0063,
+      "true_label": 1,
+      "n_visible_players": 20,
+      "tactical_phase": "High Line Vulnerability (Deep Space Exposed)",
+      "concepts": {
+        "C1_LineHeight": 0.896,
+        "C2_Compactness": 0.0,
+        "C3_Overload": 0.863,
+        "C4_Gegenpress": 0.0,
+        "C5_ChannelSpace": 0.333,
+        "C6_Dominance": 0.0
+      }
+    },
+    {
+      "frame_idx": 61292,
+      "error_type": "False Negative",
+      "calibrated_prob": 0.0063,
+      "raw_prob": 0.0063,
+      "true_label": 1,
+      "n_visible_players": 20,
+      "tactical_phase": "High Line Vulnerability (Deep Space Exposed)",
+      "concepts": {
+        "C1_LineHeight": 0.971,
+        "C2_Compactness": 0.152,
+        "C3_Overload": 0.643,
+        "C4_Gegenpress": 0.056,
+        "C5_ChannelSpace": 0.8,
+        "C6_Dominance": 0.0
+      }
+    },
+    {
+      "frame_idx": 85699,
+      "error_type": "False Negative",
+      "calibrated_prob": 0.0063,
+      "raw_prob": 0.0063,
+      "true_label": 1,
+      "n_visible_players": 18,
+      "tactical_phase": "High Line Vulnerability (Deep Space Exposed)",
+      "concepts": {
+        "C1_LineHeight": 1.0,
+        "C2_Compactness": 0.316,
+        "C3_Overload": 0.932,
+        "C4_Gegenpress": 0.137,
+        "C5_ChannelSpace": 0.5,
+        "C6_Dominance": 0.0
+      }
+    },
+    {
+      "frame_idx": 19797,
+      "error_type": "False Negative",
+      "calibrated_prob": 0.0065,
+      "raw_prob": 0.0064,
+      "true_label": 1,
+      "n_visible_players": 13,
+      "tactical_phase": "High Line Vulnerability (Deep Space Exposed)",
+      "concepts": {
+        "C1_LineHeight": 1.0,
+        "C2_Compactness": 0.5,
+        "C3_Overload": 0.963,
+        "C4_Gegenpress": 0.226,
+        "C5_ChannelSpace": 1.0,
+        "C6_Dominance": 0.0
+      }
+    },
+    {
+      "frame_idx": 34810,
+      "error_type": "False Negative",
+      "calibrated_prob": 0.0066,
+      "raw_prob": 0.0065,
+      "true_label": 1,
+      "n_visible_players": 15,
+      "tactical_phase": "High Line Vulnerability (Deep Space Exposed)",
+      "concepts": {
+        "C1_LineHeight": 1.0,
+        "C2_Compactness": 0.5,
+        "C3_Overload": 0.866,
+        "C4_Gegenpress": 0.05,
+        "C5_ChannelSpace": 0.667,
+        "C6_Dominance": 0.0
+      }
+    },
+    {
+      "frame_idx": 58342,
+      "error_type": "False Negative",
+      "calibrated_prob": 0.0066,
+      "raw_prob": 0.0065,
+      "true_label": 1,
+      "n_visible_players": 19,
+      "tactical_phase": "High Line Vulnerability (Deep Space Exposed)",
+      "concepts": {
+        "C1_LineHeight": 0.952,
+        "C2_Compactness": 0.056,
+        "C3_Overload": 0.978,
+        "C4_Gegenpress": 0.088,
+        "C5_ChannelSpace": 0.0,
+        "C6_Dominance": 0.0
+      }
+    },
+    {
+      "frame_idx": 58343,
+      "error_type": "False Negative",
+      "calibrated_prob": 0.0066,
+      "raw_prob": 0.0065,
+      "true_label": 1,
+      "n_visible_players": 19,
+      "tactical_phase": "High Line Vulnerability (Deep Space Exposed)",
+      "concepts": {
+        "C1_LineHeight": 0.952,
+        "C2_Compactness": 0.056,
+        "C3_Overload": 0.978,
+        "C4_Gegenpress": 0.088,
+        "C5_ChannelSpace": 0.0,
+        "C6_Dominance": 0.0
+      }
+    },
+    {
+      "frame_idx": 90437,
+      "error_type": "False Negative",
+      "calibrated_prob": 0.0066,
+      "raw_prob": 0.0065,
+      "true_label": 1,
+      "n_visible_players": 16,
+      "tactical_phase": "High Line Vulnerability (Deep Space Exposed)",
+      "concepts": {
+        "C1_LineHeight": 0.984,
+        "C2_Compactness": 0.5,
+        "C3_Overload": 0.906,
+        "C4_Gegenpress": 0.165,
+        "C5_ChannelSpace": 1.0,
+        "C6_Dominance": 0.0
+      }
+    },
+    {
+      "frame_idx": 21810,
+      "error_type": "False Negative",
+      "calibrated_prob": 0.0066,
+      "raw_prob": 0.0065,
+      "true_label": 1,
+      "n_visible_players": 17,
+      "tactical_phase": "High Line Vulnerability (Deep Space Exposed)",
+      "concepts": {
+        "C1_LineHeight": 0.922,
+        "C2_Compactness": 0.095,
+        "C3_Overload": 0.803,
+        "C4_Gegenpress": 0.03,
+        "C5_ChannelSpace": 0.5,
+        "C6_Dominance": 0.0
+      }
+    },
+    {
+      "frame_idx": 21809,
+      "error_type": "False Negative",
+      "calibrated_prob": 0.0066,
+      "raw_prob": 0.0065,
+      "true_label": 1,
+      "n_visible_players": 17,
+      "tactical_phase": "High Line Vulnerability (Deep Space Exposed)",
+      "concepts": {
+        "C1_LineHeight": 0.922,
+        "C2_Compactness": 0.095,
+        "C3_Overload": 0.803,
+        "C4_Gegenpress": 0.03,
+        "C5_ChannelSpace": 0.5,
+        "C6_Dominance": 0.0
+      }
+    },
+    {
+      "frame_idx": 8622,
+      "error_type": "False Negative",
+      "calibrated_prob": 0.0066,
+      "raw_prob": 0.0066,
+      "true_label": 1,
+      "n_visible_players": 19,
+      "tactical_phase": "High Line Vulnerability (Deep Space Exposed)",
+      "concepts": {
+        "C1_LineHeight": 1.0,
+        "C2_Compactness": 0.5,
+        "C3_Overload": 0.892,
+        "C4_Gegenpress": 0.087,
+        "C5_ChannelSpace": 0.7,
+        "C6_Dominance": 0.0
+      }
+    },
+    {
+      "frame_idx": 21806,
+      "error_type": "False Negative",
+      "calibrated_prob": 0.0066,
+      "raw_prob": 0.0066,
+      "true_label": 1,
+      "n_visible_players": 19,
+      "tactical_phase": "High Line Vulnerability (Deep Space Exposed)",
+      "concepts": {
+        "C1_LineHeight": 1.0,
+        "C2_Compactness": 0.171,
+        "C3_Overload": 0.884,
+        "C4_Gegenpress": 0.0,
+        "C5_ChannelSpace": 0.0,
+        "C6_Dominance": 0.0
+      }
+    },
+    {
+      "frame_idx": 74836,
+      "error_type": "False Negative",
+      "calibrated_prob": 0.0066,
+      "raw_prob": 0.0066,
+      "true_label": 1,
+      "n_visible_players": 20,
+      "tactical_phase": "High Line Vulnerability (Deep Space Exposed)",
+      "concepts": {
+        "C1_LineHeight": 1.0,
+        "C2_Compactness": 0.215,
+        "C3_Overload": 0.918,
+        "C4_Gegenpress": 0.226,
+        "C5_ChannelSpace": 0.5,
+        "C6_Dominance": 0.0
+      }
+    },
+    {
+      "frame_idx": 52286,
+      "error_type": "False Negative",
+      "calibrated_prob": 0.0067,
+      "raw_prob": 0.0066,
+      "true_label": 1,
+      "n_visible_players": 18,
+      "tactical_phase": "High Line Vulnerability (Deep Space Exposed)",
+      "concepts": {
+        "C1_LineHeight": 0.934,
+        "C2_Compactness": 0.0,
+        "C3_Overload": 0.731,
+        "C4_Gegenpress": 0.07,
+        "C5_ChannelSpace": 0.5,
+        "C6_Dominance": 0.0
+      }
+    },
+    {
+      "frame_idx": 19777,
+      "error_type": "False Negative",
+      "calibrated_prob": 0.0067,
+      "raw_prob": 0.0066,
+      "true_label": 1,
+      "n_visible_players": 14,
+      "tactical_phase": "High Line Vulnerability (Deep Space Exposed)",
+      "concepts": {
+        "C1_LineHeight": 1.0,
+        "C2_Compactness": 0.5,
+        "C3_Overload": 0.61,
+        "C4_Gegenpress": 0.0,
+        "C5_ChannelSpace": 1.0,
+        "C6_Dominance": 0.0
+      }
+    },
+    {
+      "frame_idx": 19778,
+      "error_type": "False Negative",
+      "calibrated_prob": 0.0067,
+      "raw_prob": 0.0066,
+      "true_label": 1,
+      "n_visible_players": 14,
+      "tactical_phase": "High Line Vulnerability (Deep Space Exposed)",
+      "concepts": {
+        "C1_LineHeight": 1.0,
+        "C2_Compactness": 0.5,
+        "C3_Overload": 0.61,
+        "C4_Gegenpress": 0.0,
+        "C5_ChannelSpace": 1.0,
+        "C6_Dominance": 0.0
+      }
+    },
+    {
+      "frame_idx": 75797,
+      "error_type": "False Negative",
+      "calibrated_prob": 0.0067,
+      "raw_prob": 0.0067,
+      "true_label": 1,
+      "n_visible_players": 11,
+      "tactical_phase": "High Line Vulnerability (Deep Space Exposed)",
+      "concepts": {
+        "C1_LineHeight": 1.0,
+        "C2_Compactness": 0.5,
+        "C3_Overload": 0.769,
+        "C4_Gegenpress": 0.042,
+        "C5_ChannelSpace": 0.8,
+        "C6_Dominance": 0.0
+      }
+    },
+    {
+      "frame_idx": 75796,
+      "error_type": "False Negative",
+      "calibrated_prob": 0.0067,
+      "raw_prob": 0.0067,
+      "true_label": 1,
+      "n_visible_players": 11,
+      "tactical_phase": "High Line Vulnerability (Deep Space Exposed)",
+      "concepts": {
+        "C1_LineHeight": 1.0,
+        "C2_Compactness": 0.5,
+        "C3_Overload": 0.769,
+        "C4_Gegenpress": 0.042,
+        "C5_ChannelSpace": 0.8,
+        "C6_Dominance": 0.0
+      }
+    }
+  ]
+}

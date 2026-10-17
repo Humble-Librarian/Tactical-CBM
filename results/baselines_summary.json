@@ -1,0 +1,52 @@
+[
+  {
+    "model": "Baseline 0: Stratified Random Prior",
+    "roc_auc": 0.5,
+    "pr_auc": 0.0547,
+    "brier_score": 0.0517,
+    "log_loss": 0.2121,
+    "optimal_f1": 0.1037,
+    "optimal_threshold": 0.0523,
+    "latency_us_per_frame": 0.0
+  },
+  {
+    "model": "Baseline 1: Logistic Regression (6 Concepts)",
+    "roc_auc": 0.8101,
+    "pr_auc": 0.2434,
+    "brier_score": 0.1649,
+    "log_loss": 0.51,
+    "optimal_f1": 0.3398,
+    "optimal_threshold": 0.7446,
+    "latency_us_per_frame": 0.09
+  },
+  {
+    "model": "Baseline 2: LightGBM (6 Concepts)",
+    "roc_auc": 0.8293,
+    "pr_auc": 0.3029,
+    "brier_score": 0.1498,
+    "log_loss": 0.4776,
+    "optimal_f1": 0.3724,
+    "optimal_threshold": 0.7933,
+    "latency_us_per_frame": 1.73
+  },
+  {
+    "model": "Baseline 3: Logistic Regression (132-dim Raw Nodes)",
+    "roc_auc": 0.8367,
+    "pr_auc": 0.2958,
+    "brier_score": 0.1598,
+    "log_loss": 0.4897,
+    "optimal_f1": 0.3742,
+    "optimal_threshold": 0.7594,
+    "latency_us_per_frame": 0.69
+  },
+  {
+    "model": "Baseline 4: Mean-Pooled 2-Layer MLP",
+    "roc_auc": 0.8351,
+    "pr_auc": 0.3095,
+    "brier_score": 0.156,
+    "log_loss": 0.4984,
+    "optimal_f1": 0.384,
+    "optimal_threshold": 0.8082,
+    "latency_us_per_frame": 0.08
+  }
+]

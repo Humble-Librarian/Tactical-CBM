@@ -49,18 +49,18 @@ Phase 9: Systems Alignment, Documentation & Technical Report (D1, D4, E1, E2, E3
 
 ---
 
-### [ ] Phase 2: Comprehensive Baselines Suite
+### [x] Phase 2: Comprehensive Baselines Suite
 - **Scope:** A1 (Baselines: Random, Linear, GBDT, MLP).
 - **Deliverables:**
   - Create `ml_trainer/baselines.py`.
-  - Train & evaluate:
-    1. Stratified Random Prior Baseline (5.9% base rate).
-    2. Logistic Regression on Ground-Truth Concepts ($C_1 \dots C_6$).
-    3. XGBoost / LightGBM on Ground-Truth Concepts.
-    4. Logistic Regression on Flattened $22 \times 6 = 132$-dim Node Features.
-    5. Mean-Pooled 2-Layer MLP on Node Features ($6 \to 32 \to 1$).
+  - Train & evaluate on 574,560 modern tracking frames:
+    1. Stratified Random Prior Baseline (5.23% base rate, ROC-AUC: 0.5000, PR-AUC: 0.0547).
+    2. Logistic Regression on Ground-Truth Concepts (ROC-AUC: 0.8101, PR-AUC: 0.2434, 0.09 us).
+    3. LightGBM GBDT on Ground-Truth Concepts (ROC-AUC: 0.8293, PR-AUC: 0.3029, 1.73 us).
+    4. Logistic Regression on Flattened 132-dim Node Features (ROC-AUC: 0.8367, PR-AUC: 0.2958, 0.69 us).
+    5. Mean-Pooled 2-Layer MLP on Node Features (ROC-AUC: 0.8351, PR-AUC: 0.3095, 0.08 us).
   - Export structured benchmark results to `results/baselines_table.md` and `results/baselines_summary.json`.
-- **Exit Gate:** All 5 baselines reproducible via single-command `python ml_trainer/baselines.py`.
+- **Exit Gate:** Single-command execution `python ml_trainer/baselines.py` and unit test `tests/test_baselines_reproducibility.py` passing 42/42 tests. Verified on 2026-10-17.
 
 ---
 

@@ -303,6 +303,22 @@ class ThresholdOptimizer:
         tn_opt, fp_opt, fn_opt, tp_opt = confusion_matrix(y_true, y_pred_opt).ravel()
         optimal_cm = {"TN": int(tn_opt), "FP": int(fp_opt), "FN": int(fn_opt), "TP": int(tp_opt)}
 
+        # Precision-constrained Recall optimization: max Recall subject to Precision >= 0.50
+        valid_p_indices = np.where(precision >= 0.50)[0]
+        if len(valid_p_indices) > 0:
+            best_p_idx = valid_p_indices[int(np.argmax(recall[valid_p_indices]))]
+            recall_at_p50 = float(recall[best_p_idx])
+            precision_at_p50 = float(precision[best_p_idx])
+            threshold_at_p50 = float(thresholds[min(best_p_idx, len(thresholds) - 1)])
+        else:
+            recall_at_p50 = float(r_at_f05)
+            precision_at_p50 = float(p_at_f05)
+            threshold_at_p50 = float(best_f05_t)
+
+        y_pred_p50 = (y_prob >= threshold_at_p50).astype(int)
+        tn_p50, fp_p50, fn_p50, tp_p50 = confusion_matrix(y_true, y_pred_p50).ravel()
+        p50_cm = {"TN": int(tn_p50), "FP": int(fp_p50), "FN": int(fn_p50), "TP": int(tp_p50)}
+
         return {
             "best_f1": best_f1,
             "best_f1_threshold": best_f1_t,
@@ -310,6 +326,10 @@ class ThresholdOptimizer:
             "best_f05_threshold": best_f05_t,
             "precision_at_f05": p_at_f05,
             "recall_at_f05": r_at_f05,
+            "threshold_at_p50": threshold_at_p50,
+            "precision_at_p50": precision_at_p50,
+            "recall_at_p50": recall_at_p50,
+            "p50_cm": p50_cm,
             "default_cm": default_cm,
             "optimal_cm": optimal_cm
         }

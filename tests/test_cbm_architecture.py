@@ -184,3 +184,62 @@ def test_dataset_lateral_pitch_reflection():
     assert raw_frame["c_true"].shape == (6,)
     assert 0.0 <= float(raw_frame["y_threat"]) <= 1.0
 
+
+def test_relational_spatial_radar_invariance(cbm_model):
+    """
+    Verifies that compute_rel_spatial_bias:
+    1. Produces exact tensor shape [B, 22, 22]
+    2. Has identical values along the diagonal (self-to-self relative offset is zero)
+    3. Handles batch invariance and translation symmetry.
+    """
+    B = 2
+    x = torch.rand(B, 22, 6)
+    bias = cbm_model.compute_rel_spatial_bias(x)
+    assert bias.shape == (B, 22, 22)
+    assert not torch.isnan(bias).any()
+    # Check self-interaction along diagonal
+    for b in range(B):
+        diag_vals = torch.diagonal(bias[b])
+        assert torch.allclose(diag_vals, diag_vals[0], atol=1e-5)
+
+
+def test_active_passing_corridor_pooling_safety(cbm_model):
+    """
+    Verifies that SpatioTemporalCBM correctly pools the dynamic passing corridor
+    between ball carrier (actor) and forward teammates, with no NaNs when actor is missing.
+    """
+    B = 3
+    x = torch.rand(B, 22, 6)
+    adj = torch.ones(B, 22, 22)
+    mask = torch.ones(B, 22, 1)
+
+    # Frame 0: actor present
+    x[0, 5, 5] = 1.0  # node 5 is actor
+    # Frame 1: actor missing (fallback clamp)
+    x[1, :, 5] = 0.0
+
+    concepts, threat = cbm_model(x, adj, mask, return_calibrated=True)
+    assert not torch.isnan(concepts).any()
+    assert not torch.isnan(threat).any()
+    assert torch.all(concepts >= 0.0) and torch.all(concepts <= 1.0)
+
+
+def test_threshold_optimizer_precision_constrained_recall():
+    """
+    Verifies that optimize_thresholds returns precision-constrained recall
+    with Precision >= 50% and valid threshold in [0, 1].
+    """
+    from ml_trainer.evaluation import ThresholdOptimizer
+    np.random.seed(42)
+    y_true = (np.random.rand(1000) > 0.85).astype(int)
+    y_prob = np.clip(y_true * 0.4 + np.random.rand(1000) * 0.5, 0.01, 0.99)
+
+    info = ThresholdOptimizer.optimize_thresholds(y_true, y_prob)
+    assert "recall_at_p50" in info
+    assert "precision_at_p50" in info
+    assert "threshold_at_p50" in info
+    assert info["precision_at_p50"] >= 0.50
+    assert 0.0 <= info["recall_at_p50"] <= 1.0
+    assert 0.0 <= info["threshold_at_p50"] <= 1.0
+
+

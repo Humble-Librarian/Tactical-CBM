@@ -122,7 +122,7 @@ def evaluate_model(model: nn.Module, loader: DataLoader, device: torch.device):
 
 
 def train_cbm(
-    epochs: int = 3,
+    epochs: int = 4,
     batch_size: int = 256,
     lr: float = 1e-3,
     hidden_dim: int = 32
@@ -133,7 +133,7 @@ def train_cbm(
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print("=" * 75)
-    print("TRAINING SPATIO-TEMPORAL CONCEPT BOTTLENECK MODEL (CBM)")
+    print("TRAINING SPATIO-TEMPORAL CONCEPT BOTTLENECK MODEL (CBM) - WAVE 2")
     print(f"Device: {device} | Batch Size: {batch_size} | Epochs: {epochs}")
     print("=" * 75, flush=True)
 
@@ -145,11 +145,14 @@ def train_cbm(
     train_loader = DataLoader(train_ds, batch_size=batch_size, shuffle=True, drop_last=True)
     val_loader = DataLoader(val_ds, batch_size=batch_size, shuffle=False)
 
-    # 2. Model
+    # 2. Model (Wave 2: Relational Radar + 5-Zone Pooling)
     model = SpatioTemporalCBM(in_features=6, hidden_dim=hidden_dim, num_concepts=6).to(device)
 
-    # 3. Loss & Optimizer
-    criterion_concept = nn.MSELoss()
+    # 3. Loss & Optimizer with Dynamic Difficulty Weighting
+    # Concept weights: focus gradient attention on C5 (Channel Space) and subtle concepts
+    concept_weights = torch.tensor([1.0, 1.2, 1.2, 1.0, 2.5, 1.2], dtype=torch.float32, device=device)
+    concept_weights = concept_weights / concept_weights.mean()
+
     pos_weight = torch.tensor([12.0]).to(device)
     criterion_threat = nn.BCEWithLogitsLoss(pos_weight=pos_weight)
 
@@ -178,7 +181,7 @@ def train_cbm(
             optimizer.zero_grad()
             c_pred, y_logits = model(x, adj, mask, return_calibrated=False)
 
-            loss_c = criterion_concept(c_pred, c_true)
+            loss_c = (concept_weights * (c_pred - c_true)**2).mean()
             loss_y = criterion_threat(y_logits, y_true)
             loss = loss_c + threat_weight * loss_y
 
@@ -196,7 +199,7 @@ def train_cbm(
         n_batches = len(train_loader)
         print(f"Epoch {epoch:02d}/{epochs:02d} [{elapsed:.1f}s] | "
               f"Loss: {total_loss/n_batches:.4f} (C_MSE: {c_loss_sum/n_batches:.4f}, Y_BCE: {y_loss_sum/n_batches:.4f}) | "
-              f"Val R2: {val_eval['mean_r2']:.4f} | Val ROC-AUC: {val_eval['roc_auc']:.4f} | Val PR-AUC: {val_eval['pr_auc']:.4f}",
+              f"Val R2: {val_eval['mean_r2']:.4f} (C5: {val_eval['r2_scores'][4]:.4f}, C6: {val_eval['r2_scores'][5]:.4f}) | Val ROC-AUC: {val_eval['roc_auc']:.4f} | Val PR-AUC: {val_eval['pr_auc']:.4f}",
               flush=True)
 
         combined_score = val_eval['roc_auc'] + 0.5 * val_eval['mean_r2']
@@ -243,6 +246,9 @@ def train_cbm(
     print(f"  Optimal F0.5 Thresh: {thresh_info['best_f05_threshold']:.4f}")
     print(f"  Precision at F0.5:   {thresh_info['precision_at_f05']*100:.1f}%")
     print(f"  Recall at F0.5:      {thresh_info['recall_at_f05']*100:.1f}%")
+    print(f"  P>=50% Threshold:    {thresh_info['threshold_at_p50']:.4f}")
+    print(f"  Precision at P50:    {thresh_info['precision_at_p50']*100:.1f}%")
+    print(f"  Recall at P50:       {thresh_info['recall_at_p50']*100:.1f}%")
 
     # 5. Export Sidecar JSON for Instant Slider Execution
     bilinear_head = model.bilinear_head
@@ -267,7 +273,8 @@ def train_cbm(
                 "b": float(beta_cal.b),
                 "c": float(beta_cal.c)
             },
-            "optimal_f05_threshold": float(thresh_info["best_f05_threshold"])
+            "optimal_f05_threshold": float(thresh_info["best_f05_threshold"]),
+            "threshold_at_p50": float(thresh_info["threshold_at_p50"])
         },
         "concepts": CONCEPT_NAMES,
         "validation_metrics": {
@@ -277,7 +284,9 @@ def train_cbm(
             "calibrated_brier_score": final_eval['cal_brier'],
             "ece_percent": round(ece * 100, 2),
             "precision_at_f05": round(thresh_info['precision_at_f05'] * 100, 1),
-            "recall_at_f05": round(thresh_info['recall_at_f05'] * 100, 1)
+            "recall_at_f05": round(thresh_info['recall_at_f05'] * 100, 1),
+            "precision_at_p50": round(thresh_info['precision_at_p50'] * 100, 1),
+            "recall_at_p50": round(thresh_info['recall_at_p50'] * 100, 1)
         }
     }
 

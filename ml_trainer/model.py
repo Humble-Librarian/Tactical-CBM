@@ -20,10 +20,11 @@ class DenseGATLayer(nn.Module):
         self.W_v = nn.Linear(in_features, out_features, bias=False)
         self.out_proj = nn.Linear(out_features, out_features)
 
-    def forward(self, x: torch.Tensor, mask: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: torch.Tensor, mask: torch.Tensor, spatial_bias: Optional[torch.Tensor] = None) -> torch.Tensor:
         """
         x: [B, 22, in_features]
         mask: [B, 22, 22] (1.0 for valid connection, 0.0 otherwise)
+        spatial_bias: Optional [B, 22, 22] pairwise relational spatial bias
         """
         Q = self.W_q(x)  # [B, 22, out_features]
         K = self.W_k(x)  # [B, 22, out_features]
@@ -31,6 +32,10 @@ class DenseGATLayer(nn.Module):
         
         # Attention scores: Q @ K.T
         scores = torch.matmul(Q, K.transpose(-2, -1)) * self.scale  # [B, 22, 22]
+
+        # Add pairwise relational spatial bias if provided
+        if spatial_bias is not None:
+            scores = scores + spatial_bias
         
         # Masked attention: fill non-connected slots with -1e9
         mask_bool = mask > 0.5
@@ -201,9 +206,9 @@ BetaCalibratorTorch = BetaCalibratorLayer
 class SpatioTemporalCBM(nn.Module):
     """
     Spatio-Temporal Concept Bottleneck Model:
-      - 2-layer Dense-GAT with bidirectional adjacency and LayerNorm residual skips
-      - Team-conditioned masked dual pooling: [h_def, h_att]
-      - Stage 1 Concept Bottleneck: [h_def, h_att] -> C1..C6 (strictly [0, 1] via Sigmoid)
+      - 2-layer Dense-GAT with bidirectional topology, Relational Spatial Radar Bias, and LayerNorm skips
+      - 5-zone pitch pooling: [h_def, h_att, h_box, h_channel, h_corridor]
+      - Stage 1 Concept Bottleneck: 5-zone latent -> C1..C6 (strictly [0, 1] via Sigmoid)
       - Stage 2 Bilinear Concept Interaction Head: C1..C6 -> Threat Logits (+51.7% PR-AUC)
       - Integrated Beta Calibrator: maps raw threat probabilities to properly calibrated probabilities
     """
@@ -211,6 +216,14 @@ class SpatioTemporalCBM(nn.Module):
         super().__init__()
         self.in_proj = nn.Linear(in_features, hidden_dim)
         self.norm0 = nn.LayerNorm(hidden_dim)
+
+        # Relational Spatial Radar Bias: computes pairwise relative displacement & distance -> scalar attention bias
+        # Inputs: [dx, dy, dist] -> 3 features. Runs entirely on-the-fly in registers (0 bytes disk storage)
+        self.rel_radar = nn.Sequential(
+            nn.Linear(3, 16),
+            nn.GELU(),
+            nn.Linear(16, 1)
+        )
 
         self.gat1 = DenseGATLayer(hidden_dim, hidden_dim)
         self.norm1 = nn.LayerNorm(hidden_dim)
@@ -220,10 +233,10 @@ class SpatioTemporalCBM(nn.Module):
         self.norm2 = nn.LayerNorm(hidden_dim)
         self.act2 = nn.GELU()
 
-        # Stage 1 Concept Bottleneck Head with Multi-Zone Pitch Pooling:
-        # Inputs: [h_def, h_att, h_box, h_channel] -> 4 * hidden_dim
+        # Stage 1 Concept Bottleneck Head with 5-Zone Pitch Pooling:
+        # Inputs: [h_def, h_att, h_box, h_channel, h_corridor] -> 5 * hidden_dim
         self.concept_head = nn.Sequential(
-            nn.Linear(hidden_dim * 4, 32),
+            nn.Linear(hidden_dim * 5, 32),
             nn.LayerNorm(32),
             nn.GELU(),
             nn.Linear(32, 16),
@@ -237,6 +250,18 @@ class SpatioTemporalCBM(nn.Module):
 
         # Integrated Beta Calibrator
         self.beta_calibrator = BetaCalibratorLayer()
+
+    def compute_rel_spatial_bias(self, node_features: torch.Tensor) -> torch.Tensor:
+        """
+        Computes pairwise relative spatial bias [B, 22, 22] from normalized (x, y) coordinates.
+        Zero disk footprint: runs entirely in GPU/CPU tensor registers.
+        """
+        pos = node_features[:, :, 0:2]  # [B, 22, 2]
+        delta_pos = pos.unsqueeze(1) - pos.unsqueeze(2)  # [B, 22, 22, 2] (pos_j - pos_i)
+        dist = torch.norm(delta_pos, dim=-1, keepdim=True)  # [B, 22, 22, 1]
+        rel_feats = torch.cat([delta_pos, dist], dim=-1)  # [B, 22, 22, 3]
+        bias = self.rel_radar(rel_feats).squeeze(-1)  # [B, 22, 22]
+        return bias
 
     def forward(
         self,
@@ -254,11 +279,14 @@ class SpatioTemporalCBM(nn.Module):
         # 1. Input embedding with LayerNorm
         h = self.norm0(self.in_proj(node_features))
 
-        # 2. Dense GAT Layers with LayerNorm + Residual skips
-        h = self.norm1(h + self.act1(self.gat1(h, adj_mask)))
-        h = self.norm2(h + self.act2(self.gat2(h, adj_mask)))
+        # Relational radar bias for pairwise attention
+        spatial_bias = self.compute_rel_spatial_bias(node_features)
 
-        # 3. Multi-Zone Attentive Pitch Pooling (Focus Eyes):
+        # 2. Dense GAT Layers with Relational Radar Bias, LayerNorm + Residual skips
+        h = self.norm1(h + self.act1(self.gat1(h, adj_mask, spatial_bias=spatial_bias)))
+        h = self.norm2(h + self.act2(self.gat2(h, adj_mask, spatial_bias=spatial_bias)))
+
+        # 3. Multi-Zone Attentive Pitch Pooling (5 Focus Eyes):
         # A. Team-wide defenders & attackers
         is_attacker = node_features[:, :, 4:5]
         mask_att = player_mask * is_attacker
@@ -281,8 +309,19 @@ class SpatioTemporalCBM(nn.Module):
         mask_channel = player_mask * in_channel.float()
         h_channel = (h * mask_channel).sum(dim=1) / torch.clamp(mask_channel.sum(dim=1), min=1.0)
 
-        # Concatenate 4 spatial views: [h_def, h_att, h_box, h_channel]
-        graph_latent = torch.cat([h_def, h_att, h_box, h_channel], dim=-1)
+        # D. Active Passing Corridor (The 5th Eye):
+        # Focuses on the dynamic corridor between the ball carrier and forward passing options ahead of the ball
+        is_actor = node_features[:, :, 5:6]
+        actor_mask = player_mask * is_actor
+        actor_x = (x_coords * actor_mask).sum(dim=1, keepdim=True) / torch.clamp(actor_mask.sum(dim=1, keepdim=True), min=1.0)
+        actor_y = (y_coords * actor_mask).sum(dim=1, keepdim=True) / torch.clamp(actor_mask.sum(dim=1, keepdim=True), min=1.0)
+
+        in_corridor = (x_coords >= actor_x - 0.02) & (torch.abs(y_coords - actor_y) <= 0.25)
+        mask_corridor = player_mask * in_corridor.float()
+        h_corridor = (h * mask_corridor).sum(dim=1) / torch.clamp(mask_corridor.sum(dim=1), min=1.0)
+
+        # Concatenate 5 spatial views: [h_def, h_att, h_box, h_channel, h_corridor]
+        graph_latent = torch.cat([h_def, h_att, h_box, h_channel, h_corridor], dim=-1)
 
         # 4. Predict Concepts C1 - C6
         concepts = self.concept_head(graph_latent)

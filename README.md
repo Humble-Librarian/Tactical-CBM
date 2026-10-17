@@ -1,153 +1,115 @@
-# Tactical-CBM Engine ⚽⚡
+# Tactical CBM Engine ⚽⚡
 
-> **Sub-millisecond interpretable Graph Neural Network engine for real-time football tactics and counterfactual simulation.**  
-> Built with **C++17, PyTorch, ONNX Runtime, and StatsBomb 360** tracking data. Targeted for consumer hardware (Intel i5 / 8GB RAM).
+> **Explainable AI (Concept Bottleneck Model) & Real-Time Tactical Evaluation Engine for Modern Football.**  
+> Built with **PyTorch, C++17, WebAssembly, and StatsBomb 360** tracking data. Designed for reproducible ML experimental rigor and zero-copy consumer hardware inference.
+
+---
+
+## 📖 Table of Contents
+- [What is Tactical-CBM?](#-what-is-tactical-cbm)
+- [The 6 Canonical Concepts](#-the-6-canonical-concepts)
+- [Modern Dataset Benchmark (2022–2024)](#-modern-dataset-benchmark-20222024)
+- [Architecture & Multi-Runtime Parity](#-architecture--multi-runtime-parity)
+- [Getting Started](#-getting-started)
+- [Verification & Test Suite](#-verification--test-suite)
+- [Technical Documentation](#-technical-documentation)
 
 ---
 
 ## 🎯 What is Tactical-CBM?
 
-Standard football analytics models output opaque threat scores (e.g., *"Attack danger: 0.82"*). Coaches cannot trust or action black-box predictions.
+Standard football analytics models output opaque, black-box threat numbers (e.g., *"Attack Threat: 0.82"*). Elite coaches and analysts cannot trust or action black-box predictions because the reasoning cannot be inspected or challenged.
 
-**Tactical-CBM** is an **Explainable AI (Concept Bottleneck Model)** engine that forces neural representations through **6 human-understandable geometric concepts**:
-1. **$C_1$ Defensive Line Height:** Distance of the deepest outfield defender from own goal line.
-2. **$C_2$ Defensive Compactness:** $1 - (\text{Convex Hull Area} / 1500\text{m}^2)$.
-3. **$C_3$ Defensive Width Balance:** Lateral spread of defenders relative to the ball carrier's corridor.
-4. **$C_4$ Ball-Carrier Pressure:** Inverse-distance pressure summation $\sum \exp(-d_i / 4.0)$ within 8m.
-5. **$C_5$ Central Lane Blockage:** Proportion of direct passing rays to box attackers intercepted within 2.0m.
-6. **$C_6$ Box Overload Ratio:** Ratio of attackers to defenders inside the final 25m danger zone.
+**Tactical-CBM** is an **Explainable AI (Concept Bottleneck Model)** engine that projects high-dimensional spatial graph embeddings through **6 human-understandable geometric concepts** before predicting goal threat ($Y \in [0, 1]$):
+
+$$\text{Pitch Coordinates } (X) \xrightarrow{\text{Dense-GAT}} \text{Latent Space } (\mathbf{z}) \xrightarrow{\text{Bottleneck}} \text{Concepts } (C_1 \dots C_6) \xrightarrow{\text{Linear Head}} \text{Threat } (\hat{y})$$
+
+Coaches can perform **$O(1)$ real-time counterfactual interventions** (e.g., "What if the backline pushes up 10 meters?") via simple slider adjustments without re-running the full GNN.
 
 ---
 
-## ⚡ The Architecture: Fast Hybrid C++ / ONNX
+## 📐 The 6 Canonical Concepts
 
-Because a soccer match has a fixed ceiling of **22 players**, a dense $22 \times 22$ graph representation (484 floats) fits completely inside the CPU's **L1/L2 cache lines (~2 KB)**.
-
-```
-[Raw StatsBomb 360 JSONs]
-           │
-           ▼
-[Stage 1: Streaming Ingestion & Schema Lock] ──► 2,588-byte Zero-Copy Binary Contract
-           │
-           ▼
-[Stage 2: Dense-GAT Concept Training] ─────────► [B, 22, 22] Masked Attention in PyTorch
-           │
-           ▼
-[Stage 3: ONNX Graph Optimization] ────────────► Opset-17 Constant Folding (68 ➔ 29 Ops)
-           │
-           ▼
-[Stage 4: C++17 Zero-Copy Runtime] ────────────► alignas(32) Stack Buffers (<0.2ms / 5,500 FPS)
-           │
-           ▼
-[Stage 5: Instant Concept Intervention] ───────► Coach Slider Dot Product (0.002 ms / 2 μs)
-```
-
-### 🔬 Key Hardware & Systems Specs:
-* **Frame Latency:** $\sim 0.18\text{ ms}$ on 8th-Gen Intel i5 (AVX2 vectorization).
-* **Memory Footprint:** $< 25\text{ MB}$ RAM footprint for runtime.
-* **Instant Counterfactuals:** $O(1)$ slider re-evaluations ($0.002\text{ ms}$) without re-running the full GNN.
-
----
-
-## 📐 The Binary Contract (`shard_format.hpp` & `schema.py`)
-
-Fixed **2,588 bytes** per frame across Python and C++ (`#pragma pack(push, 1)` and `numpy.dtype`):
-
-| Offset (Bytes) | Field | Dimensions / Type | Description |
+| Concept | Name | Description | Normalization |
 | :--- | :--- | :--- | :--- |
-| `0` | `match_id` | `int32` | Unique match identifier |
-| `4` | `frame_id` | `int32` | Sequential frame index |
-| `8` | `node_features` | `float32[22, 6]` | `[x, y, dist_to_ball, angle_to_goal, team, actor]` |
-| `536` | `adj_mask` | `float32[22, 22]` | Delaunay / proximity connection mask |
-| `2472` | `player_mask` | `float32[22]` | `1.0` if visible player, `0.0` if empty pad |
-| `2560` | `c_true` | `float32[6]` | Ground-truth concepts ($C_1 \dots C_6$) |
-| `2584` | `y_threat` | `float32[1]` | Binary threat label (`1.0` if shot within 10 actions) |
+| **$C_1$** | **Defensive Line Height** | Distance of deepest defender (or penetrating ball carrier) from own goal | $[0, 1]$ ($70\text{m}$ ceiling) |
+| **$C_2$** | **Defensive Compactness** | Defensive block volume via Convex Hull area with camera frustum scaling | $[0, 1]$ ($1200\text{m}^2$ ceiling) |
+| **$C_3$** | **Defensive Width Balance** | Lateral defensive spread adjusted for ball-carrier offset | $[0, 1]$ |
+| **$C_4$** | **Ball-Carrier Pressure** | Gegenpressing intensity (nearest defender decay + local swarm count) | $[0, 1]$ |
+| **$C_5$** | **Passing Lane Blockage** | Proportion of passing rays to forward box attackers intercepted by defenders | $[0, 1]$ ($2.2\text{m}$ corridor) |
+| **$C_6$** | **Box Overload Ratio** | Ratio of attacking players to defenders inside the penalty box | $[0, 1]$ |
 
 ---
 
-## 📁 Repository Structure
+## 📊 Modern Dataset Benchmark (2022–2024)
 
-```
-Tactical-CBM/
-├── data/
-│   ├── raw/                  # StatsBomb 360 JSONs (events/ + three-sixty/ + matches/)
-│   └── processed/            # Binary shards (train.bin, val.bin)
-├── cpp_engine/
-│   └── include/
-│       └── shard_format.hpp  # C++17 struct header with byte-offset static asserts
-├── scripts/
-│   ├── schema.py             # Python numpy structured dtype matching C++ memory layout
-│   ├── setup_and_download.py # Automated parallel downloader for StatsBomb 360 data
-│   ├── inspect_linkage.py    # Event-to-360 linkage validator and threat label auditor
-│   └── verify_raw_data.py    # Dataset integrity verification
-├── .gitignore
-└── README.md
-```
+The engine trains on a curated **181-match modern tactical cohort** ($574,560$ freeze frames) representing modern high lines, inverted fullbacks, and box midfields:
+
+- **UEFA Euro 2024 (51 matches):** Complete tournament (Spain, Germany, England, France).
+- **1. Bundesliga 2023/24 (34 matches):** Xabi Alonso's unbeaten Bayer Leverkusen & FC Bayern Munich.
+- **Ligue 1 2022/23 (32 matches):** Complete Paris Saint-Germain domestic dominance.
+- **FIFA World Cup 2022 (64 matches):** Global elite tournament and transition meta.
+- **Binary Shard Storage:** $462,382$ training frames ($1,141.21\text{ MB}$) / $112,178$ validation frames ($276.87\text{ MB}$) in zero-copy memory-mapped format.
+
+---
+
+## ⚡ Architecture & Multi-Runtime Parity
+
+All geometric algorithms maintain verified cross-runtime mathematical parity ($|\Delta| < 10^{-5}$) across three execution targets:
+1. **Python Training Runtime:** [`scripts/geometry.py`](file:///d:/Tactical%20CBM%20Engine/scripts/geometry.py) with NumPy and SciPy.
+2. **C++ Native Runtime:** [`cpp_engine/include/geometry.hpp`](file:///d:/Tactical%20CBM%20Engine/cpp_engine/include/geometry.hpp) with Andrew's Monotone Chain 2D convex hull.
+3. **WebAssembly / Browser Runtime:** [`dashboard/tactical_geometry.wasm`](file:///d:/Tactical%20CBM%20Engine/dashboard/tactical_geometry.wasm) executed in [`dashboard/index.html`](file:///d:/Tactical%20CBM%20Engine/dashboard/index.html).
 
 ---
 
 ## 🚀 Getting Started
 
 ### 1. Requirements
-* Python 3.10+
-* `torch`, `scipy`, `statsbombpy`, `requests`
-* C++17 compatible compiler (MSVC / GCC / Clang)
+- Python 3.10+
+- `torch`, `numpy`, `scipy`, `statsbombpy`, `requests`, `pytest`
+- Modern C++17 compiler (MSVC / GCC / Clang)
 
-### 2. Download StatsBomb 360 Data
-Run the automated downloader (downloads UEFA Euro 2020 matches with 360 tracking):
+### 2. Download Modern Data & Build Shards
 ```bash
-python scripts/setup_and_download.py --limit 10
+# Ingest 181 modern matches from StatsBomb Open Data
+python scripts/setup_and_download.py --comp all --workers 8
+
+# Compile zero-copy binary shards
+python scripts/build_shards.py --workers 8
 ```
 
-### 3. Verify Dataset & Schema Invariants
-Verify the downloaded match pairs and test binary schema parity:
+### 3. Launch Interactive Canvas Dashboard
 ```bash
-python scripts/verify_raw_data.py
-python scripts/schema.py
+# Compile WebAssembly geometry module
+python scripts/compile_geometry_wasm.py
+
+# Launch local dashboard server
+python -m http.server 8501 --directory dashboard
+# Open http://localhost:8501 in your browser
 ```
 
 ---
 
-## 🗺️ Roadmap
-- [x] **Stage 1: Data & Schema Lock** (Matched 34,324 freeze-frames, verified 2,588-byte struct parity)
-- [x] **Stage 2: Python Feature & Delaunay Mesh Extraction** (`train.bin` & `val.bin` generated, 33,197 frames, 0 NaNs)
-- [x] **Stage 3: Dense-GAT Concept Bottleneck Training** (Dense masked attention, Val ROC-AUC: 0.755, 43 KB model)
-- [x] **Stage 4: ONNX Graph Optimization & Zero-Copy C++ Engine** (0.139ms ONNX latency, 67ns C++ intervention, 3.58e-7 numerical parity)
-- [x] **Stage 5: Interactive Tactical Sandbox & Slider Dashboard** (Real-time drag-and-drop pitch, 6 live bottleneck sliders, 60 FPS HTML5 canvas)
+## 🧪 Verification & Test Suite
 
----
-
-## 🎮 Launching the Interactive Tactical Sandbox
-
-Start the interactive board:
+Run the full automated test suite (39 unit, schema, and invariant tests):
 ```bash
-python dashboard/app.py --open
-```
-Or simply double-click `dashboard/index.html` to open it in any web browser without needing any server or dependencies!
-
----
-
-## 🧪 Automated Verification & Test Suite
-
-The project includes an exhaustive, multi-tier test suite covering binary contracts, geometry degeneracies, bottleneck invariants, and numerical parity:
-
-```bash
-# Run the complete Python test suite (21/21 tests passing)
-pytest -v tests/
-
-# Compile and run the native C++ invariant & memory alignment test
-g++ -std=c++17 -O3 -I cpp_engine/include tests/test_cpp_engine.cpp -o bin/test_cpp_engine
-./bin/test_cpp_engine
+pytest tests
 ```
 
-### Verified Invariants:
-- ✅ **Binary Parity:** Python `FRAME_DTYPE` and C++ `FrameRecord` match exactly 2,588 bytes at offsets 0, 4, 8, 536, 2472, 2560, 2584.
-- ✅ **Geometry Degeneracies:** Convex hull handled for collinear points; line height, pressure, blockage, and overload clamped $[0, 1]$.
-- ✅ **Concept Bottleneck Integrity:** Linear head confirmed to have 0 hidden bypass from GNN latent space to threat output.
-- ✅ **Numerical Parity:** PyTorch vs ONNX Runtime absolute error $< 3.58 \times 10^{-7}$ across all outputs.
-- ✅ **Stack Alignment:** 32-byte AVX2 SIMD memory alignment confirmed with zero dynamic heap allocations.
+Run C++ native layout and memory alignment assertions:
+```bash
+./bin/test_cpp_engine.exe
+```
 
 ---
 
-## 📄 License
-MIT License. Open for educational and research usage.
+## 📚 Technical Documentation
+
+- 📐 [System Architecture Specification](docs/ARCHITECTURE.md)
+- 🗄️ [Data Pipeline & Binary Shards](docs/DATA_PIPELINE.md)
+- 🧠 [Model Architecture & Training](docs/MODEL_ARCHITECTURE.md)
+- ⚡ [C++ Native & WebAssembly Engine](docs/CPP_AND_WASM_ENGINE.md)
+- 🎯 [Tactical Tracking & Kalman Filtering](docs/TRACKING_AND_KALMAN.md)
+- 🔬 [Test Suite & Verification Contracts](docs/TESTING_AND_VERIFICATION.md)
+- 🗺️ [Master Engineering Roadmap](ROADMAP.md)

@@ -220,9 +220,10 @@ class SpatioTemporalCBM(nn.Module):
         self.norm2 = nn.LayerNorm(hidden_dim)
         self.act2 = nn.GELU()
 
-        # Stage 1 Concept Bottleneck Head
+        # Stage 1 Concept Bottleneck Head with Multi-Zone Pitch Pooling:
+        # Inputs: [h_def, h_att, h_box, h_channel] -> 4 * hidden_dim
         self.concept_head = nn.Sequential(
-            nn.Linear(hidden_dim * 2, 32),
+            nn.Linear(hidden_dim * 4, 32),
             nn.LayerNorm(32),
             nn.GELU(),
             nn.Linear(32, 16),
@@ -257,14 +258,31 @@ class SpatioTemporalCBM(nn.Module):
         h = self.norm1(h + self.act1(self.gat1(h, adj_mask)))
         h = self.norm2(h + self.act2(self.gat2(h, adj_mask)))
 
-        # 3. Team-Conditioned Masked Dual Pooling
+        # 3. Multi-Zone Attentive Pitch Pooling (Focus Eyes):
+        # A. Team-wide defenders & attackers
         is_attacker = node_features[:, :, 4:5]
         mask_att = player_mask * is_attacker
         mask_def = player_mask * (1.0 - is_attacker)
 
         h_def = (h * mask_def).sum(dim=1) / torch.clamp(mask_def.sum(dim=1), min=1.0)
         h_att = (h * mask_att).sum(dim=1) / torch.clamp(mask_att.sum(dim=1), min=1.0)
-        graph_latent = torch.cat([h_def, h_att], dim=-1)
+
+        # B. Penalty Box Sentry: X >= 102m -> x_norm >= 0.85, Y in [18, 62]m -> y_norm in [0.225, 0.775]
+        x_coords = node_features[:, :, 0:1]
+        y_coords = node_features[:, :, 1:2]
+        in_box = (x_coords >= 0.85) & (y_coords >= 0.225) & (y_coords <= 0.775)
+        mask_box = player_mask * in_box.float()
+        h_box = (h * mask_box).sum(dim=1) / torch.clamp(mask_box.sum(dim=1), min=1.0)
+
+        # C. Half-Space Channel Scout: X >= 60m -> x_norm >= 0.50, Y in [18, 32]m (left) or [48, 62]m (right)
+        in_left_chan = (y_coords >= 0.225) & (y_coords <= 0.40)
+        in_right_chan = (y_coords >= 0.60) & (y_coords <= 0.775)
+        in_channel = (x_coords >= 0.50) & (in_left_chan | in_right_chan)
+        mask_channel = player_mask * in_channel.float()
+        h_channel = (h * mask_channel).sum(dim=1) / torch.clamp(mask_channel.sum(dim=1), min=1.0)
+
+        # Concatenate 4 spatial views: [h_def, h_att, h_box, h_channel]
+        graph_latent = torch.cat([h_def, h_att, h_box, h_channel], dim=-1)
 
         # 4. Predict Concepts C1 - C6
         concepts = self.concept_head(graph_latent)

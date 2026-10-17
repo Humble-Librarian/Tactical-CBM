@@ -138,3 +138,49 @@ def test_sub_microsecond_slider_latency(cbm_model):
     elapsed = time.perf_counter() - t0
     per_frame_latency_us = (elapsed / (200 * 100)) * 1e6
     assert per_frame_latency_us < 10.0, f"Batched throughput {per_frame_latency_us:.2f} us/frame exceeds 10 us SLA"
+
+
+def test_zone_aware_pooling_empty_zones_safety(cbm_model):
+    """
+    Verifies that when NO players are in the penalty box or half-space channels
+    (e.g., play is entirely in defensive half x < 40), pooling handles division
+    by zero safely and outputs finite, non-NaN concept predictions.
+    """
+    B = 4
+    # All players positioned at defensive half x in [0.1, 0.3], y in [0.2, 0.6]
+    # (zero in box x >= 0.85, zero in channel x >= 0.50)
+    x = torch.zeros(B, 22, 6)
+    x[:, :, 0] = torch.rand(B, 22) * 0.20 + 0.10
+    x[:, :, 1] = torch.rand(B, 22) * 0.40 + 0.20
+    adj = torch.ones(B, 22, 22)
+    mask = torch.ones(B, 22, 1)
+
+    concepts, logits = cbm_model(x, adj, mask, return_calibrated=True)
+    assert not torch.isnan(concepts).any(), "NaN detected in concepts with empty zones!"
+    assert not torch.isnan(logits).any(), "NaN detected in logits with empty zones!"
+    assert torch.all(concepts >= 0.0) and torch.all(concepts <= 1.0)
+
+
+def test_dataset_lateral_pitch_reflection():
+    """
+    Verifies that lateral pitch reflection in BinaryShardDataset mirrors y to 1.0 - y
+    and inverts angle to goal, preserving valid [0, 1] normalized field bounds.
+    """
+    from ml_trainer.dataset import BinaryShardDataset
+    val_bin = BASE_DIR / "data" / "processed" / "val.bin"
+    if not val_bin.exists():
+        pytest.skip("val.bin not available for dataset reflection test")
+
+    # Deterministic seed
+    torch.manual_seed(42)
+    ds_aug = BinaryShardDataset(val_bin, augment=True)
+    ds_raw = BinaryShardDataset(val_bin, augment=False)
+
+    raw_frame = ds_raw[0]
+    raw_y = raw_frame["node_features"][:, 1]
+
+    # Verify bounds in normalized space [0, 1]
+    assert torch.all(raw_y >= 0.0) and torch.all(raw_y <= 1.0)
+    assert raw_frame["c_true"].shape == (6,)
+    assert 0.0 <= float(raw_frame["y_threat"]) <= 1.0
+

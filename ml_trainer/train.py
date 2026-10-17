@@ -137,9 +137,9 @@ def train_cbm(
     print(f"Device: {device} | Batch Size: {batch_size} | Epochs: {epochs}")
     print("=" * 75, flush=True)
 
-    # 1. Datasets
-    train_ds = BinaryShardDataset(TRAIN_BIN)
-    val_ds = BinaryShardDataset(VAL_BIN)
+    # 1. Datasets (with D2 lateral reflection pitch symmetry on train)
+    train_ds = BinaryShardDataset(TRAIN_BIN, augment=True)
+    val_ds = BinaryShardDataset(VAL_BIN, augment=False)
     print(f"Loaded datasets zero-copy: {len(train_ds):,} train frames, {len(val_ds):,} val frames.")
 
     train_loader = DataLoader(train_ds, batch_size=batch_size, shuffle=True, drop_last=True)

@@ -15,8 +15,9 @@ if str(BASE_DIR) not in sys.path:
 from scripts.schema import FRAME_DTYPE, FRAME_BYTE_SIZE
 
 class BinaryShardDataset(Dataset):
-    def __init__(self, bin_path: str):
+    def __init__(self, bin_path: str, augment: bool = False):
         self.bin_path = Path(bin_path)
+        self.augment = augment
         if not self.bin_path.exists():
             raise FileNotFoundError(f"Binary shard not found at: {self.bin_path}")
             
@@ -40,6 +41,13 @@ class BinaryShardDataset(Dataset):
         player_mask = torch.from_numpy(rec['player_mask']).unsqueeze(-1) # [22, 1]
         c_true = torch.from_numpy(rec['c_true'])                # [6]
         y_threat = torch.tensor(rec['y_threat'], dtype=torch.float32)  # scalar
+        
+        # D2 Klein Four-Group Lateral Pitch Symmetry Augmentation (DeepMind TacticAI pattern)
+        # Reflects lateral position (y_norm -> 1.0 - y_norm) and angle to goal (angle_norm -> 1.0 - angle_norm)
+        if self.augment and torch.rand(1).item() < 0.5:
+            node_features = node_features.clone()
+            node_features[:, 1] = 1.0 - node_features[:, 1]
+            node_features[:, 3] = 1.0 - node_features[:, 3]
         
         return {
             'node_features': node_features,

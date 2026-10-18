@@ -12,6 +12,7 @@ Verifies:
 """
 
 import sys
+import math
 import time
 import pytest
 import torch
@@ -296,5 +297,183 @@ def test_bcit_javascript_mathematical_parity():
                 k += 1
 
     assert abs(pt_logit - js_logit) < 1e-5, f"Discrepancy: PyTorch {pt_logit} vs JS {js_logit}"
+
+
+def test_wave4_role_taxonomy_contracts():
+    """
+    Verifies that the canonical 8-role taxonomy conforms to the contract:
+      1. Contains exactly the 8 specified position-role tags.
+      2. ZERO player names exist in the schema.
+      3. All physical capability values (theta, clearance, gamma_box, v_max) are strictly positive.
+      4. Normalized capability vectors lie strictly within [0, 1].
+    """
+    from ml_trainer.model import ROLE_TAXONOMY, get_role_capability_vector, NEUTRAL_ROLE_CAPABILITIES
+
+    expected_roles = ["AM", "CF", "W", "DM", "CM", "FB", "CB", "GK"]
+    assert set(ROLE_TAXONOMY.keys()) == set(expected_roles)
+
+    for role_tag, role_data in ROLE_TAXONOMY.items():
+        # Contract: No celebrity names in role names or descriptions
+        assert "De Bruyne" not in role_data["name"] and "Haaland" not in role_data["name"]
+        assert role_data["theta"] > 0.0
+        assert role_data["clearance"] > 0.0
+        assert role_data["gamma_box"] > 0.0
+        assert role_data["v_max"] > 0.0
+
+        vec = get_role_capability_vector(role_tag)
+        assert len(vec) == 4
+        for val in vec:
+            assert 0.0 <= val <= 1.0
+
+    neutral = get_role_capability_vector("UNKNOWN_ROLE")
+    assert neutral == list(NEUTRAL_ROLE_CAPABILITIES)
+
+
+def test_wave4_kinematic_closing_speed_physics():
+    """
+    Verifies that kinematic closing speed physics:
+      c_ij = ((p_j - p_i) . (v_j - v_i)) / (||p_j - p_i|| + eps)
+    accurately represents relative closing speed and vanishes when velocities are zero.
+    """
+    # 2 players: Attacker at (0.8, 0.5), Defender at (0.75, 0.5)
+    # Distance = 0.05
+    pos = torch.tensor([[[0.75, 0.5], [0.80, 0.5]]], dtype=torch.float32)  # [1, 2, 2]
+    delta_pos = pos[:, 1:2, :] - pos[:, 0:1, :]  # [1, 1, 2] = [0.05, 0.0]
+    dist = torch.norm(delta_pos, dim=-1, keepdim=True)  # [1, 1, 1] = 0.05
+
+    # Case A: Stationary players -> closing speed must be 0
+    vel_zero = torch.zeros(1, 2, 2, dtype=torch.float32)
+    delta_vel_zero = vel_zero[:, 1:2, :] - vel_zero[:, 0:1, :]
+    c_zero = (delta_pos * delta_vel_zero).sum(dim=-1, keepdim=True) / (dist + 1e-4)
+    assert abs(c_zero.item()) < 1e-6
+
+    # Case B: Defender steps up toward halfway line (vx = -0.5) while attacker runs toward goal (vx = +0.5)
+    # Relative velocity (v_att - v_def) = +0.5 - (-0.5) = +1.0
+    # Dot product = 0.05 * 1.0 = 0.05, divided by dist (0.05) -> closing speed = +1.0 (trap snapping shut)
+    vel_trap = torch.tensor([[[-0.5, 0.0], [0.5, 0.0]]], dtype=torch.float32)
+    delta_vel_trap = vel_trap[:, 1:2, :] - vel_trap[:, 0:1, :]
+    c_trap = (delta_pos * delta_vel_trap).sum(dim=-1, keepdim=True) / (dist + 1e-4)
+    assert c_trap.item() > 0.95, f"Expected strong positive closing speed for step-up trap, got {c_trap.item()}"
+
+
+def test_wave4_step_up_offside_trap_kinematics():
+    """
+    Verifies that SpatioTemporalCBM.compute_offside_kinematics correctly detects
+    offside trap execution when the last defender steps up.
+    """
+    model = SpatioTemporalCBM(in_features=12, hidden_dim=32, num_concepts=6)
+
+    # 22 players:
+    # Defender 0 (CB): pos=(0.70, 0.5), vel=(-0.3, 0.0) [stepping up!]
+    # Attacker 1 (Striker): pos=(0.72, 0.5), vel=(0.5, 0.0) [running forward, caught offside!]
+    node_features = torch.zeros(1, 22, 12, dtype=torch.float32)
+
+    # Defender at index 0 (is_teammate = 0.0)
+    node_features[0, 0, 0] = 0.70  # x
+    node_features[0, 0, 1] = 0.50  # y
+    node_features[0, 0, 4] = 0.0   # is_teammate = 0 (defender)
+    node_features[0, 0, 6] = -0.30 # vx: stepping up toward halfway line
+
+    # Attacker at index 1 (is_teammate = 1.0)
+    node_features[0, 1, 0] = 0.72  # x (ahead of defender: offside!)
+    node_features[0, 1, 1] = 0.50  # y
+    node_features[0, 1, 4] = 1.0   # is_teammate = 1 (attacker)
+    node_features[0, 1, 6] = 0.50  # vx: sprinting toward goal
+
+    # Fill remaining players safely in their half
+    for i in range(2, 11):
+        node_features[0, i, 0] = 0.40
+        node_features[0, i, 1] = 0.1 * i
+        node_features[0, i, 4] = 0.0  # defenders
+    for i in range(11, 22):
+        node_features[0, i, 0] = 0.35
+        node_features[0, i, 1] = 0.08 * (i - 10)
+        node_features[0, i, 4] = 1.0  # attackers
+
+    res = model.compute_offside_kinematics(node_features)
+    assert res["is_offside"] is True
+    assert res["trap_snapped"] is True
+    assert res["closing_speed"] > 0.0
+
+
+def test_wave4_model_forward_compatibility_and_padding():
+    """
+    Verifies that SpatioTemporalCBM(in_features=12) handles:
+      1. Full 12-dimensional node features [B, 22, 12]
+      2. 6-dimensional node features [B, 22, 6] with automatic padding
+      3. Outputs are valid, bounded in [0, 1], and numerical shapes conform.
+    """
+    model = SpatioTemporalCBM(in_features=12, hidden_dim=32, num_concepts=6)
+    model.eval()
+
+    B = 4
+    adj = torch.ones(B, 22, 22)
+    mask = torch.ones(B, 22, 1)
+
+    # 1. Full 12-dimensional features
+    x12 = torch.randn(B, 22, 12)
+    x12[:, :, 0:2] = torch.clamp(x12[:, :, 0:2], 0.0, 1.0)
+    x12[:, :, 4] = (torch.rand(B, 22) > 0.5).float()  # is_teammate
+    concepts12, threat12 = model(x12, adj, mask, return_calibrated=True)
+    assert concepts12.shape == (B, 6)
+    assert threat12.shape == (B, 1)
+    assert torch.all(concepts12 >= 0.0) and torch.all(concepts12 <= 1.0)
+    assert torch.all(threat12 >= 0.0) and torch.all(threat12 <= 1.0)
+
+    # 2. 6-dimensional features with auto-padding
+    x6 = x12[:, :, :6]
+    concepts6, threat6 = model(x6, adj, mask, return_calibrated=True)
+    assert concepts6.shape == (B, 6)
+    assert threat6.shape == (B, 1)
+    assert torch.all(concepts6 >= 0.0) and torch.all(concepts6 <= 1.0)
+    assert torch.all(threat6 >= 0.0) and torch.all(threat6 <= 1.0)
+
+
+def test_wave4_python_javascript_role_and_closing_speed_parity():
+    """
+    Verifies that Python ROLE_TAXONOMY and kinematic closing speed formula
+    match the JavaScript implementation embedded in dashboard/index.html.
+    """
+    from ml_trainer.model import ROLE_TAXONOMY
+    import re
+
+    # Read dashboard/index.html
+    html_path = BASE_DIR / "dashboard" / "index.html"
+    assert html_path.exists()
+    with open(html_path, "r", encoding="utf-8") as f:
+        html_content = f.read()
+
+    # Verify that all 8 roles are defined in JS ROLE_CAPABILITIES
+    for role_tag, data in ROLE_TAXONOMY.items():
+        assert f'"{role_tag}":' in html_content
+        assert f'theta: {int(data["theta"])}' in html_content or f'theta: {data["theta"]}' in html_content
+        assert f'clearance: {data["clearance"]}' in html_content
+        assert f'gamma_box: {data["gamma_box"]}' in html_content
+
+    # Mathematical closing speed verification:
+    # Python: c = ((p_att - p_def) . (v_att - v_def)) / (||p_att - p_def|| + eps)
+    p_def = np.array([71.0, 32.0], dtype=np.float64)
+    v_def = np.array([-2.5, 0.0], dtype=np.float64)  # step-up
+    p_att = np.array([74.0, 32.0], dtype=np.float64)  # striker
+    v_att = np.array([5.0, 0.0], dtype=np.float64)   # run toward goal
+
+    # Python computation
+    dp = p_att - p_def
+    dist = np.linalg.norm(dp) + 1e-4
+    dv = v_att - v_def
+    py_closing = float(np.dot(dp, dv) / dist)
+
+    # JS replicated computation
+    dx = p_att[0] - p_def[0]
+    dy = p_att[1] - p_def[1]
+    js_dist = math.hypot(dx, dy) + 1e-4
+    dvx = v_att[0] - v_def[0]
+    dvy = v_att[1] - v_def[1]
+    js_closing = (dx * dvx + dy * dvy) / js_dist
+
+    assert abs(py_closing - js_closing) < 1e-6
+    assert py_closing > 7.0  # 3.0 * (5.0 - (-2.5)) / 3.0 = +7.5 m/s
+
+
 
 

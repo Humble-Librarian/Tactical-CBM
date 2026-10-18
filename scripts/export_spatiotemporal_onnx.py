@@ -63,7 +63,7 @@ def export_spatiotemporal_to_onnx():
             (dummy_node, dummy_adj, dummy_mask),
             str(ONNX_PATH),
             export_params=True,
-            opset_version=17,
+            opset_version=18,
             do_constant_folding=True,
             input_names=['node_features', 'adj_mask', 'player_mask'],
             output_names=['concepts', 'threat_logits'],

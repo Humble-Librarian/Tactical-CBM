@@ -234,25 +234,138 @@ class BetaCalibratorLayer(nn.Module):
 BetaCalibratorTorch = BetaCalibratorLayer
 
 
+# Canonical 8 Position & Role Taxonomy (Zero Player Names)
+# Physical capabilities: [theta_vision (deg), d_clearance (m), gamma_box (ratio), v_max (m/s)]
+ROLE_TAXONOMY: Dict[str, Dict[str, Any]] = {
+    "AM": {
+        "id": 0,
+        "name": "AM · Advanced Playmaker",
+        "theta": 180.0,
+        "clearance": 1.4,
+        "gamma_box": 1.0,
+        "v_max": 7.8,
+        "description": "Half-space creation, unlocking low blocks with high-tolerance passing."
+    },
+    "CF": {
+        "id": 1,
+        "name": "CF · Box Finisher",
+        "theta": 90.0,
+        "clearance": 2.2,
+        "gamma_box": 1.5,
+        "v_max": 8.5,
+        "description": "Penalty box poacher, header & shot converter inside the 18-yard box."
+    },
+    "W": {
+        "id": 2,
+        "name": "W · Direct Winger",
+        "theta": 110.0,
+        "clearance": 1.8,
+        "gamma_box": 1.1,
+        "v_max": 9.5,
+        "description": "1v1 isolation, rapid flank transition and breakaway sprint speed."
+    },
+    "DM": {
+        "id": 3,
+        "name": "DM · Holding Pivot",
+        "theta": 140.0,
+        "clearance": 1.9,
+        "gamma_box": 0.8,
+        "v_max": 7.5,
+        "description": "Defensive screening, tempo circulation, transitions control."
+    },
+    "CM": {
+        "id": 4,
+        "name": "CM · Box-to-Box",
+        "theta": 120.0,
+        "clearance": 2.0,
+        "gamma_box": 1.2,
+        "v_max": 8.8,
+        "description": "High work-rate, late third-man arrival into the penalty box."
+    },
+    "FB": {
+        "id": 5,
+        "name": "FB · Overlapping Full-Back",
+        "theta": 100.0,
+        "clearance": 2.1,
+        "gamma_box": 0.9,
+        "v_max": 9.2,
+        "description": "Flank width, overlapping passing outlets, recovery sprints."
+    },
+    "CB": {
+        "id": 6,
+        "name": "CB · Central Stopper",
+        "theta": 100.0,
+        "clearance": 2.4,
+        "gamma_box": 0.6,
+        "v_max": 8.2,
+        "description": "Offside line anchor, aerial duels, step-up offside trap execution."
+    },
+    "GK": {
+        "id": 7,
+        "name": "GK · Sweeper Keeper",
+        "theta": 150.0,
+        "clearance": 2.5,
+        "gamma_box": 0.2,
+        "v_max": 7.0,
+        "description": "Depth coverage, penalty box command, sweeping behind high line."
+    }
+}
+
+# Canonical normalization bounds for role physical capabilities
+ROLE_NORM_FACTORS = {
+    "theta": 180.0,
+    "clearance": 3.0,
+    "gamma_box": 2.0,
+    "v_max": 10.0
+}
+
+NEUTRAL_ROLE_CAPABILITIES = [
+    120.0 / ROLE_NORM_FACTORS["theta"],       # 0.6667
+    2.0 / ROLE_NORM_FACTORS["clearance"],     # 0.6667
+    1.0 / ROLE_NORM_FACTORS["gamma_box"],     # 0.5000
+    8.0 / ROLE_NORM_FACTORS["v_max"]          # 0.8000
+]
+
+
+def get_role_capability_vector(role_tag: str) -> list:
+    """Returns normalized [theta, clearance, gamma_box, v_max] for a role tag."""
+    role = ROLE_TAXONOMY.get(role_tag.upper())
+    if role is None:
+        return list(NEUTRAL_ROLE_CAPABILITIES)
+    return [
+        role["theta"] / ROLE_NORM_FACTORS["theta"],
+        role["clearance"] / ROLE_NORM_FACTORS["clearance"],
+        role["gamma_box"] / ROLE_NORM_FACTORS["gamma_box"],
+        role["v_max"] / ROLE_NORM_FACTORS["v_max"]
+    ]
+
+
 class SpatioTemporalCBM(nn.Module):
     """
-    Spatio-Temporal Concept Bottleneck Model:
-      - 2-layer Dense-GAT with bidirectional topology, Relational Spatial Radar Bias, and LayerNorm skips
-      - 5-zone pitch pooling: [h_def, h_att, h_box, h_channel, h_corridor]
+    Spatio-Temporal Concept Bottleneck Model (Wave 4: Kinematic Velocity & Role Physics):
+      - 2-layer Dense-GAT with bidirectional topology, Relational Kinematic Radar Bias, and LayerNorm skips
+      - Pairwise Kinematic Closing Speed Physics: (delta_p . delta_v) / (||delta_p|| + eps)
+      - Dynamic Position x Role Capabilities: [theta_vision, d_clearance, gamma_box, v_max]
+      - Multi-zone pitch pooling: [h_def, h_att, h_box, h_channel, h_corridor]
       - Stage 1 Concept Bottleneck: 5-zone latent -> C1..C6 (strictly [0, 1] via Sigmoid)
       - Stage 2 Bilinear Concept Interaction Head: C1..C6 -> Threat Logits (+51.7% PR-AUC)
       - Integrated Beta Calibrator: maps raw threat probabilities to properly calibrated probabilities
     """
     def __init__(self, in_features: int = 6, hidden_dim: int = 32, num_concepts: int = 6):
         super().__init__()
+        self.in_features = in_features
+        self.hidden_dim = hidden_dim
+        self.num_concepts = num_concepts
         self.in_proj = nn.Linear(in_features, hidden_dim)
         self.norm0 = nn.LayerNorm(hidden_dim)
 
-        # Relational Spatial Radar Bias: computes pairwise relative displacement & distance -> 4-head attention biases
-        # Inputs: [dx, dy, dist] -> 3 features. Outputs: 4 specialized spatial biases (1 per attention head).
+        # Relational Spatial & Kinematic Radar Bias:
+        # If in_features >= 8: accepts [dx, dy, dist, closing_speed] (4 features)
+        # If in_features == 6: accepts [dx, dy, dist] (3 features, Wave 3 legacy compatibility)
         self.num_heads = 4
+        radar_in_dim = 4 if in_features >= 8 else 3
         self.rel_radar = nn.Sequential(
-            nn.Linear(3, 16),
+            nn.Linear(radar_in_dim, 16),
             nn.GELU(),
             nn.Linear(16, self.num_heads)
         )
@@ -285,13 +398,26 @@ class SpatioTemporalCBM(nn.Module):
 
     def compute_rel_spatial_bias(self, node_features: torch.Tensor) -> torch.Tensor:
         """
-        Computes pairwise 4-head relative spatial bias [B, 4, 22, 22] from normalized (x, y) coordinates.
-        Zero disk footprint: runs entirely in GPU/CPU tensor registers.
+        Computes pairwise 4-head relative spatial & kinematic bias [B, 4, 22, 22].
+        In Wave 4, computes scalar closing speed:
+          c_ij = ((p_j - p_i) . (v_j - v_i)) / (||p_j - p_i|| + eps)
+        When players are stationary (v = 0), closing speed is identically 0.
         """
         pos = node_features[:, :, 0:2]  # [B, 22, 2]
         delta_pos = pos.unsqueeze(1) - pos.unsqueeze(2)  # [B, 22, 22, 2] (pos_j - pos_i)
         dist = torch.norm(delta_pos, dim=-1, keepdim=True)  # [B, 22, 22, 1]
-        rel_feats = torch.cat([delta_pos, dist], dim=-1)  # [B, 22, 22, 3]
+
+        if self.rel_radar[0].in_features == 4:
+            if node_features.shape[-1] >= 8:
+                vel = node_features[:, :, 6:8]  # [B, 22, 2]
+                delta_vel = vel.unsqueeze(1) - vel.unsqueeze(2)  # [B, 22, 22, 2] (v_j - v_i)
+                closing_speed = (delta_pos * delta_vel).sum(dim=-1, keepdim=True) / (dist + 1e-4)  # [B, 22, 22, 1]
+            else:
+                closing_speed = torch.zeros_like(dist)
+            rel_feats = torch.cat([delta_pos, dist, closing_speed], dim=-1)  # [B, 22, 22, 4]
+        else:
+            rel_feats = torch.cat([delta_pos, dist], dim=-1)  # [B, 22, 22, 3]
+
         bias = self.rel_radar(rel_feats)  # [B, 22, 22, 4]
         # Permute to [B, 4, 22, 22] for multi-head attention
         bias = bias.permute(0, 3, 1, 2)
@@ -305,13 +431,33 @@ class SpatioTemporalCBM(nn.Module):
         return_calibrated: bool = False
     ) -> Tuple[torch.Tensor, torch.Tensor]:
         """
-        node_features: [B, 22, 6]
+        node_features: [B, 22, in_features] (6 spatial, or 8 with velocities, or 12 with role capabilities)
         adj_mask:      [B, 22, 22]
         player_mask:   [B, 22, 1]
         returns: (concepts [B, 6], threat_logits [B, 1] or calibrated_threat [B, 1])
         """
+        B, N, F = node_features.shape
+
+        # Auto-adapt feature dimensions between 6 and 12 for flawless backward compatibility
+        if self.in_features >= 12 and F < 12:
+            device = node_features.device
+            dtype = node_features.dtype
+            # Pad velocities with zeros if missing
+            if F <= 6:
+                pad_vel = torch.zeros(B, N, 2, device=device, dtype=dtype)
+                pad_caps = torch.tensor(NEUTRAL_ROLE_CAPABILITIES, device=device, dtype=dtype).view(1, 1, 4).expand(B, N, 4)
+                node_features = torch.cat([node_features, pad_vel, pad_caps], dim=-1)
+            elif F == 8:
+                pad_caps = torch.tensor(NEUTRAL_ROLE_CAPABILITIES, device=device, dtype=dtype).view(1, 1, 4).expand(B, N, 4)
+            node_features_in = node_features
+        elif self.in_features == 6 and F > 6:
+            # Slicing down to 6 spatial features for legacy model mode
+            node_features_in = node_features[:, :, :6]
+        else:
+            node_features_in = node_features
+
         # 1. Input embedding with LayerNorm
-        h = self.norm0(self.in_proj(node_features))
+        h = self.norm0(self.in_proj(node_features_in))
 
         # Relational radar bias for pairwise attention
         spatial_bias = self.compute_rel_spatial_bias(node_features)
@@ -330,10 +476,16 @@ class SpatioTemporalCBM(nn.Module):
         h_att = (h * mask_att).sum(dim=1) / torch.clamp(mask_att.sum(dim=1), min=1.0)
 
         # B. Penalty Box Sentry: X >= 102m -> x_norm >= 0.85, Y in [18, 62]m -> y_norm in [0.225, 0.775]
+        # In Wave 4, modulated by box threat factor gamma_box if role capabilities are present
         x_coords = node_features[:, :, 0:1]
         y_coords = node_features[:, :, 1:2]
         in_box = (x_coords >= 0.85) & (y_coords >= 0.225) & (y_coords <= 0.775)
-        mask_box = player_mask * in_box.float()
+        
+        if node_features.shape[-1] >= 11:
+            gamma_box = node_features[:, :, 10:11] * ROLE_NORM_FACTORS["gamma_box"]  # De-normalize to [0.2 .. 1.5]
+            mask_box = player_mask * in_box.float() * gamma_box
+        else:
+            mask_box = player_mask * in_box.float()
         h_box = (h * mask_box).sum(dim=1) / torch.clamp(mask_box.sum(dim=1), min=1.0)
 
         # C. Half-Space Channel Scout: X >= 60m -> x_norm >= 0.50, Y in [18, 32]m (left) or [48, 62]m (right)
@@ -381,6 +533,67 @@ class SpatioTemporalCBM(nn.Module):
         if calibrated:
             return self.beta_calibrator(raw_probs)
         return raw_probs
+
+    def compute_offside_kinematics(
+        self,
+        node_features: torch.Tensor,
+        player_mask: Optional[torch.Tensor] = None
+    ) -> Dict[str, Any]:
+        """
+        Computes exact kinematic offside trap closing speeds:
+          c = ((p_atk - p_def) . (v_atk - v_def)) / (||p_atk - p_def|| + eps)
+        Returns offside status, closing speed, and trap snapping status.
+        """
+        if node_features.dim() == 2:
+            node_features = node_features.unsqueeze(0)
+        B, N, F = node_features.shape
+
+        pos = node_features[:, :, 0:2]  # [B, 22, 2]
+        vel = node_features[:, :, 6:8] if F >= 8 else torch.zeros_like(pos)  # [B, 22, 2]
+        is_attacker = node_features[:, :, 4] > 0.5  # [B, 22] bool
+
+        results = []
+        for b in range(B):
+            def_indices = torch.where(~is_attacker[b])[0]
+            att_indices = torch.where(is_attacker[b])[0]
+
+            if len(def_indices) == 0 or len(att_indices) == 0:
+                results.append({"is_offside": False, "closing_speed": 0.0, "trap_snapped": False})
+                continue
+
+            # Deepest defender (highest x)
+            last_def_idx = def_indices[torch.argmax(pos[b, def_indices, 0])]
+            # Most advanced attacker (highest x)
+            lead_att_idx = att_indices[torch.argmax(pos[b, att_indices, 0])]
+
+            p_def = pos[b, last_def_idx]
+            p_att = pos[b, lead_att_idx]
+            v_def = vel[b, last_def_idx]
+            v_att = vel[b, lead_att_idx]
+
+            delta_p = p_att - p_def
+            dist = torch.norm(delta_p) + 1e-4
+            delta_v = v_att - v_def
+            closing_speed = float(torch.dot(delta_p, delta_v).item() / dist.item())
+
+            # Offside condition: attacker is beyond the second last opponent (last outfield defender)
+            is_offside = bool(p_att[0] > p_def[0] + 0.005)
+
+            # Step-up trap: defender moving toward own half / away from goal (vx < 0 in pitch coords)
+            # or relative closing speed is strongly positive while attacker is offside
+            trap_snapped = bool(is_offside and (v_def[0] < -0.05 or closing_speed > 0.10))
+
+            results.append({
+                "is_offside": is_offside,
+                "closing_speed": closing_speed,
+                "trap_snapped": trap_snapped,
+                "def_x": float(p_def[0].item()),
+                "att_x": float(p_att[0].item()),
+                "def_vx": float(v_def[0].item()),
+                "att_vx": float(v_att[0].item())
+            })
+
+        return results[0] if B == 1 else results
 
     def get_concept_sensitivities(self, concepts: torch.Tensor) -> torch.Tensor:
         """

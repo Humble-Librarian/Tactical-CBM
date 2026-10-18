@@ -568,6 +568,183 @@
         .legend-gold { background: #eab308; border: 1px solid #fef08a; }
         .legend-red { background: #e11d48; border: 1px solid #fda4af; }
         .legend-ball { background: #ffffff; border: 1px solid #000000; border-radius: 50%; }
+
+        /* Wave 4: Kinematic Velocity & Offside Trap HUD */
+        .kinematic-hud {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(15, 23, 42, 0.85);
+            border: 1px solid #1e293b;
+            border-radius: 8px;
+            padding: 8px 14px;
+            margin-bottom: 8px;
+            font-size: 0.8rem;
+            backdrop-filter: blur(8px);
+        }
+
+        .hud-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .hud-badge {
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-weight: 700;
+            font-size: 0.72rem;
+            letter-spacing: 0.03em;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-family: 'Fira Code', monospace;
+            transition: all 0.2s ease;
+        }
+
+        .hud-badge-trap {
+            background: rgba(16, 185, 129, 0.2);
+            color: #10b981;
+            border: 1px solid rgba(16, 185, 129, 0.5);
+            box-shadow: 0 0 10px rgba(16, 185, 129, 0.25);
+        }
+
+        .hud-badge-breakaway {
+            background: rgba(244, 63, 94, 0.2);
+            color: #f43f5e;
+            border: 1px solid rgba(244, 63, 94, 0.5);
+            box-shadow: 0 0 10px rgba(244, 63, 94, 0.25);
+        }
+
+        .hud-badge-neutral {
+            background: rgba(56, 189, 248, 0.12);
+            color: var(--accent-blue);
+            border: 1px solid rgba(56, 189, 248, 0.3);
+        }
+
+        .hud-details {
+            color: var(--text-muted);
+            font-size: 0.76rem;
+            font-family: 'Fira Code', monospace;
+        }
+
+        .hud-action-btn {
+            background: linear-gradient(135deg, #1e293b, #0f172a);
+            border: 1px solid #334155;
+            color: var(--text-main);
+            padding: 5px 12px;
+            border-radius: 6px;
+            font-size: 0.72rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s ease;
+        }
+
+        .hud-action-btn:hover {
+            border-color: #38bdf8;
+            color: #38bdf8;
+            background: rgba(56, 189, 248, 0.1);
+        }
+
+        /* Wave 4: Dynamic Player Role & Velocity Bar */
+        .player-control-panel {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(15, 23, 42, 0.9);
+            border: 1px solid #1e293b;
+            border-radius: 8px;
+            padding: 8px 14px;
+            margin-top: 8px;
+            font-size: 0.78rem;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .panel-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .selected-player-pill {
+            font-family: 'Fira Code', monospace;
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: 5px;
+            background: rgba(56, 189, 248, 0.15);
+            color: #38bdf8;
+            border: 1px solid rgba(56, 189, 248, 0.3);
+            font-size: 0.75rem;
+        }
+
+        .role-chips-group {
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+        }
+
+        .role-chip {
+            background: #1e293b;
+            border: 1px solid #334155;
+            color: var(--text-muted);
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .role-chip:hover {
+            color: var(--text-main);
+            border-color: #64748b;
+        }
+
+        .role-chip.active {
+            background: rgba(56, 189, 248, 0.2);
+            color: #38bdf8;
+            border-color: #38bdf8;
+            box-shadow: 0 0 8px rgba(56, 189, 248, 0.3);
+        }
+
+        .panel-right {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .velocity-readout {
+            font-family: 'Fira Code', monospace;
+            font-size: 0.74rem;
+            color: #a7f3d0;
+            background: rgba(16, 185, 129, 0.1);
+            padding: 3px 7px;
+            border-radius: 4px;
+            border: 1px solid rgba(16, 185, 129, 0.25);
+        }
+
+        .velocity-btn {
+            background: #1e293b;
+            border: 1px solid #334155;
+            color: var(--text-muted);
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .velocity-btn:hover {
+            color: var(--text-main);
+            border-color: #38bdf8;
+        }
     </style>
 </head>
 <body>
@@ -620,8 +797,46 @@
                 </div>
             </div>
             
+            <!-- Wave 4 Kinematic Offside & Velocity HUD -->
+            <div id="kinematicHud" class="kinematic-hud">
+                <div class="hud-left">
+                    <span id="hudBadge" class="hud-badge hud-badge-neutral">🛡️ ACTIVE LINE</span>
+                    <span id="hudDetails" class="hud-details">Last Defender: CB #4 · Stopper | Relative Closing: 0.0 m/s</span>
+                </div>
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <button id="stepUpTrapBtn" class="hud-action-btn" onclick="triggerStepUpTrap()" title="Simulate last CB aggressively stepping up 4m to spring offside trap">
+                        <span>⚡ Test Step-Up Trap</span>
+                    </button>
+                    <button id="resetVelocitiesBtn" class="hud-action-btn" onclick="resetAllVelocities()" title="Set all player velocities to stationary (v = 0)">
+                        <span>⏹ Reset Speeds</span>
+                    </button>
+                </div>
+            </div>
+
             <div class="pitch-canvas-wrapper">
                 <canvas id="pitchCanvas" width="1200" height="800"></canvas>
+            </div>
+
+            <!-- Wave 4 Interactive Role Taxonomy & Kinematics Control Bar -->
+            <div id="playerControlPanel" class="player-control-panel">
+                <div class="panel-left">
+                    <span id="selectedPlayerInfo" class="selected-player-pill">Click player to assign role & drag arrow to aim sprint</span>
+                    <div id="roleSelectorChips" class="role-chips-group">
+                        <button class="role-chip" onclick="setSelectedPlayerRole('AM')" title="AM · Advanced Playmaker (Vision 180°, Clearance 1.4m)">AM · Playmaker</button>
+                        <button class="role-chip" onclick="setSelectedPlayerRole('CF')" title="CF · Box Finisher (Box Threat 1.5x, Vision 90°)">CF · Finisher</button>
+                        <button class="role-chip" onclick="setSelectedPlayerRole('W')"  title="W · Direct Winger (Sprint 9.5 m/s, Clearance 1.8m)">W · Winger</button>
+                        <button class="role-chip" onclick="setSelectedPlayerRole('DM')" title="DM · Holding Pivot (Vision 140°, Screening)">DM · Pivot</button>
+                        <button class="role-chip" onclick="setSelectedPlayerRole('CM')" title="CM · Box-to-Box (Workrate 8.8 m/s, Late Runs)">CM · Box-to-Box</button>
+                        <button class="role-chip" onclick="setSelectedPlayerRole('FB')" title="FB · Overlapping Full-Back (Speed 9.2 m/s)">FB · Full-Back</button>
+                        <button class="role-chip" onclick="setSelectedPlayerRole('CB')" title="CB · Central Stopper (Offside Anchor, Clearance 2.4m)">CB · Stopper</button>
+                        <button class="role-chip" onclick="setSelectedPlayerRole('GK')" title="GK · Sweeper Keeper (Sweeping Coverage 2.5m)">GK · Sweeper</button>
+                    </div>
+                </div>
+                <div class="panel-right">
+                    <span id="velocityReadout" class="velocity-readout">Sprint: 0.0 m/s</span>
+                    <button class="velocity-btn" onclick="reverseSelectedVelocity()" title="Reverse sprint direction">⇄ Reverse</button>
+                    <button class="velocity-btn" onclick="zeroSelectedVelocity()" title="Stop sprint">⏹ Halt</button>
+                </div>
             </div>
 
             <!-- Pitch Tactical Legend -->
@@ -805,6 +1020,19 @@
             "C6: Box Overload Ratio"
         ];
 
+        // Wave 4: Canonical 8 Position & Role Taxonomy (Zero Player Names, Zero Fixed Weights)
+        // Physical Capabilities: Vision Cone (theta), Passing Corridor Clearance (d_clearance), Box Threat Factor (gamma_box), Max Sprint Speed (v_max)
+        const ROLE_CAPABILITIES = {
+            "AM": { name: "AM · Advanced Playmaker", theta: 180, clearance: 1.4, gamma_box: 1.0, v_max: 7.8, desc: "Wide vision (180°), narrow clearance tolerance (1.4m)" },
+            "CF": { name: "CF · Box Finisher",       theta: 90,  clearance: 2.2, gamma_box: 1.5, v_max: 8.5, desc: "Lethal 1.5x in-box finisher, heading & poach instinct" },
+            "W":  { name: "W · Direct Winger",        theta: 110, clearance: 1.8, gamma_box: 1.1, v_max: 9.5, desc: "High sprint velocity (9.5 m/s), 1v1 flank isolation" },
+            "DM": { name: "DM · Holding Pivot",       theta: 140, clearance: 1.9, gamma_box: 0.8, v_max: 7.5, desc: "Defensive central screen & tempo distribution" },
+            "CM": { name: "CM · Box-to-Box",          theta: 120, clearance: 2.0, gamma_box: 1.2, v_max: 8.8, desc: "High work-rate engine & late penalty box runs" },
+            "FB": { name: "FB · Overlapping Full-Back",theta: 100, clearance: 2.1, gamma_box: 0.9, v_max: 9.2, desc: "Flank width, recovery sprints & overlapping support" },
+            "CB": { name: "CB · Central Stopper",     theta: 100, clearance: 2.4, gamma_box: 0.6, v_max: 8.2, desc: "Offside line anchor & step-up trap execution" },
+            "GK": { name: "GK · Sweeper Keeper",      theta: 150, clearance: 2.5, gamma_box: 0.2, v_max: 7.0, desc: "Sweeping depth coverage behind high line" }
+        };
+
         let autoMode = true;
         const canvas = document.getElementById("pitchCanvas");
         const ctx = canvas.getContext("2d");
@@ -871,7 +1099,7 @@
             drawPitch();
         }
 
-        // Tactical Entity State
+        // Tactical Entity State (Wave 4: Kinematics & Roles)
         let defenders = [];
         let attackers = [];
         let goalkeeper = null;
@@ -880,6 +1108,9 @@
         let hoveredPlayer = null;
         let openNetHazard = 0.0;
         let isOpenNet = false;
+        let isOffsideTrapSnapped = false;
+        let isBreakawayHazard = false;
+        let currentClosingSpeed = 0.0;
 
         function initPlayers() {
             applyFormation("high-press");
@@ -887,102 +1118,101 @@
 
         function applyFormation(type) {
             // Defending goal is at X = 120, Y = 40 (Right side)
-            goalkeeper = { x: 116, y: 40, isKeeper: true, role: "GK", number: 1 };
+            goalkeeper = { x: 116, y: 40, vx: 0.0, vy: 0.0, isKeeper: true, role: "GK", number: 1 };
 
             if (type === "high-press") {
-                // Aggressive High-Line: Back four pushed up to X=72m, active counter-pressing unit
+                // Aggressive High-Line: Back four pushed up to X=71-72m with active step-up offside trap
                 defenders = [
-                    // Back 4 line at X = 71-72 (48m from goal line!)
-                    { x: 72, y: 18, role: "LB", number: 3 },
-                    { x: 71, y: 32, role: "CB", number: 4 },
-                    { x: 71, y: 48, role: "CB", number: 5 },
-                    { x: 72, y: 62, role: "RB", number: 2 },
-                    // Midfield double pivot & pressing wings
-                    { x: 65, y: 28, role: "DM", number: 6 },
-                    { x: 64, y: 40, role: "CM", number: 8 },
-                    { x: 65, y: 52, role: "DM", number: 16 },
-                    // Front pressing hunters suffocating the ball carrier
-                    { x: 57, y: 36, role: "LW", number: 11 },
-                    { x: 56, y: 44, role: "CF", number: 9 },
-                    { x: 58, y: 22, role: "RW", number: 7 }
+                    { x: 72, y: 18, vx: -1.0, vy: 0.0, role: "FB", number: 3 },
+                    { x: 71, y: 32, vx: -1.5, vy: 0.0, role: "CB", number: 4 }, // Step-up trap anchor!
+                    { x: 71, y: 48, vx: -1.5, vy: 0.0, role: "CB", number: 5 }, // Step-up trap anchor!
+                    { x: 72, y: 62, vx: -1.0, vy: 0.0, role: "FB", number: 2 },
+                    { x: 65, y: 28, vx: -0.5, vy: 0.2, role: "DM", number: 6 },
+                    { x: 64, y: 40, vx: -0.8, vy: 0.0, role: "CM", number: 8 },
+                    { x: 65, y: 52, vx: -0.5, vy: -0.2, role: "DM", number: 16 },
+                    { x: 57, y: 36, vx: -0.5, vy: 0.5, role: "W", number: 11 },
+                    { x: 56, y: 44, vx: -0.8, vy: 0.0, role: "CF", number: 9 },
+                    { x: 58, y: 22, vx: -0.5, vy: -0.5, role: "W", number: 7 }
                 ];
 
                 attackers = [
-                    { x: 54, y: 40, isActor: true, role: "AM", number: 10 }, // Ball carrier under intense press
-                    { x: 92, y: 30, isActor: false, role: "ST", number: 9 }, // Caught in offside trap
-                    { x: 94, y: 50, isActor: false, role: "ST", number: 19 }, // Caught in offside trap
-                    { x: 70, y: 15, isActor: false, role: "LW", number: 11 },
-                    { x: 70, y: 65, isActor: false, role: "RW", number: 7 }
+                    { x: 54, y: 40, vx: 1.2, vy: 0.0, isActor: true, role: "AM", number: 10 }, // Ball carrier playmaker
+                    { x: 92, y: 30, vx: 4.5, vy: 0.2, isActor: false, role: "CF", number: 9 }, // Caught in offside trap!
+                    { x: 94, y: 50, vx: 4.8, vy: -0.2, isActor: false, role: "CF", number: 19 }, // Caught in offside trap!
+                    { x: 70, y: 15, vx: 3.2, vy: 0.5, isActor: false, role: "W", number: 11 },
+                    { x: 70, y: 65, vx: 3.2, vy: -0.5, isActor: false, role: "W", number: 7 }
                 ];
             } else if (type === "5-4-1") {
                 // Deep low block: 5 defenders packed inside / just outside penalty area
                 defenders = [
-                    { x: 108, y: 18, role: "LWB", number: 3 },
-                    { x: 109, y: 29, role: "CB", number: 4 },
-                    { x: 110, y: 40, role: "SW", number: 5 },
-                    { x: 109, y: 51, role: "CB", number: 14 },
-                    { x: 108, y: 62, role: "RWB", number: 2 },
-                    { x: 98, y: 24, role: "LM", number: 11 },
-                    { x: 97, y: 34, role: "CM", number: 6 },
-                    { x: 97, y: 46, role: "CM", number: 8 },
-                    { x: 98, y: 56, role: "RM", number: 7 },
-                    { x: 86, y: 40, role: "CF", number: 9 }
+                    { x: 108, y: 18, vx: 0.0, vy: 0.0, role: "FB", number: 3 },
+                    { x: 109, y: 29, vx: 0.0, vy: 0.0, role: "CB", number: 4 },
+                    { x: 110, y: 40, vx: 0.0, vy: 0.0, role: "CB", number: 5 },
+                    { x: 109, y: 51, vx: 0.0, vy: 0.0, role: "CB", number: 14 },
+                    { x: 108, y: 62, vx: 0.0, vy: 0.0, role: "FB", number: 2 },
+                    { x: 98, y: 24, vx: 0.0, vy: 0.0, role: "CM", number: 11 },
+                    { x: 97, y: 34, vx: 0.0, vy: 0.0, role: "DM", number: 6 },
+                    { x: 97, y: 46, vx: 0.0, vy: 0.0, role: "DM", number: 8 },
+                    { x: 98, y: 56, vx: 0.0, vy: 0.0, role: "CM", number: 7 },
+                    { x: 86, y: 40, vx: 0.0, vy: 0.0, role: "CF", number: 9 }
                 ];
 
                 attackers = [
-                    { x: 80, y: 40, isActor: true, role: "AM", number: 10 },
-                    { x: 104, y: 35, isActor: false, role: "ST", number: 9 },
-                    { x: 104, y: 45, isActor: false, role: "ST", number: 19 },
-                    { x: 92, y: 20, isActor: false, role: "LW", number: 11 },
-                    { x: 92, y: 60, isActor: false, role: "RW", number: 7 }
+                    { x: 80, y: 40, vx: 1.5, vy: 0.0, isActor: true, role: "AM", number: 10 },
+                    { x: 104, y: 35, vx: 2.0, vy: 0.2, isActor: false, role: "CF", number: 9 },
+                    { x: 104, y: 45, vx: 2.0, vy: -0.2, isActor: false, role: "CF", number: 19 },
+                    { x: 92, y: 20, vx: 1.8, vy: 0.4, isActor: false, role: "W", number: 11 },
+                    { x: 92, y: 60, vx: 1.8, vy: -0.4, isActor: false, role: "W", number: 7 }
                 ];
             } else if (type === "breakdown") {
-                // Broken structure: Low pressure, stretched defense, multiple attackers inside 18-yard box
+                // Broken structure: Low pressure, multiple attackers inside 18-yard box
                 defenders = [
-                    { x: 96, y: 15, role: "LB", number: 3 },
-                    { x: 98, y: 30, role: "CB", number: 4 },
-                    { x: 108, y: 55, role: "CB", number: 5 },
-                    { x: 105, y: 68, role: "RB", number: 2 },
-                    { x: 82, y: 20, role: "DM", number: 6 },
-                    { x: 85, y: 60, role: "DM", number: 8 },
-                    { x: 70, y: 30, role: "LW", number: 11 },
-                    { x: 72, y: 50, role: "RW", number: 7 },
-                    { x: 65, y: 40, role: "CM", number: 10 },
-                    { x: 62, y: 20, role: "CF", number: 9 }
+                    { x: 96, y: 15, vx: 0.5, vy: 0.0, role: "FB", number: 3 },
+                    { x: 98, y: 30, vx: 0.8, vy: 0.0, role: "CB", number: 4 },
+                    { x: 108, y: 55, vx: 0.2, vy: 0.0, role: "CB", number: 5 },
+                    { x: 105, y: 68, vx: 0.4, vy: 0.0, role: "FB", number: 2 },
+                    { x: 82, y: 20, vx: 0.0, vy: 0.0, role: "DM", number: 6 },
+                    { x: 85, y: 60, vx: 0.0, vy: 0.0, role: "DM", number: 8 },
+                    { x: 70, y: 30, vx: 0.0, vy: 0.0, role: "W", number: 11 },
+                    { x: 72, y: 50, vx: 0.0, vy: 0.0, role: "W", number: 7 },
+                    { x: 65, y: 40, vx: 0.0, vy: 0.0, role: "CM", number: 10 },
+                    { x: 62, y: 20, vx: 0.0, vy: 0.0, role: "CF", number: 9 }
                 ];
 
                 attackers = [
-                    { x: 78, y: 40, isActor: true, role: "AM", number: 10 },   // Unchallenged ball carrier
-                    { x: 106, y: 36, isActor: false, role: "ST", number: 9 }, // Striker 1 in box
-                    { x: 105, y: 44, isActor: false, role: "ST", number: 19 }, // Striker 2 in box
-                    { x: 104, y: 28, isActor: false, role: "LW", number: 11 }, // Attacker 3 in box (Triple overload!)
-                    { x: 85, y: 42, isActor: false, role: "RW", number: 7 }
+                    { x: 78, y: 40, vx: 2.2, vy: 0.0, isActor: true, role: "AM", number: 10 },
+                    { x: 106, y: 36, vx: 4.8, vy: 0.0, isActor: false, role: "CF", number: 9 }, // Lethal Box Finisher
+                    { x: 105, y: 44, vx: 4.5, vy: 0.0, isActor: false, role: "CF", number: 19 },
+                    { x: 104, y: 28, vx: 5.2, vy: 0.0, isActor: false, role: "W", number: 11 },
+                    { x: 85, y: 42, vx: 3.5, vy: 0.0, isActor: false, role: "CM", number: 7 }
                 ];
             } else {
                 // 4-3-3 Mid-block
                 defenders = [
-                    { x: 88, y: 18, role: "LB", number: 3 },
-                    { x: 89, y: 33, role: "CB", number: 4 },
-                    { x: 89, y: 47, role: "CB", number: 5 },
-                    { x: 88, y: 62, role: "RB", number: 2 },
-                    { x: 76, y: 28, role: "CM", number: 8 },
-                    { x: 75, y: 40, role: "DM", number: 6 },
-                    { x: 76, y: 52, role: "CM", number: 10 },
-                    { x: 62, y: 24, role: "LW", number: 11 },
-                    { x: 60, y: 40, role: "CF", number: 9 },
-                    { x: 62, y: 56, role: "RW", number: 7 }
+                    { x: 88, y: 18, vx: 0.0, vy: 0.0, role: "FB", number: 3 },
+                    { x: 89, y: 33, vx: 0.0, vy: 0.0, role: "CB", number: 4 },
+                    { x: 89, y: 47, vx: 0.0, vy: 0.0, role: "CB", number: 5 },
+                    { x: 88, y: 62, vx: 0.0, vy: 0.0, role: "FB", number: 2 },
+                    { x: 76, y: 28, vx: 0.0, vy: 0.0, role: "CM", number: 8 },
+                    { x: 75, y: 40, vx: 0.0, vy: 0.0, role: "DM", number: 6 },
+                    { x: 76, y: 52, vx: 0.0, vy: 0.0, role: "CM", number: 10 },
+                    { x: 62, y: 24, vx: 0.0, vy: 0.0, role: "W", number: 11 },
+                    { x: 60, y: 40, vx: 0.0, vy: 0.0, role: "CF", number: 9 },
+                    { x: 62, y: 56, vx: 0.0, vy: 0.0, role: "W", number: 7 }
                 ];
 
                 attackers = [
-                    { x: 68, y: 38, isActor: true, role: "AM", number: 10 },
-                    { x: 100, y: 34, isActor: false, role: "ST", number: 9 },
-                    { x: 101, y: 46, isActor: false, role: "ST", number: 19 },
-                    { x: 80, y: 18, isActor: false, role: "LW", number: 11 },
-                    { x: 80, y: 62, isActor: false, role: "RW", number: 7 }
+                    { x: 68, y: 38, vx: 1.8, vy: 0.0, isActor: true, role: "AM", number: 10 },
+                    { x: 100, y: 34, vx: 3.2, vy: 0.1, isActor: false, role: "CF", number: 9 },
+                    { x: 101, y: 46, vx: 3.0, vy: -0.1, isActor: false, role: "CF", number: 19 },
+                    { x: 80, y: 18, vx: 2.5, vy: 0.3, isActor: false, role: "W", number: 11 },
+                    { x: 80, y: 62, vx: 2.5, vy: -0.3, isActor: false, role: "W", number: 7 }
                 ];
             }
 
             ballCarrier = attackers[0];
+            selectedPlayer = ballCarrier;
+            updatePlayerControlPanel();
             recalculate();
         }
 
@@ -1075,13 +1305,17 @@
             }
 
             // C5: Central Passing Lane Blockage to Forward Attackers
+            // Wave 4: Dynamic Passer Role Clearance (1.4m for AM playmaker vs 2.4m for CB stopper)
             const forwardAtt = attackers.filter(a => a.x > ballCarrier.x);
             let blockedCount = 0;
+            const passerRole = ROLE_CAPABILITIES[ballCarrier.role] || ROLE_CAPABILITIES["AM"];
+            const requiredClearance = passerRole.clearance;
+
             forwardAtt.forEach(a => {
                 let isBlocked = false;
                 allDefenders.forEach(d => {
                     const distToLine = getDistToSegment(d, ballCarrier, a);
-                    if (distToLine <= 2.2) isBlocked = true;
+                    if (distToLine <= requiredClearance) isBlocked = true;
                 });
                 if (isBlocked) blockedCount++;
             });
@@ -1089,15 +1323,28 @@
 
             // C6: Box Overload Ratio (Penalty area X >= 102, Y in [18, 62])
             // IFAB Offside Law Enforcement: Only ON-SIDE attackers count as an active box overload.
+            // Wave 4: Modulated dynamically by Box Finisher factor gamma_box and late arrivals
             const offsideLineX = Math.max(maxDefX, ballCarrier.x);
-            const onsideAttInBox = attackers.filter(a => a.x >= 102.0 && a.y >= 18.0 && a.y <= 62.0 && a.x <= (offsideLineX + 0.5)).length;
+            let weightedAttInBox = 0.0;
+            attackers.forEach(a => {
+                if (a.x >= 102.0 && a.y >= 18.0 && a.y <= 62.0 && a.x <= (offsideLineX + 0.5)) {
+                    const roleCap = ROLE_CAPABILITIES[a.role] || ROLE_CAPABILITIES["CF"];
+                    const sprintBoost = Math.max(0, (a.vx || 0) / (roleCap.v_max || 8.5)) * 0.3;
+                    weightedAttInBox += roleCap.gamma_box * (1.0 + sprintBoost);
+                }
+            });
+
             const isCarrierInBox = ballCarrier.x >= 102.0 && ballCarrier.y >= 18.0 && ballCarrier.y <= 62.0;
-            const totalAttInBox = onsideAttInBox + (isCarrierInBox ? 1 : 0);
+            if (isCarrierInBox) {
+                const carrierRole = ROLE_CAPABILITIES[ballCarrier.role] || ROLE_CAPABILITIES["AM"];
+                weightedAttInBox += carrierRole.gamma_box;
+            }
+
             const defInBox = allDefenders.filter(d => d.x >= 102.0 && d.y >= 18.0 && d.y <= 62.0).length;
 
             let c6 = 0.0;
-            if (totalAttInBox > 0) {
-                const rawRatio = defInBox === 0 ? 1.0 : (totalAttInBox / (totalAttInBox + defInBox));
+            if (weightedAttInBox > 0) {
+                const rawRatio = defInBox === 0 ? 1.0 : (weightedAttInBox / (weightedAttInBox + defInBox));
                 
                 // If ball carrier is in box OR has an open passing lane to an onside receiver in the box, full danger!
                 let isConnectedToBox = isCarrierInBox;
@@ -1106,7 +1353,7 @@
                         if (a.x >= 102.0 && a.y >= 18.0 && a.y <= 62.0 && a.x <= (offsideLineX + 0.5)) {
                             let blocked = false;
                             allDefenders.forEach(d => {
-                                if (getDistToSegment(d, ballCarrier, a) <= 2.2) blocked = true;
+                                if (getDistToSegment(d, ballCarrier, a) <= requiredClearance) blocked = true;
                             });
                             if (!blocked) isConnectedToBox = true;
                         }
@@ -1114,10 +1361,10 @@
                 }
 
                 if (isConnectedToBox) {
-                    c6 = rawRatio;
+                    c6 = Math.min(1.0, rawRatio);
                 } else {
                     const boxProximity = Math.min(Math.max((ballCarrier.x - 30.0) / 72.0, 0.0), 1.0);
-                    c6 = rawRatio * (0.4 + 0.6 * boxProximity);
+                    c6 = Math.min(1.0, rawRatio * (0.4 + 0.6 * boxProximity));
                 }
             }
 
@@ -1134,6 +1381,7 @@
         }
 
         // Wave 3 Bilinear Concept Interaction Tensor (BCIT) & Beta Calibration Engine
+        // + Wave 4 Kinematic Closing Speed Physics & Step-Up Offside Trap
         function evaluateStage5(concepts) {
             const w_lin = CBM_WEIGHTS.linear_weights;
             const bias = CBM_WEIGHTS.bias;
@@ -1156,6 +1404,55 @@
                 }
             }
 
+            // Wave 4: Kinematic Closing Speed Physics & Step-Up Offside Trap Detection
+            isOffsideTrapSnapped = false;
+            isBreakawayHazard = false;
+            currentClosingSpeed = 0.0;
+            let lastDef = null;
+            let leadAtt = null;
+
+            if (defenders.length > 0 && attackers.length > 0) {
+                lastDef = defenders.reduce((prev, curr) => curr.x > prev.x ? curr : prev, defenders[0]);
+                leadAtt = attackers.reduce((prev, curr) => curr.x > prev.x ? curr : prev, attackers[0]);
+
+                const dx = leadAtt.x - lastDef.x;
+                const dy = leadAtt.y - lastDef.y;
+                const dist = Math.hypot(dx, dy) + 1e-4;
+                const dvx = (leadAtt.vx || 0) - (lastDef.vx || 0);
+                const dvy = (leadAtt.vy || 0) - (lastDef.vy || 0);
+                currentClosingSpeed = (dx * dvx + dy * dvy) / dist; // in m/s
+
+                const isLeadOffside = leadAtt.x > (lastDef.x + 0.3);
+                // Step-up trap: defender stepping up (vx < -0.3 in pitch coords) or positive relative closing speed
+                if (isLeadOffside && ((lastDef.vx || 0) < -0.3 || currentClosingSpeed > 0.8)) {
+                    isOffsideTrapSnapped = true;
+                    // IFAB Rule: Offside play completely neutralizes goal threat
+                    logit -= 3.8;
+                } else if (!isLeadOffside && (lastDef.vx || 0) > 0.4 && currentClosingSpeed < -1.2) {
+                    isBreakawayHazard = true;
+                    logit += 0.9;
+                }
+            }
+
+            // Update Kinematic HUD live
+            const hudBadge = document.getElementById("hudBadge");
+            const hudDetails = document.getElementById("hudDetails");
+            if (hudBadge && hudDetails) {
+                if (isOffsideTrapSnapped) {
+                    hudBadge.className = "hud-badge hud-badge-trap";
+                    hudBadge.innerHTML = "🚩 OFFSIDE TRAP SNAPPED";
+                    hudDetails.innerHTML = `Last Defender: CB #${lastDef ? lastDef.number : '4'} Step-Up | Closing Speed: +${currentClosingSpeed.toFixed(1)} m/s (Threat Neutralized)`;
+                } else if (isBreakawayHazard) {
+                    hudBadge.className = "hud-badge hud-badge-breakaway";
+                    hudBadge.innerHTML = "⚡ BREAKAWAY 1v1 HAZARD";
+                    hudDetails.innerHTML = `Striker Pulling Away | Relative Velocity: ${currentClosingSpeed.toFixed(1)} m/s (Line Breached)`;
+                } else {
+                    hudBadge.className = "hud-badge hud-badge-neutral";
+                    hudBadge.innerHTML = "🛡️ ACTIVE LINE";
+                    hudDetails.innerHTML = `Last Defender: CB #${lastDef ? lastDef.number : '4'} · Stopper | Relative Closing: ${currentClosingSpeed.toFixed(1)} m/s`;
+                }
+            }
+
             // Effective attack distance: either the ball carrier or any open receiver in the box
             let minDistanceToGoal = Math.hypot(120.0 - ballCarrier.x, 40.0 - ballCarrier.y);
             const maxDefX = Math.max(...defenders.map(d => d.x));
@@ -1166,7 +1463,7 @@
                 if (a.x > ballCarrier.x && a.x <= offsideLineX + 0.5) {
                     let blocked = false;
                     allDef.forEach(d => {
-                        if (getDistToSegment(d, ballCarrier, a) <= 2.2) blocked = true;
+                        if (getDistToSegment(d, ballCarrier, a) <= requiredClearance) blocked = true;
                     });
                     if (!blocked) {
                         const aDist = Math.hypot(120.0 - a.x, 40.0 - a.y);
@@ -1615,7 +1912,7 @@
                 ctx.fillText("UNGUARDED NET", canvas.width - MARGIN_X - 70, goalMouthPx.y - 14);
             }
 
-            // 4. Draw Proper Tactical Players (Jerseys & Kits)
+            // 4. Draw Proper Tactical Players (Jerseys & Kits + Velocity Vectors)
             // Goalkeeper (Gold/Amber Kit)
             if (goalkeeper) {
                 const gkPx = toPx(goalkeeper.x, goalkeeper.y);
@@ -1624,10 +1921,13 @@
                     primaryColor: "#eab308",
                     secondaryColor: "#ca8a04",
                     number: goalkeeper.number || 1,
-                    role: "GK",
+                    role: goalkeeper.role || "GK",
+                    vx: goalkeeper.vx || 0,
+                    vy: goalkeeper.vy || 0,
                     isSelected: selectedPlayer === goalkeeper,
                     isHovered: hoveredPlayer === goalkeeper,
-                    isGK: true
+                    isGK: true,
+                    player: goalkeeper
                 });
             }
 
@@ -1639,9 +1939,12 @@
                     primaryColor: "#2563eb",
                     secondaryColor: "#1d4ed8",
                     number: d.number,
-                    role: d.role,
+                    role: d.role || "CB",
+                    vx: d.vx || 0,
+                    vy: d.vy || 0,
                     isSelected: selectedPlayer === d,
-                    isHovered: hoveredPlayer === d
+                    isHovered: hoveredPlayer === d,
+                    player: d
                 });
             });
 
@@ -1656,11 +1959,14 @@
                     primaryColor: a.isActor ? "#f43f5e" : "#e11d48",
                     secondaryColor: a.isActor ? "#e11d48" : "#be123c",
                     number: a.number,
-                    role: a.role,
+                    role: a.role || (a.isActor ? "AM" : "CF"),
+                    vx: a.vx || 0,
+                    vy: a.vy || 0,
                     isCarrier: a.isActor,
                     isOffside: isOff,
                     isSelected: selectedPlayer === a,
-                    isHovered: hoveredPlayer === a
+                    isHovered: hoveredPlayer === a,
+                    player: a
                 });
             });
         }
@@ -1693,13 +1999,13 @@
         }
 
         // ==========================================
-        // PROPER PLAYER JERSEY VECTOR RENDERER
+        // PROPER PLAYER JERSEY & KINEMATICS RENDERER
         // ==========================================
 
         function drawTacticalPlayer(ctx, x, y, options) {
             const {
-                type, primaryColor, secondaryColor, number, role,
-                isGK, isCarrier, isSelected, isHovered, isOffside
+                type, primaryColor, secondaryColor, number, role, vx, vy,
+                isGK, isCarrier, isSelected, isHovered, isOffside, player
             } = options;
 
             ctx.save();
@@ -1707,6 +2013,34 @@
 
             const s = PLAYER_SCALE || 1.0;
             ctx.scale(s, s);
+
+            // A. Vision Cone for Ball Carrier (Dynamic Role Vision Angle theta)
+            if (isCarrier) {
+                const roleCap = ROLE_CAPABILITIES[role] || ROLE_CAPABILITIES["AM"];
+                const thetaRad = ((roleCap.theta || 180) * Math.PI) / 180.0;
+                let aimAngle = 0.0; // pointing right toward goal (x=120)
+                if (Math.hypot(vx, vy) > 0.4) {
+                    aimAngle = Math.atan2(vy, vx);
+                }
+
+                ctx.save();
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.arc(0, 0, 75, aimAngle - thetaRad / 2, aimAngle + thetaRad / 2);
+                ctx.closePath();
+                ctx.fillStyle = "rgba(56, 189, 248, 0.08)";
+                ctx.fill();
+                ctx.strokeStyle = "rgba(56, 189, 248, 0.35)";
+                ctx.lineWidth = 1;
+                ctx.stroke();
+
+                // Vision Cone label
+                ctx.font = "bold 7px 'Fira Code', monospace";
+                ctx.fillStyle = "rgba(56, 189, 248, 0.85)";
+                ctx.textAlign = "center";
+                ctx.fillText(`VISION ${roleCap.theta}°`, 55 * Math.cos(aimAngle), 55 * Math.sin(aimAngle));
+                ctx.restore();
+            }
 
             // 1. Turf Drop Shadow
             ctx.beginPath();
@@ -1716,7 +2050,6 @@
 
             // 2. Active Possession / Selection / Offside Auras
             if (isCarrier) {
-                // Pulsing golden ring
                 ctx.beginPath();
                 ctx.arc(0, 0, 20, 0, Math.PI * 2);
                 ctx.fillStyle = "rgba(251, 191, 36, 0.18)";
@@ -1753,33 +2086,19 @@
             }
 
             // 3. Football Jersey Silhouette
-            // Coordinates scaled for ~24px width, 22px height
             ctx.beginPath();
-            // Collar Scoop Center (Top)
             ctx.moveTo(-5, -11);
-            // Left Shoulder
             ctx.lineTo(-12, -8);
-            // Left Sleeve Outer
             ctx.lineTo(-16, -2);
-            // Left Sleeve Hem
             ctx.lineTo(-12, 1);
-            // Left Armpit
             ctx.lineTo(-9, -2);
-            // Left Torso down
             ctx.lineTo(-8, 9);
-            // Hem Bottom Curve
             ctx.quadraticCurveTo(0, 11, 8, 9);
-            // Right Torso up
             ctx.lineTo(9, -2);
-            // Right Armpit
             ctx.lineTo(12, 1);
-            // Right Sleeve Hem
             ctx.lineTo(16, -2);
-            // Right Shoulder
             ctx.lineTo(12, -8);
-            // Right Neck
             ctx.lineTo(5, -11);
-            // Collar Neckline Curve
             ctx.quadraticCurveTo(0, -8, -5, -11);
             ctx.closePath();
 
@@ -1817,9 +2136,64 @@
                 ctx.fillText(role, 0, 18);
             }
 
+            // 6. Draw Interactive Velocity Vector Arrow & Aim Handle
+            const speed = Math.hypot(vx, vy);
+            if (speed > 0.2 || isSelected || isHovered) {
+                const arrowLen = Math.min(speed * 4.2, 52.0);
+                const angle = Math.atan2(vy, vx);
+                const tipX = Math.cos(angle) * arrowLen;
+                const tipY = Math.sin(angle) * arrowLen;
+
+                const isStepUp = type === "def" && vx < -0.3;
+                const arrowColor = isStepUp ? "#10b981" : (type === "def" ? "#60a5fa" : (type === "gk" ? "#fbbf24" : "#f43f5e"));
+
+                ctx.save();
+                ctx.strokeStyle = arrowColor;
+                ctx.fillStyle = arrowColor;
+                ctx.lineWidth = 2.2;
+
+                // Shaft
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.lineTo(tipX, tipY);
+                ctx.stroke();
+
+                // Arrow head
+                const headLen = 7;
+                const headAngle = 0.45;
+                ctx.beginPath();
+                ctx.moveTo(tipX, tipY);
+                ctx.lineTo(tipX - headLen * Math.cos(angle - headAngle), tipY - headLen * Math.sin(angle - headAngle));
+                ctx.lineTo(tipX - headLen * Math.cos(angle + headAngle), tipY - headLen * Math.sin(angle + headAngle));
+                ctx.closePath();
+                ctx.fill();
+
+                // Draggable Aim Handle Circle
+                ctx.beginPath();
+                ctx.arc(tipX, tipY, 4.5, 0, Math.PI * 2);
+                ctx.strokeStyle = "#ffffff";
+                ctx.lineWidth = 1.5;
+                ctx.stroke();
+
+                // Speed text badge
+                if (speed >= 0.5) {
+                    ctx.font = "bold 8px 'Fira Code', monospace";
+                    ctx.fillStyle = "#ffffff";
+                    ctx.fillText(`${speed.toFixed(1)}m/s`, tipX + 10 * Math.cos(angle), tipY + 10 * Math.sin(angle));
+                }
+
+                if (isStepUp) {
+                    ctx.font = "bold 7px 'Fira Code', monospace";
+                    ctx.fillStyle = "#10b981";
+                    ctx.fillText("STEP-UP", 0, -28);
+                }
+
+                ctx.restore();
+            }
+
             ctx.restore();
 
-            // 6. Draw 3D Soccer Ball beside Ball Carrier
+            // 7. Draw 3D Soccer Ball beside Ball Carrier
             if (isCarrier) {
                 const s = PLAYER_SCALE || 1.0;
                 drawSoccerBall(ctx, x + (15 * s), y + (8 * s), s);
@@ -1868,23 +2242,37 @@
         }
 
         // ==========================================
-        // MOUSE DRAG & HOVER INTERACTION
+        // MOUSE DRAG & KINEMATIC AIM INTERACTION
         // ==========================================
 
-        let isDragging = false;
+        let isDraggingPlayer = false;
+        let isDraggingVelocity = false;
+        let activeHandlePlayer = null;
+
+        function getVelocityHandleAt(canvasPx, canvasPy) {
+            const all = goalkeeper ? [...defenders, ...attackers, goalkeeper] : [...defenders, ...attackers];
+            const s = PLAYER_SCALE || 1.0;
+            for (const p of all) {
+                const pPx = toPx(p.x, p.y);
+                const speed = Math.hypot(p.vx || 0, p.vy || 0);
+                const arrowLen = Math.min(speed * 4.2, 52.0);
+                const angle = Math.atan2(p.vy || 0, p.vx || 0);
+                const tipX = pPx.x + Math.cos(angle) * arrowLen * s;
+                const tipY = pPx.y + Math.sin(angle) * arrowLen * s;
+                if (Math.hypot(canvasPx - tipX, canvasPy - tipY) <= 14 * s) {
+                    return p;
+                }
+            }
+            return null;
+        }
 
         function getPlayerAt(mouseX, mouseY) {
-            const allDefenders = goalkeeper ? [...defenders, goalkeeper] : defenders;
-            
-            // Check ball carrier & attackers first (generous 4.5m hit radius)
             for (const a of attackers) {
                 if (Math.hypot(a.x - mouseX, a.y - mouseY) < 4.5) return a;
             }
-            // Check defenders
             for (const d of defenders) {
                 if (Math.hypot(d.x - mouseX, d.y - mouseY) < 4.5) return d;
             }
-            // Check goalkeeper
             if (goalkeeper && Math.hypot(goalkeeper.x - mouseX, goalkeeper.y - mouseY) < 4.5) {
                 return goalkeeper;
             }
@@ -1897,16 +2285,28 @@
             const canvasPy = (e.clientY - rect.top) * (canvas.height / rect.height);
             const pitchPos = fromPx(canvasPx, canvasPy);
 
+            // 1. Check if user clicked on a velocity handle tip
+            const handlePlayer = getVelocityHandleAt(canvasPx, canvasPy);
+            if (handlePlayer) {
+                isDraggingVelocity = true;
+                activeHandlePlayer = handlePlayer;
+                selectedPlayer = handlePlayer;
+                updatePlayerControlPanel();
+                recalculate();
+                return;
+            }
+
+            // 2. Check if user clicked on a player body
             selectedPlayer = getPlayerAt(pitchPos.x, pitchPos.y);
 
             if (selectedPlayer) {
-                isDragging = true;
-                // Clicking or dragging an attacker passes possession to that player
+                isDraggingPlayer = true;
                 if (attackers.includes(selectedPlayer)) {
                     attackers.forEach(a => a.isActor = false);
                     selectedPlayer.isActor = true;
                     ballCarrier = selectedPlayer;
                 }
+                updatePlayerControlPanel();
                 recalculate();
             }
         });
@@ -1917,33 +2317,123 @@
             const canvasPy = (e.clientY - rect.top) * (canvas.height / rect.height);
             const pitchPos = fromPx(canvasPx, canvasPy);
 
-            if (isDragging && selectedPlayer) {
+            if (isDraggingVelocity && activeHandlePlayer) {
+                const pPx = toPx(activeHandlePlayer.x, activeHandlePlayer.y);
+                const s = PLAYER_SCALE || 1.0;
+                let rawVx = (canvasPx - pPx.x) / (4.2 * s);
+                let rawVy = (canvasPy - pPx.y) / (4.2 * s);
+                const rawSpeed = Math.hypot(rawVx, rawVy);
+                if (rawSpeed > 10.0) {
+                    rawVx = (rawVx / rawSpeed) * 10.0;
+                    rawVy = (rawVy / rawSpeed) * 10.0;
+                }
+                activeHandlePlayer.vx = rawVx;
+                activeHandlePlayer.vy = rawVy;
+                updatePlayerControlPanel();
+                recalculate();
+            } else if (isDraggingPlayer && selectedPlayer) {
                 selectedPlayer.x = Math.max(1.5, Math.min(PITCH_W - 1.5, pitchPos.x));
                 selectedPlayer.y = Math.max(1.5, Math.min(PITCH_H - 1.5, pitchPos.y));
                 recalculate();
             } else {
                 // Hover detection
                 const prevHover = hoveredPlayer;
-                hoveredPlayer = getPlayerAt(pitchPos.x, pitchPos.y);
+                const handleHover = getVelocityHandleAt(canvasPx, canvasPy);
+                hoveredPlayer = handleHover || getPlayerAt(pitchPos.x, pitchPos.y);
                 if (hoveredPlayer !== prevHover) {
-                    canvas.style.cursor = hoveredPlayer ? "grab" : "default";
+                    canvas.style.cursor = handleHover ? "crosshair" : (hoveredPlayer ? "grab" : "default");
                     drawPitch();
                 }
             }
         });
 
         window.addEventListener("mouseup", () => {
-            if (isDragging) {
-                isDragging = false;
-                selectedPlayer = null;
+            if (isDraggingPlayer || isDraggingVelocity) {
+                isDraggingPlayer = false;
+                isDraggingVelocity = false;
+                activeHandlePlayer = null;
                 recalculate();
             }
         });
 
-        function initPlayers() {
-            applyFormation("high-press");
-            resizePitchCanvas();
-            setTimeout(resizePitchCanvas, 60);
+        // ==========================================
+        // PLAYER CONTROL PANEL & KINEMATIC UTILITIES
+        // ==========================================
+
+        function updatePlayerControlPanel() {
+            if (!selectedPlayer) return;
+            const p = selectedPlayer;
+            const info = document.getElementById("selectedPlayerInfo");
+            const roleCap = ROLE_CAPABILITIES[p.role] || ROLE_CAPABILITIES["AM"];
+            const speed = Math.hypot(p.vx || 0, p.vy || 0);
+
+            if (info) {
+                const team = attackers.includes(p) ? "Attacker" : (p.isKeeper ? "Goalkeeper" : "Defender");
+                info.innerText = `#${p.number || '10'} [${roleCap.name}] (${team})`;
+            }
+
+            const velReadout = document.getElementById("velocityReadout");
+            if (velReadout) {
+                velReadout.innerText = `Sprint: ${speed.toFixed(1)} m/s`;
+            }
+
+            // Update active role chip
+            const chips = document.querySelectorAll(".role-chip");
+            chips.forEach(chip => {
+                if (chip.innerText.startsWith(p.role)) {
+                    chip.className = "role-chip active";
+                } else {
+                    chip.className = "role-chip";
+                }
+            });
+        }
+
+        function setSelectedPlayerRole(roleTag) {
+            if (!selectedPlayer) return;
+            selectedPlayer.role = roleTag;
+            updatePlayerControlPanel();
+            recalculate();
+        }
+
+        function reverseSelectedVelocity() {
+            if (!selectedPlayer) return;
+            selectedPlayer.vx = -(selectedPlayer.vx || 0);
+            selectedPlayer.vy = -(selectedPlayer.vy || 0);
+            updatePlayerControlPanel();
+            recalculate();
+        }
+
+        function zeroSelectedVelocity() {
+            if (!selectedPlayer) return;
+            selectedPlayer.vx = 0.0;
+            selectedPlayer.vy = 0.0;
+            updatePlayerControlPanel();
+            recalculate();
+        }
+
+        function triggerStepUpTrap() {
+            // Find last CB and spring the offside trap
+            if (defenders.length === 0) return;
+            const lastDef = defenders.reduce((prev, curr) => curr.x > prev.x ? curr : prev, defenders[0]);
+            lastDef.vx = -3.2; // Step up aggressively toward center line
+            lastDef.vy = 0.0;
+
+            if (attackers.length > 0) {
+                const leadAtt = attackers.reduce((prev, curr) => curr.x > prev.x ? curr : prev, attackers[0]);
+                leadAtt.vx = 5.5; // Sprinting forward toward goal
+                leadAtt.vy = 0.0;
+            }
+
+            selectedPlayer = lastDef;
+            updatePlayerControlPanel();
+            recalculate();
+        }
+
+        function resetAllVelocities() {
+            const all = goalkeeper ? [...defenders, ...attackers, goalkeeper] : [...defenders, ...attackers];
+            all.forEach(p => { p.vx = 0.0; p.vy = 0.0; });
+            updatePlayerControlPanel();
+            recalculate();
         }
 
         window.addEventListener("resize", () => {

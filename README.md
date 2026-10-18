@@ -53,10 +53,44 @@ The engine trains on a curated **181-match modern tactical cohort** ($574,560$ f
 
 ---
 
+## 🔬 Empirical Ablation Benchmark (Phase 4 / A2)
+
+A systematic ablation study across 11 architectural variants evaluates the exact "interpretability tax" of the concept bottleneck and isolates the contribution of each geometric component:
+
+| Architecture Variant | Params | Concept Mean $R^2$ | Threat ROC-AUC | $\Delta$ ROC | Threat PR-AUC | $\Delta$ PR | Brier Score | CPU Latency |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| **V0: Full Canonical CBM** | 14,672 | 0.2107 | **0.8200** | `Baseline` | **0.3089** | `Baseline` | 0.1918 | 228.7 $\mu$s |
+| **V1: No GAT (Node MLP Bypass)** | 7,276 | 0.2709 | **0.8096** | `-0.0103` | **0.2474** | `-0.0616` | 0.1914 | 95.2 $\mu$s |
+| **V2: Dense Attention (No Delaunay)** | 14,672 | 0.2325 | **0.8098** | `-0.0102` | **0.2762** | `-0.0327` | 0.1900 | 245.4 $\mu$s |
+| **V3: Unmasked Tokens (No Player Mask)** | 14,672 | 0.2656 | **0.8149** | `-0.0051` | **0.2398** | `-0.0692` | 0.1927 | 253.0 $\mu$s |
+| **V4a: 1 GAT Layer Depth** | 10,480 | 0.2027 | **0.8158** | `-0.0042` | **0.2433** | `-0.0656` | 0.1916 | 162.7 $\mu$s |
+| **V4b: 3 GAT Layer Depth** | 18,864 | 0.2107 | **0.8073** | `-0.0126` | **0.2918** | `-0.0172` | 0.1879 | 316.5 $\mu$s |
+| **V5a: Hidden Dim = 16** | 5,728 | 0.1847 | **0.7644** | `-0.0555` | **0.1225** | `-0.1865` | 0.1868 | 226.8 $\mu$s |
+| **V5b: Hidden Dim = 64** | 44,848 | 0.2288 | **0.8089** | `-0.0110` | **0.2851** | `-0.0239` | 0.1954 | 223.7 $\mu$s |
+| **V6: Monolithic Global Mean Pool** | 10,576 | 0.0054 | **0.8096** | `-0.0103` | **0.3094** | `+0.0004` | 0.2007 | 207.3 $\mu$s |
+| **V7: Direct GNN (No Concept Bottleneck)** | 14,565 | N/A | **0.8390** | `+0.0190` | **0.3220** | `+0.0131` | 0.0818 | 249.4 $\mu$s |
+| **V8: Strictly Linear Threat Head** | 14,679 | 0.1109 | **0.8085** | `-0.0115` | **0.2746** | `-0.0343` | 0.2377 | 207.8 $\mu$s |
+
+- **Interpretability Tax:** The unconstrained Direct GNN attains $0.3220$ PR-AUC vs. our CBM's $0.3089$ PR-AUC. Forcing predictions through human concepts costs only $0.0131$ PR-AUC while enabling real-time counterfactual interventions.
+- **Graph Structure Necessity:** Removing GAT drops PR-AUC by $6.16\%$, and removing Delaunay edges drops PR-AUC by $3.27\%$.
+- **Bilinear Synergies (BCIT):** Adding pairwise concept interactions ($C_i W_{ij} C_j$) delivers a $+3.43\%$ PR-AUC lift over a linear sum.
+
+---
+
+## 🏃 Kinematics & Spearman Pitch Control (Wave 5)
+
+The engine couples tactical concept evaluation with continuous pitch control and temporal extrapolation:
+- **William Spearman (2018) Kinematics:** 4-phase ballistic Time-To-Intercept (reaction latency, turn inertia, acceleration, max sprint).
+- **Gumbel Extreme-Value Softmin Field:** Continuous $60 \times 40$ pitch control probability surface ($P_{\text{att}} + P_{\text{def}} \equiv 1.0$) with Log-Sum-Exp numerical stabilization.
+- **Dynamic Offside Wavefront:** Forward rollout ($t + 0.5\text{s}, t + 1.0\text{s}, t + 2.0\text{s}$) capturing step-up traps and passing windows.
+- **Zero-Allocation 60 FPS Browser HUD:** Rendered via packed 32-bit pixel buffers and an 8,192-entry Sigmoid lookup table.
+
+---
+
 ## ⚡ Architecture & Multi-Runtime Parity
 
 All geometric algorithms maintain verified cross-runtime mathematical parity ($|\Delta| < 10^{-5}$) across three execution targets:
-1. **Python Training Runtime:** [`scripts/geometry.py`](file:///d:/Tactical%20CBM%20Engine/scripts/geometry.py) with NumPy and SciPy.
+1. **Python Training Runtime:** [`scripts/geometry.py`](file:///d:/Tactical%20CBM%20Engine/scripts/geometry.py) and [`scripts/pitch_control.py`](file:///d:/Tactical%20CBM%20Engine/scripts/pitch_control.py).
 2. **C++ Native Runtime:** [`cpp_engine/include/geometry.hpp`](file:///d:/Tactical%20CBM%20Engine/cpp_engine/include/geometry.hpp) with Andrew's Monotone Chain 2D convex hull.
 3. **WebAssembly / Browser Runtime:** [`dashboard/tactical_geometry.wasm`](file:///d:/Tactical%20CBM%20Engine/dashboard/tactical_geometry.wasm) executed in [`dashboard/index.html`](file:///d:/Tactical%20CBM%20Engine/dashboard/index.html).
 
@@ -92,7 +126,7 @@ python -m http.server 8501 --directory dashboard
 
 ## 🧪 Verification & Test Suite
 
-Run the full automated test suite (39 unit, schema, and invariant tests):
+Run the full automated test suite (103 unit, schema, kinematic, and ablation tests):
 ```bash
 pytest tests
 ```

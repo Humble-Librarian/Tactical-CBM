@@ -1,42 +1,34 @@
 # Tactical-CBM Engine: Master Engineering Roadmap
 
-This roadmap structures all 26 identified gaps across ML experimental rigor, model architecture, training protocols, systems engineering, and academic presentation into 9 sequential, dependency-ordered **GSD Phases**.
+This master roadmap tracks all milestones across ML experimental rigor, concept bottleneck modeling, kinematic sports physics, and systems deployment.
 
 ---
 
-## 🗺️ Phase Overview
+## 🗺️ Dual-Track Architecture Overview
 
 ```
-Phase 1: Formula Parity & Zero-Copy Fix (D2, D3)
-       │
-       ▼
-Phase 2: Baselines Suite (A1)
-       │
-       ▼
-Phase 3: Evaluation Metrics, Calibration & Error Analysis (A6, A7)
-       │
-       ▼
-Phase 4: Systematic Ablation Study (A2, B1, B2)
-       │
-       ▼
-Phase 5: Training Rigor, Seeds & Learning Curves (C1, C2, C3, C4)
-       │
-       ▼
-Phase 6: Cross-Validation & Bootstrap Confidence Intervals (A4)
-       │
-       ▼
-Phase 7: Dataset Scaling (50+ Matches, Multi-Competition) (A5, C5)
-       │
-       ▼
-Phase 8: Architecture Justification & Hyperparameter Sweep (A3, B1-B4)
-       │
-       ▼
-Phase 9: Systems Alignment, Documentation & Technical Report (D1, D4, E1, E2, E3)
+TRACK A: Machine Learning Rigor & Concept Modeling
+[x] Phase 1: Formula Parity & Zero-Copy Fix
+[x] Phase 2: Comprehensive Baselines Suite (Random, Linear, GBDT, Flat-LR, MLP)
+[x] Phase 3: Evaluation Metrics, Beta Calibration & Error Forensics (A6, A7)
+[ ] Phase 4: Systematic Model Ablation Studies (A2: GAT, Adj, Depth, Bottleneck Cost)
+[ ] Phase 5: Training Pipeline Rigor & Deterministic Reproducibility (C1-C4)
+[ ] Phase 6: Cross-Validation & Bootstrap Confidence Intervals (A4)
+[ ] Phase 7: Dataset Scaling & Generalization (A5, C5)
+[ ] Phase 8: Architecture Justification & Hyperparameter Sweep (A3, B1-B4)
+[ ] Phase 9: Technical Paper, Portfolio & Systems Cleanup (D1, D4, E1-E3)
+
+TRACK B: Computational Kinematics & Sports Physics (Completed)
+[x] Wave 1: Pitch Bilateral Lateral Reflection Symmetry Equivariance (D2 Group Equivariance)
+[x] Wave 2: Relational Spatial Radar & Active Passing Corridor Pooling
+[x] Wave 3: 4-Head Relational Attention & Live Bilinear Concept Interaction Tensor (BCIT)
+[x] Wave 4: Closing Velocity Kinematics, Canonical 8-Role Taxonomy & Drag-Aim HUD
+[x] Wave 5: Spearman (2018) 4-Phase TTI, Gumbel Softmin Pitch Control & Lookahead Rollouts
 ```
 
 ---
 
-## Phase Details
+## Track A: Machine Learning Rigor & Experimental Modeling
 
 ### [x] Phase 1: Critical Bug Fixes & Formula Synchronization
 - **Scope:** D2 (Python/JS Formula Drift), D3 (Memmap Copy Bug).
@@ -91,29 +83,30 @@ Phase 9: Systems Alignment, Documentation & Technical Report (D1, D4, E1, E2, E3
 - **Deliverables:**
   - Create `ml_trainer/ablations.py`.
   - Evaluate 8 targeted model variants:
-    1. No GAT (bypass attention, direct node projection to concept head).
-    2. No Adjacency Mask (dense all-to-all attention).
-    3. No Player Mask (unmasked padding tokens).
-    4. 1 GAT layer vs. 2 GAT layers.
-    5. Hidden dimension sweep: $\{16, 32, 64, 128\}$.
-    6. No Team-Conditioned Pooling (monolithic global mean pool vs. $h_{\text{def}} \oplus h_{\text{att}}$).
-    7. Unconstrained Direct GNN ($X \to Y$, measuring the exact AUC cost of the concept bottleneck).
-    8. Learned linear head vs. bounded calibrated head.
-  - Export formatted markdown results to `results/ablation_table.md`.
-- **Exit Gate:** Full ablation grid executed reproducibly with concept $R^2$ and ROC/PR-AUC deltas.
+    1. **No GAT** (bypass graph attention; direct node projection to concept head).
+    2. **Dense Graph Attention** (No Delaunay adjacency mask; dense all-to-all attention).
+    3. **Unmasked Tokens** (No player mask; evaluates resilience to padding artifact noise).
+    4. **GAT Layer Depth** (1 layer vs. 2 layers vs. 3 layers).
+    5. **Latent Dimension Sweep** ($\{16, 32, 64, 128\}$).
+    6. **Monolithic Global Pooling** (No team separation; unconditioned global mean pool vs. $h_{\text{def}} \oplus h_{\text{att}}$).
+    7. **Unconstrained Direct GNN** ($X \to Y$ directly without concept bottleneck, measuring the exact AUC "tax" of interpretability).
+    8. **Linear Threat Head vs. Bilinear BCIT Synergy Head** (measuring the contribution of pairwise tactical interactions).
+  - Export formatted markdown results to `results/ablation_table.md` and `results/ablation_summary.json`.
+  - Create automated pytest assertions in `tests/test_ablations.py`.
+- **Exit Gate:** Full ablation grid executed reproducibly with concept $R^2$ and ROC/PR-AUC deltas confirming necessity of each structural choice.
 
 ---
 
 ### [ ] Phase 5: Training Pipeline Rigor & Deterministic Reproducibility
-- **Scope:** C1 (Loss Schedule), C2 (pos_weight Tuning), C3 (Early Stopping & Curves), C4 (Global Random Seeds).
+- **Scope:** C1 (Loss Weighting Schedule), C2 (pos_weight Class Imbalance Tuning), C3 (Early Stopping & Learning Curves), C4 (Global Random Seeds).
 - **Deliverables:**
   - Update `ml_trainer/train.py`:
-    - Set deterministic seeds across `torch`, `numpy`, `random`, and `cudnn.deterministic = True`.
+    - Strict deterministic seeding across `torch`, `numpy`, `random`, and `cudnn.deterministic = True`.
     - Implement patience-based early stopping monitoring validation PR-AUC.
-    - Export training/validation learning curves to `results/learning_curves.png`.
-    - Compute `pos_weight` dynamically based on exact dataset class ratio ($N_{\text{neg}} / N_{\text{pos}} \approx 16.0$) and benchmark against tuned 8.0.
-    - Provide formal mathematical justification for staged concept-to-threat loss weighting.
-- **Exit Gate:** `python ml_trainer/train.py` runs with early stopping and logs convergence curves.
+    - Export training/validation learning curves to `results/plots/learning_curves.png`.
+    - Compute `pos_weight` dynamically based on exact dataset class ratio ($N_{\text{neg}} / N_{\text{pos}}$) vs. hand-tuned values.
+    - Formal mathematical justification for staged concept-to-threat loss weighting.
+- **Exit Gate:** `python ml_trainer/train.py` runs with early stopping and logs convergence curves with verified multi-seed reproducibility.
 
 ---
 
@@ -136,7 +129,7 @@ Phase 9: Systems Alignment, Documentation & Technical Report (D1, D4, E1, E2, E3
   - Run `scripts/setup_and_download.py` across Euro 2020 and FIFA World Cup 2022 (50+ matches with 360 data).
   - Stream multi-match shards using parallel `multiprocessing.Pool` ingestion pipeline.
   - Implement data augmentation:
-    - Pitch Lateral Y-Symmetry flip ($y \to 80 - y$) to double dataset size and enforce bilateral tactical invariance.
+    - Pitch Lateral Y-Symmetry flip ($y \to 68 - y$) to double dataset size and enforce bilateral tactical invariance.
     - Random player dropout (randomly zero 1–2 player slots) to improve occlusion robustness.
   - Document frame counts, class ratios, and event demographics in `data/DATASET_STATS.md`.
 - **Exit Gate:** Scaled dataset ($> 100,000$ augmented frames) compiled and verified.
@@ -153,7 +146,7 @@ Phase 9: Systems Alignment, Documentation & Technical Report (D1, D4, E1, E2, E3
 
 ---
 
-### [ ] Phase 9: Systems Cleanup, Professional Presentation & Technical Report
+### [ ] Phase 9: Technical Paper, Portfolio & Systems Cleanup
 - **Scope:** D1 (Reframe Claims), D4 (Kalman Tracker Integration), E1 (Professional README), E2 (Results Section), E3 (Technical Paper / Write-Up).
 - **Deliverables:**
   - Refactor `README.md` language: remove marketing hype and present rigorous engineering metrics (*"Real-time CPU inference at 6,500 FPS, 15K-parameter interpretable GNN"*).
@@ -161,3 +154,28 @@ Phase 9: Systems Alignment, Documentation & Technical Report (D1, D4, E1, E2, E3
   - Embed comprehensive Baselines, Ablations, Calibration Curves, and PR Curves into `README.md`.
   - Author a 4-page academic-grade technical write-up in `docs/TECHNICAL_REPORT.md` (Problem Formulation, CBM Formulation, Dense-GAT Architecture, Experiments, Limitations).
 - **Exit Gate:** Clean, publication-grade repository and complete technical report ready for senior ML/DL interview defense.
+
+---
+
+## Track B: Computational Kinematics & Sports Physics (Completed)
+
+### [x] Wave 1: Pitch Lateral Reflection Symmetry Equivariance ($D_2$ Group)
+- **Delivered:** Lateral Y-symmetry flip ($y \to 68 - y$, $v_y \to -v_y$) integrated into training data generation and geometric pipeline.
+- **Invariants:** Mirror-invariant concept prediction and threat estimation.
+
+### [x] Wave 2: Relational Spatial Radar & Active Passing Corridor Pooling
+- **Delivered:** 5-zone pitch-aware geometric pooling and relational spatial radar encoding relative attacker-defender distance vectors.
+- **Invariants:** Spatial locality preservation without coordinate frame dependence.
+
+### [x] Wave 3: 4-Head Relational Attention & Live Bilinear Concept Interaction Tensor (BCIT)
+- **Delivered:** Multi-head graph attention over tactical adjacency with explicit 15-pair bilinear interaction modeling for tactical synergies (e.g., $C_4 \times C_5$ Gegenpress + Channel Space).
+- **Invariants:** Pairwise synergy quantification directly exported to live browser HUD matrix.
+
+### [x] Wave 4: Closing Velocity Kinematics & Canonical 8-Role Capabilities
+- **Delivered:** Relative closing speeds along lines of sight, mechanical acceleration curves ($a_{\max}, v_{\max}, t_{\text{react}}$), and 8-role taxonomy (`AM`, `CF`, `W`, `DM`, `CM`, `FB`, `CB`, `GK`) with zero celebrity player names. Interactive velocity aiming HUD with 15 fan-grade tactical unit tests.
+- **Invariants:** Strict adherence to positional capability constraints.
+
+### [x] Wave 5: Spearman (2018) Pitch Control Surface & Lookahead Trajectory Rollouts
+- **Delivered:** 4-phase kinematic Time-To-Intercept (TTI) physics, Gumbel Extreme-Value Softmin pitch control surface ($60 \times 40$ continuous field), multi-horizon trajectory extrapolation ($t+0.5\text{s}, t+1.0\text{s}, t+2.0\text{s}$), dynamic offside wavefront, passing window calculator, and 60 FPS zero-allocation Canvas HUD overlay.
+- **Invariants:** Bounded probabilities $P \in [0, 1]$, team completeness $P_{\text{att}} + P_{\text{def}} \equiv 1.0$, Log-Sum-Exp numerical underflow protection, vectorized $\sim 13\text{ms}$ Python grid evaluation, 94/94 passing tests.
+

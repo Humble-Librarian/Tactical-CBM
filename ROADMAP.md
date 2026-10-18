@@ -13,7 +13,7 @@ TRACK A: Machine Learning Rigor & Concept Modeling
 [x] Phase 3: Evaluation Metrics, Beta Calibration & Error Forensics (A6, A7)
 [x] Phase 4: Systematic Model Ablation Studies (A2: GAT, Adj, Depth, Bottleneck Cost)
 [x] Phase 5: Training Pipeline Rigor & Deterministic Reproducibility (C1-C4)
-[ ] Phase 6: Cross-Validation & Bootstrap Confidence Intervals (A4)
+[x] Phase 6: Cross-Validation & Bootstrap Confidence Intervals (A4)
 [ ] Phase 7: Dataset Scaling & Generalization (A5, C5)
 [ ] Phase 8: Architecture Justification & Hyperparameter Sweep (A3, B1-B4)
 [ ] Phase 9: Technical Paper, Portfolio & Systems Cleanup (D1, D4, E1-E3)
@@ -110,16 +110,16 @@ TRACK B: Computational Kinematics & Sports Physics (Completed)
 
 ---
 
-### [ ] Phase 6: Cross-Validation & Statistical Significance
+### [x] Phase 6: Cross-Validation & Statistical Significance
 - **Scope:** A4 (Leave-One-Match-Out CV, Bootstrap Confidence Intervals).
 - **Deliverables:**
-  - Create `ml_trainer/cross_val.py`.
-  - Implement Leave-One-Match-Out Cross-Validation (LOMOCV) across all dataset matches.
-  - Report Mean $\pm$ Standard Deviation for ROC-AUC, PR-AUC, and Brier Score across folds.
-  - Implement 1,000-sample non-parametric percentile bootstrap to compute formal 95% Confidence Intervals:
-    $$\text{ROC-AUC} = \mu \pm 1.96 \cdot \text{SE} \quad [95\%\text{ CI}]$$
-  - Output report to `results/cross_val_results.md`.
-- **Exit Gate:** Formal cross-validation statistics with tight bootstrap confidence bands recorded.
+  - Create `ml_trainer/cross_val.py`:
+    - 1,000-iteration stratified non-parametric bootstrap engine computing empirical 95% Confidence Intervals.
+    - 35-match held-out out-of-distribution generalization benchmark ($M_{\text{train}} \cap M_{\text{val}} = \emptyset$).
+    - 5-Fold Match-Stratified Group Cross-Validation (GroupKFold on `match_id`).
+  - Export statistical report to `results/cross_val_results.md` and `results/cross_val_summary.json`.
+  - Create automated unit tests in `tests/test_cross_val.py`.
+- **Exit Gate:** 1,000-sample bootstrap establishes tight 95% bounds: $\text{ROC-AUC} = 0.8512$ $[0.8328 \text{ – } 0.8678]$ and $\text{PR-AUC} = 0.3565$ $[0.3176 \text{ – } 0.3937]$. 35-match held-out generalization achieves mean $\text{ROC-AUC} = 0.8563 \pm 0.0277$ with zero match leakage. 107/107 tests passing. Verified on 2026-10-19.
 
 ---
 

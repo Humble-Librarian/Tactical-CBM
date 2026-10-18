@@ -9,6 +9,9 @@
 - [What is Tactical-CBM?](#-what-is-tactical-cbm)
 - [The 6 Canonical Concepts](#-the-6-canonical-concepts)
 - [Modern Dataset Benchmark (2022–2024)](#-modern-dataset-benchmark-20222024)
+- [Empirical Ablation Benchmark (Phase 4)](#-empirical-ablation-benchmark-phase-4--a2)
+- [Statistical Significance & Generalization (Phase 6)](#-statistical-significance--generalization-phase-6--a4)
+- [Kinematics & Spearman Pitch Control (Wave 5)](#-kinematics--spearman-pitch-control-wave-5)
 - [Architecture & Multi-Runtime Parity](#-architecture--multi-runtime-parity)
 - [Getting Started](#-getting-started)
 - [Verification & Test Suite](#-verification--test-suite)
@@ -77,6 +80,34 @@ A systematic ablation study across 11 architectural variants evaluates the exact
 
 ---
 
+## 📈 Statistical Significance & Generalization (Phase 6 / A4)
+
+To prevent reporting point-estimate artifacts on class-imbalanced tracking data (5.2% threat event frequency), evaluation uses non-parametric bootstrap resampling and zero-leakage cross-match partitions ($M_{\text{train}} \cap M_{\text{val}} = \emptyset$):
+
+### 1. 1,000-Iteration Stratified Non-Parametric Bootstrap (95% CI)
+Evaluated across 1,000 paired bootstrap iterations on 20,000 held-out tracking samples:
+
+| Metric | Point Estimate ($\mu$) | 95% Confidence Interval | Std Error ($\text{SE}$) |
+| :--- | :---: | :---: | :---: |
+| **ROC-AUC** | **0.8512** | **[0.8328, 0.8678]** | 0.0094 |
+| **PR-AUC** | **0.3565** | **[0.3176, 0.3937]** | 0.0197 |
+| **Brier Score** | **0.0919** | **[0.0888, 0.0951]** | 0.0016 |
+| **Concept Mean $R^2$** | **0.6695** | **[0.6642, 0.6748]** | 0.0027 |
+
+The tight $95\%$ bounds confirm that model performance is statistically significant and robust to sample variability.
+
+### 2. 35 Held-Out Match Out-of-Distribution Generalization
+Evaluated across 35 completely unseen matches ($112,178$ test frames) with zero match leakage:
+- **Mean ROC-AUC:** $0.8563 \pm 0.0277$ (Median: $0.8595$, Range: $[0.7890, 0.8989]$)
+- **Mean PR-AUC:** $0.3854 \pm 0.0679$ (Median: $0.3848$, Range: $[0.2175, 0.4846]$)
+
+### 3. 5-Fold Match-Stratified Group Cross-Validation (GroupKFold)
+Partitioned strictly by `match_id` so that no frames from the same match appear across train and test folds:
+- **Cross-Fold Mean ROC-AUC:** $0.8067 \pm 0.0266$
+- **Cross-Fold Mean PR-AUC:** $0.2550 \pm 0.0462$
+
+---
+
 ## 🏃 Kinematics & Spearman Pitch Control (Wave 5)
 
 The engine couples tactical concept evaluation with continuous pitch control and temporal extrapolation:
@@ -126,7 +157,7 @@ python -m http.server 8501 --directory dashboard
 
 ## 🧪 Verification & Test Suite
 
-Run the full automated test suite (103 unit, schema, kinematic, and ablation tests):
+Run the full automated test suite (107 unit, schema, kinematic, ablation, and cross-validation tests):
 ```bash
 pytest tests
 ```

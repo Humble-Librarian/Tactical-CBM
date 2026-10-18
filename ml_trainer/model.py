@@ -9,11 +9,17 @@ import torch
 import torch.nn as nn
 
 class DenseGATLayer(nn.Module):
-    def __init__(self, in_features: int, out_features: int):
+    def __init__(self, in_features: int, out_features: int, num_heads: int = 1):
         super().__init__()
         self.in_features = in_features
         self.out_features = out_features
-        self.scale = 1.0 / math.sqrt(out_features)
+        self.num_heads = num_heads
+        
+        # Ensure out_features is divisible by num_heads
+        if out_features % num_heads != 0:
+            num_heads = 1
+        self.head_dim = out_features // num_heads
+        self.scale = 1.0 / math.sqrt(self.head_dim)
         
         self.W_q = nn.Linear(in_features, out_features, bias=False)
         self.W_k = nn.Linear(in_features, out_features, bias=False)
@@ -24,29 +30,54 @@ class DenseGATLayer(nn.Module):
         """
         x: [B, 22, in_features]
         mask: [B, 22, 22] (1.0 for valid connection, 0.0 otherwise)
-        spatial_bias: Optional [B, 22, 22] pairwise relational spatial bias
+        spatial_bias: Optional [B, 22, 22] or [B, num_heads, 22, 22] pairwise relational spatial bias
         """
+        B, N, _ = x.shape
+        
         Q = self.W_q(x)  # [B, 22, out_features]
         K = self.W_k(x)  # [B, 22, out_features]
         V = self.W_v(x)  # [B, 22, out_features]
-        
-        # Attention scores: Q @ K.T
-        scores = torch.matmul(Q, K.transpose(-2, -1)) * self.scale  # [B, 22, 22]
 
-        # Add pairwise relational spatial bias if provided
-        if spatial_bias is not None:
-            scores = scores + spatial_bias
-        
-        # Masked attention: fill non-connected slots with -1e9
-        mask_bool = mask > 0.5
-        scores = scores.masked_fill(~mask_bool, -1e9)
-        
-        attn = torch.softmax(scores, dim=-1)
-        # Avoid NaN if an isolated node has all -1e9
-        attn = torch.nan_to_num(attn, nan=0.0)
-        
-        out = torch.matmul(attn, V)  # [B, 22, out_features]
-        return self.out_proj(out)
+        if self.num_heads > 1:
+            # Reshape to [B, num_heads, 22, head_dim]
+            Q = Q.view(B, N, self.num_heads, self.head_dim).transpose(1, 2)
+            K = K.view(B, N, self.num_heads, self.head_dim).transpose(1, 2)
+            V = V.view(B, N, self.num_heads, self.head_dim).transpose(1, 2)
+            
+            # Scores: [B, num_heads, 22, 22]
+            scores = torch.matmul(Q, K.transpose(-2, -1)) * self.scale
+            
+            # Add spatial bias
+            if spatial_bias is not None:
+                if spatial_bias.dim() == 3:  # [B, 22, 22] -> broadcast across heads
+                    scores = scores + spatial_bias.unsqueeze(1)
+                elif spatial_bias.dim() == 4:  # [B, num_heads, 22, 22]
+                    scores = scores + spatial_bias
+            
+            # Masked attention: expand mask to [B, 1, 22, 22]
+            mask_bool = (mask > 0.5).unsqueeze(1)
+            scores = scores.masked_fill(~mask_bool, -1e9)
+            
+            attn = torch.softmax(scores, dim=-1)
+            attn = torch.nan_to_num(attn, nan=0.0)
+            
+            # Context: [B, num_heads, 22, head_dim] -> [B, 22, out_features]
+            context = torch.matmul(attn, V).transpose(1, 2).contiguous().view(B, N, self.out_features)
+            return self.out_proj(context)
+        else:
+            # Single-head fast path
+            scores = torch.matmul(Q, K.transpose(-2, -1)) * self.scale  # [B, 22, 22]
+            if spatial_bias is not None:
+                if spatial_bias.dim() == 4:
+                    spatial_bias = spatial_bias.mean(dim=1)
+                scores = scores + spatial_bias
+            
+            mask_bool = mask > 0.5
+            scores = scores.masked_fill(~mask_bool, -1e9)
+            attn = torch.softmax(scores, dim=-1)
+            attn = torch.nan_to_num(attn, nan=0.0)
+            out = torch.matmul(attn, V)
+            return self.out_proj(out)
 
 class TacticalCBM(nn.Module):
     """
@@ -217,19 +248,20 @@ class SpatioTemporalCBM(nn.Module):
         self.in_proj = nn.Linear(in_features, hidden_dim)
         self.norm0 = nn.LayerNorm(hidden_dim)
 
-        # Relational Spatial Radar Bias: computes pairwise relative displacement & distance -> scalar attention bias
-        # Inputs: [dx, dy, dist] -> 3 features. Runs entirely on-the-fly in registers (0 bytes disk storage)
+        # Relational Spatial Radar Bias: computes pairwise relative displacement & distance -> 4-head attention biases
+        # Inputs: [dx, dy, dist] -> 3 features. Outputs: 4 specialized spatial biases (1 per attention head).
+        self.num_heads = 4
         self.rel_radar = nn.Sequential(
             nn.Linear(3, 16),
             nn.GELU(),
-            nn.Linear(16, 1)
+            nn.Linear(16, self.num_heads)
         )
 
-        self.gat1 = DenseGATLayer(hidden_dim, hidden_dim)
+        self.gat1 = DenseGATLayer(hidden_dim, hidden_dim, num_heads=self.num_heads)
         self.norm1 = nn.LayerNorm(hidden_dim)
         self.act1 = nn.GELU()
 
-        self.gat2 = DenseGATLayer(hidden_dim, hidden_dim)
+        self.gat2 = DenseGATLayer(hidden_dim, hidden_dim, num_heads=self.num_heads)
         self.norm2 = nn.LayerNorm(hidden_dim)
         self.act2 = nn.GELU()
 
@@ -253,14 +285,16 @@ class SpatioTemporalCBM(nn.Module):
 
     def compute_rel_spatial_bias(self, node_features: torch.Tensor) -> torch.Tensor:
         """
-        Computes pairwise relative spatial bias [B, 22, 22] from normalized (x, y) coordinates.
+        Computes pairwise 4-head relative spatial bias [B, 4, 22, 22] from normalized (x, y) coordinates.
         Zero disk footprint: runs entirely in GPU/CPU tensor registers.
         """
         pos = node_features[:, :, 0:2]  # [B, 22, 2]
         delta_pos = pos.unsqueeze(1) - pos.unsqueeze(2)  # [B, 22, 22, 2] (pos_j - pos_i)
         dist = torch.norm(delta_pos, dim=-1, keepdim=True)  # [B, 22, 22, 1]
         rel_feats = torch.cat([delta_pos, dist], dim=-1)  # [B, 22, 22, 3]
-        bias = self.rel_radar(rel_feats).squeeze(-1)  # [B, 22, 22]
+        bias = self.rel_radar(rel_feats)  # [B, 22, 22, 4]
+        # Permute to [B, 4, 22, 22] for multi-head attention
+        bias = bias.permute(0, 3, 1, 2)
         return bias
 
     def forward(

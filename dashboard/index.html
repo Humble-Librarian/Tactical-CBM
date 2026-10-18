@@ -464,6 +464,79 @@
             color: var(--accent-red);
         }
 
+        /* Tactical Synergy Matrix Diagnostics */
+        .synergy-section {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 14px;
+        }
+
+        .synergy-title {
+            font-size: 0.82rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .synergy-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            max-height: 220px;
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+
+        .synergy-grid::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .synergy-grid::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 4px;
+        }
+
+        .synergy-card {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(15, 23, 42, 0.7);
+            border: 1px solid rgba(51, 65, 85, 0.6);
+            border-radius: 6px;
+            padding: 6px 10px;
+            font-size: 0.74rem;
+            transition: all 0.2s ease;
+        }
+
+        .synergy-card.active-threat {
+            border-color: rgba(244, 63, 94, 0.5);
+            background: rgba(244, 63, 94, 0.08);
+        }
+
+        .synergy-card.active-neutral {
+            border-color: rgba(56, 189, 248, 0.4);
+            background: rgba(56, 189, 248, 0.06);
+        }
+
+        .synergy-name {
+            font-weight: 500;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .synergy-score {
+            font-family: 'Fira Code', monospace;
+            font-weight: 600;
+            font-size: 0.75rem;
+        }
+
         /* Custom Legend for Players */
         .pitch-legend {
             width: 100%;
@@ -654,13 +727,75 @@
                 <div class="attribution-title">Tactical Factor Attribution</div>
                 <div id="explanationsList" class="explanations"></div>
             </div>
+
+            <!-- Wave 3: Bilinear Tactical Synergy Matrix -->
+            <div class="synergy-section">
+                <div class="synergy-title">
+                    <span>Tactical Synergy Matrix (BCIT)</span>
+                    <span id="synergyStatus" style="font-size:0.7rem; color: var(--accent-blue);">Live BCIT</span>
+                </div>
+                <div id="synergyList" class="synergy-grid"></div>
+            </div>
         </div>
     </div>
 
     <script>
-        // Calibrated weights with tactical domain invariants
-        const WEIGHTS = [-1.2000, -0.1500, -0.5000, -0.3000, -0.2000, 2.0000];
-        const BIAS = 0.3823;
+        // Wave 3 Canonical SpatioTemporalCBM Sidecar Parameters
+        // (Dynamically synchronized with models/spatiotemporal_cbm_weights.json)
+        let CBM_WEIGHTS = {
+            linear_weights: [-0.9437, 0.3442, -0.4094, 0.7187, 0.0622, 0.9238],
+            bias: -0.2044,
+            pairwise_interactions: {
+                "C1_x_C2": -0.7667,
+                "C1_x_C3": -0.9850,
+                "C1_x_C4": -0.2943,
+                "C1_x_C5": -0.9954,
+                "C1_x_C6": -0.0582,
+                "C2_x_C3": 0.1437,
+                "C2_x_C4": 1.0153,
+                "C2_x_C5": 0.5557,
+                "C2_x_C6": 1.0202,
+                "C3_x_C4": 0.6182,
+                "C3_x_C5": -0.1479,
+                "C3_x_C6": 0.9241,
+                "C4_x_C5": 0.7926,
+                "C4_x_C6": 1.0410,
+                "C5_x_C6": 0.9381
+            },
+            beta_calibration: {
+                a: 0.8488,
+                b: 1.1079,
+                c: -2.8372
+            },
+            optimal_f05_threshold: 0.3662,
+            threshold_at_p50: 0.3458
+        };
+
+        const WEIGHTS = CBM_WEIGHTS.linear_weights;
+        const BIAS = CBM_WEIGHTS.bias;
+
+        // Try dynamically loading latest exported sidecar weights
+        fetch("../models/spatiotemporal_cbm_weights.json")
+            .then(res => res.json())
+            .then(data => {
+                if (data && data.parameters) {
+                    CBM_WEIGHTS.linear_weights = data.parameters.linear_weights || CBM_WEIGHTS.linear_weights;
+                    CBM_WEIGHTS.bias = data.parameters.bias !== undefined ? data.parameters.bias : CBM_WEIGHTS.bias;
+                    CBM_WEIGHTS.pairwise_interactions = data.parameters.pairwise_interactions || CBM_WEIGHTS.pairwise_interactions;
+                    if (data.parameters.beta_calibration) {
+                        CBM_WEIGHTS.beta_calibration = data.parameters.beta_calibration;
+                    }
+                    if (data.parameters.threshold_at_p50) {
+                        CBM_WEIGHTS.threshold_at_p50 = data.parameters.threshold_at_p50;
+                    }
+                    console.log("[CBM Engine] Loaded live sidecar weights:", CBM_WEIGHTS);
+                    recalculate();
+                }
+            })
+            .catch(err => {
+                console.log("[CBM Engine] Using embedded canonical weights fallback:", err);
+            });
+
         const CONCEPT_NAMES = [
             "C1: Defensive Line Height",
             "C2: Defensive Compactness",
@@ -998,11 +1133,27 @@
             return Math.hypot(p.x - (a.x + t * dx), p.y - (a.y + t * dy));
         }
 
-        // Stage 5 Instant Intervention Engine (O(1) Dot Product + Effective Attack Distance + Open Net Hazard)
+        // Wave 3 Bilinear Concept Interaction Tensor (BCIT) & Beta Calibration Engine
         function evaluateStage5(concepts) {
-            let logit = BIAS;
+            const w_lin = CBM_WEIGHTS.linear_weights;
+            const bias = CBM_WEIGHTS.bias;
+            const interactions = CBM_WEIGHTS.pairwise_interactions;
+
+            // 1. Linear dot product: w^T * c + bias
+            let logit = bias;
             for (let i = 0; i < 6; ++i) {
-                logit += concepts[i] * WEIGHTS[i];
+                logit += concepts[i] * w_lin[i];
+            }
+
+            // 2. Bilinear pairwise interaction synergies: sum_{i < j} W_ij * c_i * c_j
+            for (let i = 0; i < 6; ++i) {
+                for (let j = i + 1; j < 6; ++j) {
+                    const key = `C${i+1}_x_C${j+1}`;
+                    if (interactions && interactions[key] !== undefined) {
+                        const synergyWeight = interactions[key];
+                        logit += concepts[i] * concepts[j] * synergyWeight;
+                    }
+                }
             }
 
             // Effective attack distance: either the ball carrier or any open receiver in the box
@@ -1042,13 +1193,26 @@
                 }
             }
 
-            const rawThreat = 1.0 / (1.0 + Math.exp(-logit));
+            // Raw threat probability through sigmoid
+            const rawProb = 1.0 / (1.0 + Math.exp(-logit));
 
-            // Territorial Distance Physics: Probability of a shot based on the closest dangerous attacking threat
+            // 3. Post-Hoc Beta Calibration Layer (Kull et al., 2017)
+            // ln(p / (1 - p)) = a * ln(s) - b * ln(1 - s) + c
+            let calProb = rawProb;
+            if (CBM_WEIGHTS.beta_calibration) {
+                const a = CBM_WEIGHTS.beta_calibration.a;
+                const b = CBM_WEIGHTS.beta_calibration.b;
+                const c = CBM_WEIGHTS.beta_calibration.c;
+                const s = Math.min(Math.max(rawProb, 1e-7), 1.0 - 1e-7);
+                const logOdds = a * Math.log(s) - b * Math.log(1.0 - s) + c;
+                calProb = 1.0 / (1.0 + Math.exp(-logOdds));
+            }
+
+            // Territorial Distance Scaling
             const progressRatio = Math.max(0.0, 120.0 - minDistanceToGoal) / 105.0;
             const territorialScale = 0.15 + 0.85 * Math.pow(Math.min(Math.max(progressRatio, 0.0), 1.0), 1.25);
 
-            return Math.min(Math.max(rawThreat * territorialScale, 0.01), 0.99);
+            return Math.min(Math.max(calProb * territorialScale, 0.01), 0.99);
         }
 
         function recalculate() {
@@ -1151,7 +1315,8 @@
             }
 
             for (let i = 0; i < 6; ++i) {
-                const contrib = concepts[i] * WEIGHTS[i];
+                const w_lin = CBM_WEIGHTS.linear_weights ? CBM_WEIGHTS.linear_weights[i] : WEIGHTS[i];
+                const contrib = concepts[i] * w_lin;
                 const row = document.createElement("div");
                 row.className = "exp-row";
                 const isSafe = contrib < 0;
@@ -1162,6 +1327,49 @@
                     </span>
                 `;
                 expList.appendChild(row);
+            }
+
+            // Wave 3: Populate Tactical Synergy Matrix (BCIT Pairwise Interactions)
+            const synList = document.getElementById("synergyList");
+            if (synList && CBM_WEIGHTS.pairwise_interactions) {
+                synList.innerHTML = "";
+                const synergies = [];
+                for (let i = 0; i < 6; ++i) {
+                    for (let j = i + 1; j < 6; ++j) {
+                        const key = `C${i+1}_x_C${j+1}`;
+                        const w_ij = CBM_WEIGHTS.pairwise_interactions[key] || 0.0;
+                        const jointActivation = concepts[i] * concepts[j];
+                        const impact = jointActivation * w_ij;
+                        synergies.push({
+                            pair: `C${i+1} × C${j+1}`,
+                            name1: CONCEPT_NAMES[i].split(":")[1].trim(),
+                            name2: CONCEPT_NAMES[j].split(":")[1].trim(),
+                            w: w_ij,
+                            activation: jointActivation,
+                            impact: impact
+                        });
+                    }
+                }
+
+                // Sort by absolute impact descending
+                synergies.sort((a, b) => Math.abs(b.impact) - Math.abs(a.impact));
+
+                // Render top 5 active synergies
+                synergies.slice(0, 6).forEach(s => {
+                    const card = document.createElement("div");
+                    const isThreat = s.impact > 0.05;
+                    card.className = `synergy-card ${isThreat ? 'active-threat' : 'active-neutral'}`;
+                    card.innerHTML = `
+                        <span class="synergy-name">
+                            <span style="color: ${isThreat ? 'var(--accent-red)' : 'var(--accent-blue)'}; font-weight:700;">${s.pair}</span>
+                            <span style="color: var(--text-muted); font-size:0.7rem;">${s.name1.split(' ')[0]} + ${s.name2.split(' ')[0]}</span>
+                        </span>
+                        <span class="synergy-score" style="color: ${s.impact > 0 ? '#f43f5e' : '#10b981'};">
+                            ${s.impact > 0 ? '+' : ''}${s.impact.toFixed(3)}
+                        </span>
+                    `;
+                    synList.appendChild(card);
+                });
             }
         }
 

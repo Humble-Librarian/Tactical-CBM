@@ -133,7 +133,7 @@ def train_cbm(
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print("=" * 75)
-    print("TRAINING SPATIO-TEMPORAL CONCEPT BOTTLENECK MODEL (CBM) - WAVE 2")
+    print("TRAINING SPATIO-TEMPORAL CONCEPT BOTTLENECK MODEL (CBM) - WAVE 3")
     print(f"Device: {device} | Batch Size: {batch_size} | Epochs: {epochs}")
     print("=" * 75, flush=True)
 

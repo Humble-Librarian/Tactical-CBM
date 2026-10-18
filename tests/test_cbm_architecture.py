@@ -188,19 +188,20 @@ def test_dataset_lateral_pitch_reflection():
 def test_relational_spatial_radar_invariance(cbm_model):
     """
     Verifies that compute_rel_spatial_bias:
-    1. Produces exact tensor shape [B, 22, 22]
+    1. Produces exact tensor shape [B, 4, 22, 22] (4 specialized attention heads)
     2. Has identical values along the diagonal (self-to-self relative offset is zero)
     3. Handles batch invariance and translation symmetry.
     """
     B = 2
     x = torch.rand(B, 22, 6)
     bias = cbm_model.compute_rel_spatial_bias(x)
-    assert bias.shape == (B, 22, 22)
+    assert bias.shape == (B, 4, 22, 22), f"Expected (B, 4, 22, 22), got {bias.shape}"
     assert not torch.isnan(bias).any()
-    # Check self-interaction along diagonal
+    # Check self-interaction along diagonal for each head
     for b in range(B):
-        diag_vals = torch.diagonal(bias[b])
-        assert torch.allclose(diag_vals, diag_vals[0], atol=1e-5)
+        for h in range(4):
+            diag_vals = torch.diagonal(bias[b, h])
+            assert torch.allclose(diag_vals, diag_vals[0], atol=1e-5)
 
 
 def test_active_passing_corridor_pooling_safety(cbm_model):
@@ -241,5 +242,59 @@ def test_threshold_optimizer_precision_constrained_recall():
     assert info["precision_at_p50"] >= 0.50
     assert 0.0 <= info["recall_at_p50"] <= 1.0
     assert 0.0 <= info["threshold_at_p50"] <= 1.0
+
+
+def test_multihead_attention_dimensions(cbm_model):
+    """
+    Verifies that DenseGATLayer with num_heads=4 properly processes
+    multi-head spatial biases and preserves [B, 22, hidden_dim] contract.
+    """
+    B = 2
+    x = torch.rand(B, 22, 6)
+    adj = torch.ones(B, 22, 22)
+    mask = torch.ones(B, 22, 1)
+
+    cbm_model.eval()
+    with torch.no_grad():
+        concepts, threat = cbm_model(x, adj, mask, return_calibrated=True)
+
+    assert concepts.shape == (B, 6)
+    assert threat.shape == (B, 1)
+    assert cbm_model.gat1.num_heads == 4
+    assert cbm_model.gat2.num_heads == 4
+
+
+def test_bcit_javascript_mathematical_parity():
+    """
+    Verifies that the JavaScript formulation of the Bilinear Concept Interaction Tensor:
+      logit = bias + sum(w_i * c_i) + sum_{i<j}(W_ij * c_i * c_j)
+    matches PyTorch BilinearConceptHead down to floating point precision.
+    """
+    from ml_trainer.model import BilinearConceptHead
+    head = BilinearConceptHead(num_concepts=6)
+
+    # Random test concepts
+    c = torch.tensor([[0.7, 0.4, 0.2, 0.8, 0.5, 0.9]], dtype=torch.float32)
+
+    with torch.no_grad():
+        pt_logit = head(c).item()
+
+        # Replicate JS computation
+        w_lin = head.linear_weights.numpy()
+        w_int = head.interaction_weights.numpy()
+        b = head.bias.item()
+        c_np = c.squeeze(0).numpy()
+
+        js_logit = b
+        for i in range(6):
+            js_logit += c_np[i] * w_lin[i]
+
+        k = 0
+        for i in range(6):
+            for j in range(i + 1, 6):
+                js_logit += c_np[i] * c_np[j] * w_int[k]
+                k += 1
+
+    assert abs(pt_logit - js_logit) < 1e-5, f"Discrepancy: PyTorch {pt_logit} vs JS {js_logit}"
 
 

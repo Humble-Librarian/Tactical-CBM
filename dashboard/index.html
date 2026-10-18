@@ -650,6 +650,100 @@
             background: rgba(56, 189, 248, 0.1);
         }
 
+        /* Wave 5: Dynamic Pitch Control & Temporal Horizon Scrubber HUD */
+        .temporal-hud {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(15, 23, 42, 0.88);
+            border: 1px solid #1e293b;
+            border-radius: 8px;
+            padding: 8px 14px;
+            margin-bottom: 8px;
+            font-size: 0.8rem;
+            backdrop-filter: blur(8px);
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .temporal-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .toggle-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            user-select: none;
+            font-size: 0.74rem;
+            font-weight: 600;
+            color: var(--text-main);
+            background: rgba(30, 41, 59, 0.8);
+            border: 1px solid #334155;
+            padding: 4px 10px;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+        }
+
+        .toggle-pill input[type="checkbox"] {
+            cursor: pointer;
+            accent-color: #38bdf8;
+        }
+
+        .toggle-pill:hover {
+            border-color: #38bdf8;
+            background: rgba(56, 189, 248, 0.08);
+        }
+
+        .timeline-ctrl-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(2, 6, 23, 0.6);
+            border: 1px solid #334155;
+            padding: 4px 12px;
+            border-radius: 6px;
+        }
+
+        .timeline-slider {
+            width: 120px;
+            accent-color: #38bdf8;
+            cursor: pointer;
+        }
+
+        .timeline-readout {
+            font-family: 'Fira Code', monospace;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #38bdf8;
+            min-width: 75px;
+        }
+
+        .window-badge {
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            font-family: 'Fira Code', monospace;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            background: rgba(16, 185, 129, 0.15);
+            color: #10b981;
+            border: 1px solid rgba(16, 185, 129, 0.4);
+        }
+
+        .window-badge-closed {
+            background: rgba(244, 63, 94, 0.15);
+            color: #f43f5e;
+            border-color: rgba(244, 63, 94, 0.4);
+        }
+
         /* Wave 4: Dynamic Player Role & Velocity Bar */
         .player-control-panel {
             width: 100%;
@@ -810,6 +904,30 @@
                     <button id="resetVelocitiesBtn" class="hud-action-btn" onclick="resetAllVelocities()" title="Set all player velocities to stationary (v = 0)">
                         <span>⏹ Reset Speeds</span>
                     </button>
+                </div>
+            </div>
+
+            <!-- Wave 5 Dynamic Pitch Control & Temporal Horizon HUD -->
+            <div id="temporalHorizonHud" class="temporal-hud">
+                <div class="temporal-left">
+                    <label class="toggle-pill" title="Toggle William Spearman (2018) continuous pitch control dominance field">
+                        <input type="checkbox" id="pitchControlToggle" onchange="togglePitchControl(this.checked)">
+                        <span>🌊 Pitch Control Surface</span>
+                    </label>
+                    <label class="toggle-pill" title="Toggle multi-frame forward trajectory simulation outlines">
+                        <input type="checkbox" id="lookaheadToggle" onchange="toggleLookahead(this.checked)">
+                        <span>⏱️ Trajectory Lookahead</span>
+                    </label>
+                    <div class="timeline-ctrl-group">
+                        <button id="playRolloutBtn" class="hud-action-btn" style="padding: 2px 8px; font-size: 0.7rem;" onclick="toggleRolloutPlay()" title="Play / Pause forward trajectory simulation">
+                            <span id="playRolloutIcon">▶ Play</span>
+                        </button>
+                        <input type="range" id="horizonSlider" class="timeline-slider" min="0.0" max="2.0" step="0.1" value="0.0" oninput="onHorizonSliderInput(this.value)">
+                        <span id="horizonReadout" class="timeline-readout">+0.0s (Live)</span>
+                    </div>
+                </div>
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <span id="passingWindowBadge" class="window-badge">Through-Ball: [0.0s - 1.2s] (VIABLE)</span>
                 </div>
             </div>
 
@@ -1020,18 +1138,259 @@
             "C6: Box Overload Ratio"
         ];
 
-        // Wave 4: Canonical 8 Position & Role Taxonomy (Zero Player Names, Zero Fixed Weights)
-        // Physical Capabilities: Vision Cone (theta), Passing Corridor Clearance (d_clearance), Box Threat Factor (gamma_box), Max Sprint Speed (v_max)
+        // Wave 4 & 5: Canonical 8 Position & Role Taxonomy (Zero Player Names, Zero Fixed Weights)
+        // Physical Capabilities: Vision Cone (theta), Passing Corridor Clearance (d_clearance), Box Threat Factor (gamma_box), Max Sprint Speed (v_max), Acceleration (a_max), Reaction Time (t_react), Turn Penalty Max (turn_penalty_max)
         const ROLE_CAPABILITIES = {
-            "AM": { name: "AM · Advanced Playmaker", theta: 180, clearance: 1.4, gamma_box: 1.0, v_max: 7.8, desc: "Wide vision (180°), narrow clearance tolerance (1.4m)" },
-            "CF": { name: "CF · Box Finisher",       theta: 90,  clearance: 2.2, gamma_box: 1.5, v_max: 8.5, desc: "Lethal 1.5x in-box finisher, heading & poach instinct" },
-            "W":  { name: "W · Direct Winger",        theta: 110, clearance: 1.8, gamma_box: 1.1, v_max: 9.5, desc: "High sprint velocity (9.5 m/s), 1v1 flank isolation" },
-            "DM": { name: "DM · Holding Pivot",       theta: 140, clearance: 1.9, gamma_box: 0.8, v_max: 7.5, desc: "Defensive central screen & tempo distribution" },
-            "CM": { name: "CM · Box-to-Box",          theta: 120, clearance: 2.0, gamma_box: 1.2, v_max: 8.8, desc: "High work-rate engine & late penalty box runs" },
-            "FB": { name: "FB · Overlapping Full-Back",theta: 100, clearance: 2.1, gamma_box: 0.9, v_max: 9.2, desc: "Flank width, recovery sprints & overlapping support" },
-            "CB": { name: "CB · Central Stopper",     theta: 100, clearance: 2.4, gamma_box: 0.6, v_max: 8.2, desc: "Offside line anchor & step-up trap execution" },
-            "GK": { name: "GK · Sweeper Keeper",      theta: 150, clearance: 2.5, gamma_box: 0.2, v_max: 7.0, desc: "Sweeping depth coverage behind high line" }
+            "AM": { name: "AM · Advanced Playmaker", theta: 180, clearance: 1.4, gamma_box: 1.0, v_max: 7.8, a_max: 4.2, t_react: 0.55, turn_penalty_max: 0.30, desc: "Wide vision (180°), narrow clearance tolerance (1.4m)" },
+            "CF": { name: "CF · Box Finisher",       theta: 90,  clearance: 2.2, gamma_box: 1.5, v_max: 8.5, a_max: 4.8, t_react: 0.60, turn_penalty_max: 0.35, desc: "Lethal 1.5x in-box finisher, heading & poach instinct" },
+            "W":  { name: "W · Direct Winger",        theta: 110, clearance: 1.8, gamma_box: 1.1, v_max: 9.5, a_max: 5.2, t_react: 0.50, turn_penalty_max: 0.32, desc: "High sprint velocity (9.5 m/s), 1v1 flank isolation" },
+            "DM": { name: "DM · Holding Pivot",       theta: 140, clearance: 1.9, gamma_box: 0.8, v_max: 7.5, a_max: 3.8, t_react: 0.60, turn_penalty_max: 0.34, desc: "Defensive central screen & tempo distribution" },
+            "CM": { name: "CM · Box-to-Box",          theta: 120, clearance: 2.0, gamma_box: 1.2, v_max: 8.8, a_max: 4.5, t_react: 0.58, turn_penalty_max: 0.32, desc: "High work-rate engine & late penalty box runs" },
+            "FB": { name: "FB · Overlapping Full-Back",theta: 100, clearance: 2.1, gamma_box: 0.9, v_max: 9.2, a_max: 5.0, t_react: 0.52, turn_penalty_max: 0.35, desc: "Flank width, recovery sprints & overlapping support" },
+            "CB": { name: "CB · Central Stopper",     theta: 100, clearance: 2.4, gamma_box: 0.6, v_max: 8.2, a_max: 4.4, t_react: 0.65, turn_penalty_max: 0.38, desc: "Offside line anchor & step-up trap execution" },
+            "GK": { name: "GK · Sweeper Keeper",      theta: 150, clearance: 2.5, gamma_box: 0.2, v_max: 7.0, a_max: 4.0, t_react: 0.45, turn_penalty_max: 0.28, desc: "Sweeping depth coverage behind high line" }
         };
+
+        // Wave 5: Dynamic Pitch Control Surface (William Spearman 2018 Softmin Engine)
+        let showPitchControlSurface = false;
+        let showLookaheadRollout = false;
+        let lookaheadHorizon = 0.0;
+        let isPlayingRollout = false;
+        let rolloutTimer = null;
+
+        const PC_GRID_W = 60;
+        const PC_GRID_H = 40;
+        const offscreenPitchCanvas = document.createElement("canvas");
+        offscreenPitchCanvas.width = PC_GRID_W;
+        offscreenPitchCanvas.height = PC_GRID_H;
+        const offscreenPitchCtx = offscreenPitchCanvas.getContext("2d");
+        const pitchImageData = offscreenPitchCtx.createImageData(PC_GRID_W, PC_GRID_H);
+        const pitchPixelBuf32 = new Uint32Array(pitchImageData.data.buffer);
+
+        const LUT_SIZE = 8192;
+        const LUT_MIN = -8.0;
+        const LUT_MAX = 8.0;
+        const SIGMOID_LUT = new Float32Array(LUT_SIZE);
+        for (let i = 0; i < LUT_SIZE; ++i) {
+            const v = LUT_MIN + (i / LUT_SIZE) * (LUT_MAX - LUT_MIN);
+            SIGMOID_LUT[i] = 1.0 / (1.0 + Math.exp(-v));
+        }
+
+        function fastSigmoid(x) {
+            if (x <= LUT_MIN) return 0.0;
+            if (x >= LUT_MAX) return 1.0;
+            const idx = ((x - LUT_MIN) * (LUT_SIZE / (LUT_MAX - LUT_MIN))) | 0;
+            return SIGMOID_LUT[idx];
+        }
+
+        function calculatePlayerTTI(p, v, tgtX, tgtY, roleTag, isGK) {
+            const role = ROLE_CAPABILITIES[roleTag] || ROLE_CAPABILITIES["CM"];
+            const tReact = role.t_react || 0.55;
+            const vMax = role.v_max || 8.0;
+            const aMax = role.a_max || 4.2;
+            const turnMax = role.turn_penalty_max || 0.35;
+
+            const rx = p.x + (v.x || 0) * tReact;
+            const ry = p.y + (v.y || 0) * tReact;
+
+            const dx = tgtX - rx;
+            const dy = tgtY - ry;
+            const dTotal = Math.hypot(dx, dy);
+
+            let dEff = dTotal;
+            if (isGK || roleTag === "GK") {
+                const inBox = (rx >= 102.0 && ry >= 18.0 && ry <= 62.0);
+                dEff = Math.max(0.0, dTotal - (inBox ? 2.5 : 0.8));
+            } else {
+                dEff = Math.max(0.0, dTotal - 0.4);
+            }
+
+            if (dEff <= 1e-4) return tReact;
+
+            const vSpeed = Math.hypot(v.x || 0, v.y || 0);
+            let tauTurn = 0.0;
+            let vInit = 0.0;
+
+            if (vSpeed > 0.1) {
+                const dot = ((v.x || 0) * dx + (v.y || 0) * dy) / (vSpeed * dTotal + 1e-6);
+                const clampedDot = Math.max(-1.0, Math.min(1.0, dot));
+                const theta = Math.acos(clampedDot);
+                tauTurn = turnMax * Math.pow(theta / Math.PI, 2);
+                vInit = Math.max(0.0, vSpeed * clampedDot);
+            }
+
+            const dAccel = (vMax * vMax - vInit * vInit) / (2.0 * aMax);
+            let tRun;
+            if (dEff <= dAccel) {
+                const disc = Math.max(0.0, vInit * vInit + 2.0 * aMax * dEff);
+                tRun = (-vInit + Math.sqrt(disc)) / aMax;
+            } else {
+                const tAccel = (vMax - vInit) / aMax;
+                const dRemain = dEff - dAccel;
+                tRun = tAccel + (dRemain / vMax);
+            }
+
+            return tReact + tauTurn + tRun;
+        }
+
+        function renderPitchControlSurface() {
+            const SIGMA_EFF = 0.248;
+            const stepX = PITCH_W / PC_GRID_W;
+            const stepY = PITCH_H / PC_GRID_H;
+
+            const allDefs = [...defenders];
+            if (goalkeeper) allDefs.push(goalkeeper);
+
+            const allAtts = [...attackers];
+            if (ballCarrier && !allAtts.includes(ballCarrier)) allAtts.push(ballCarrier);
+
+            const defsToUse = lookaheadHorizon > 0.0 ? extrapolatePlayerList(allDefs, lookaheadHorizon) : allDefs;
+            const attsToUse = lookaheadHorizon > 0.0 ? extrapolatePlayerList(allAtts, lookaheadHorizon) : allAtts;
+
+            for (let r = 0; r < PC_GRID_H; ++r) {
+                const tgtY = (r + 0.5) * stepY;
+                for (let c = 0; c < PC_GRID_W; ++c) {
+                    const tgtX = (c + 0.5) * stepX;
+                    const idx = r * PC_GRID_W + c;
+
+                    let minAttTau = 999.0;
+                    let minDefTau = 999.0;
+
+                    for (let i = 0; i < attsToUse.length; ++i) {
+                        const a = attsToUse[i];
+                        const tau = calculatePlayerTTI({ x: a.x, y: a.y }, { x: a.vx, y: a.vy }, tgtX, tgtY, a.role, false);
+                        if (tau < minAttTau) minAttTau = tau;
+                    }
+
+                    for (let i = 0; i < defsToUse.length; ++i) {
+                        const d = defsToUse[i];
+                        const isGK = (d.role === "GK" || d === goalkeeper);
+                        const tau = calculatePlayerTTI({ x: d.x, y: d.y }, { x: d.vx, y: d.vy }, tgtX, tgtY, d.role, isGK);
+                        if (tau < minDefTau) minDefTau = tau;
+                    }
+
+                    const logit = (minDefTau - minAttTau) / SIGMA_EFF;
+                    const pAtt = fastSigmoid(logit);
+                    const certainty = Math.abs(pAtt - 0.5) * 2.0;
+                    const alpha = Math.min(180, Math.round(145 * Math.pow(certainty, 1.25)));
+
+                    if (pAtt >= 0.5) {
+                        // Radiant Crimson for attacking territory (#e11d48)
+                        pitchPixelBuf32[idx] = (alpha << 24) | (0x48 << 16) | (0x1d << 8) | 0xe1;
+                    } else {
+                        // Deep Sapphire Blue for defensive territory (#2563eb)
+                        pitchPixelBuf32[idx] = (alpha << 24) | (0xeb << 16) | (0x63 << 8) | 0x25;
+                    }
+                }
+            }
+
+            offscreenPitchCtx.putImageData(pitchImageData, 0, 0);
+        }
+
+        function extrapolatePlayerList(list, dt) {
+            const damping = Math.exp(-0.12 * dt);
+            return list.map(p => {
+                const vx = (p.vx || 0);
+                const vy = (p.vy || 0);
+                return {
+                    ...p,
+                    x: Math.max(0, Math.min(PITCH_W, p.x + vx * dt * damping)),
+                    y: Math.max(0, Math.min(PITCH_H, p.y + vy * dt * damping)),
+                    vx: vx * damping,
+                    vy: vy * damping
+                };
+            });
+        }
+
+        function togglePitchControl(checked) {
+            showPitchControlSurface = checked;
+            drawPitch();
+        }
+
+        function toggleLookahead(checked) {
+            showLookaheadRollout = checked;
+            if (!checked && lookaheadHorizon > 0.0) {
+                setLookaheadHorizon(0.0);
+            }
+            drawPitch();
+            recalculate();
+        }
+
+        function onHorizonSliderInput(val) {
+            setLookaheadHorizon(parseFloat(val));
+        }
+
+        function setLookaheadHorizon(dt) {
+            lookaheadHorizon = dt;
+            const slider = document.getElementById("horizonSlider");
+            const readout = document.getElementById("horizonReadout");
+            if (slider) slider.value = dt.toFixed(1);
+            if (readout) readout.innerText = `+${dt.toFixed(1)}s ${dt === 0 ? "(Live)" : ""}`;
+            if (dt > 0 && !showLookaheadRollout) {
+                showLookaheadRollout = true;
+                const toggle = document.getElementById("lookaheadToggle");
+                if (toggle) toggle.checked = true;
+            }
+            updatePassingWindowBadge();
+            recalculate();
+        }
+
+        function toggleRolloutPlay() {
+            isPlayingRollout = !isPlayingRollout;
+            const btnIcon = document.getElementById("playRolloutIcon");
+            if (isPlayingRollout) {
+                if (btnIcon) btnIcon.innerText = "⏸ Pause";
+                if (!showLookaheadRollout) {
+                    showLookaheadRollout = true;
+                    const toggle = document.getElementById("lookaheadToggle");
+                    if (toggle) toggle.checked = true;
+                }
+                rolloutTimer = setInterval(() => {
+                    let next = lookaheadHorizon + 0.1;
+                    if (next > 2.05) next = 0.0;
+                    setLookaheadHorizon(next);
+                }, 120);
+            } else {
+                if (btnIcon) btnIcon.innerText = "▶ Play";
+                if (rolloutTimer) {
+                    clearInterval(rolloutTimer);
+                    rolloutTimer = null;
+                }
+            }
+        }
+
+        function updatePassingWindowBadge() {
+            const badge = document.getElementById("passingWindowBadge");
+            if (!badge) return;
+
+            // Find forward passing option ahead of ball carrier
+            const forwardAtts = attackers.filter(a => a.x > ballCarrier.x + 2.0);
+            if (forwardAtts.length === 0) {
+                badge.className = "window-badge window-badge-closed";
+                badge.innerText = "Through-Ball: [NO RUNNER AHEAD]";
+                return;
+            }
+
+            const primeTarget = forwardAtts[0];
+            const dist = Math.hypot(primeTarget.x - ballCarrier.x, primeTarget.y - ballCarrier.y);
+            const ballTime = dist / 18.0; // 18 m/s ground pass
+
+            // Check if receiver reaches arrival spot ahead of defenders
+            const tauRec = calculatePlayerTTI({ x: primeTarget.x, y: primeTarget.y }, { x: primeTarget.vx, y: primeTarget.vy }, primeTarget.x, primeTarget.y, primeTarget.role, false);
+            let minDefTau = 999.0;
+            defenders.forEach(d => {
+                const tauD = calculatePlayerTTI({ x: d.x, y: d.y }, { x: d.vx, y: d.vy }, primeTarget.x, primeTarget.y, d.role, false);
+                if (tauD < minDefTau) minDefTau = tauD;
+            });
+
+            if (tauRec < minDefTau - 0.20) {
+                badge.className = "window-badge";
+                badge.innerText = `Through-Ball: [${lookaheadHorizon.toFixed(1)}s - ${(lookaheadHorizon + 0.9).toFixed(1)}s] (VIABLE)`;
+            } else {
+                badge.className = "window-badge window-badge-closed";
+                badge.innerText = `Through-Ball: INTERCEPTED (Def margin +${(tauRec - minDefTau).toFixed(2)}s)`;
+            }
+        }
 
         let autoMode = true;
         const canvas = document.getElementById("pitchCanvas");
@@ -1269,33 +1628,37 @@
 
         // 6 Canonical Tactical Concept Extractors
         function computeConceptsFromPitch() {
-            const allDefenders = goalkeeper ? [...defenders, goalkeeper] : defenders;
+            const defs = (showLookaheadRollout && lookaheadHorizon > 0.0) ? extrapolatePlayerList(defenders, lookaheadHorizon) : defenders;
+            const atts = (showLookaheadRollout && lookaheadHorizon > 0.0) ? extrapolatePlayerList(attackers, lookaheadHorizon) : attackers;
+            const carrier = (showLookaheadRollout && lookaheadHorizon > 0.0 && ballCarrier) ? extrapolatePlayerList([ballCarrier], lookaheadHorizon)[0] : ballCarrier;
+            const gk = (showLookaheadRollout && lookaheadHorizon > 0.0 && goalkeeper) ? extrapolatePlayerList([goalkeeper], lookaheadHorizon)[0] : goalkeeper;
+            const allDefenders = gk ? [...defs, gk] : defs;
 
             // Geometry calculations
-            const maxDefX = Math.max(...defenders.map(d => d.x));
-            const hullArea = computeConvexHullArea(defenders);
+            const maxDefX = Math.max(...defs.map(d => d.x));
+            const hullArea = computeConvexHullArea(defs);
             
             let minY = 80, maxY = 0;
-            defenders.forEach(d => { minY = Math.min(minY, d.y); maxY = Math.max(maxY, d.y); });
-            const avgY = defenders.reduce((s, d) => s + d.y, 0) / defenders.length;
+            defs.forEach(d => { minY = Math.min(minY, d.y); maxY = Math.max(maxY, d.y); });
+            const avgY = defs.reduce((s, d) => s + d.y, 0) / defs.length;
             const spread = maxY - minY;
-            const yOffset = Math.abs(avgY - ballCarrier.y) / 35.0;
+            const yOffset = Math.abs(avgY - carrier.y) / 35.0;
 
             let minDefDist = 999.0;
             let defendersWithin5m = 0;
             allDefenders.forEach(d => {
-                const dist = Math.hypot(d.x - ballCarrier.x, d.y - ballCarrier.y);
+                const dist = Math.hypot(d.x - carrier.x, d.y - carrier.y);
                 if (dist < minDefDist) minDefDist = dist;
                 if (dist <= 6.0) defendersWithin5m++;
             });
 
             // Dual-Engine Execution: WebAssembly C++ engine with transparent JIT fallback
-            const effectiveDefX = (ballCarrier && ballCarrier.x > maxDefX) ? ballCarrier.x : maxDefX;
+            const effectiveDefX = (carrier && carrier.x > maxDefX) ? carrier.x : maxDefX;
             let c1, c2, c3, c4;
             if (wasmGeometry) {
                 c1 = wasmGeometry.c1_line_height(effectiveDefX);
                 c2 = wasmGeometry.c2_compactness(hullArea);
-                c3 = wasmGeometry.c3_width_balance(spread, avgY, ballCarrier.y);
+                c3 = wasmGeometry.c3_width_balance(spread, avgY, carrier.y);
                 c4 = wasmGeometry.c4_pressure(minDefDist, defendersWithin5m);
             } else {
                 c1 = Math.min(Math.max((120.0 - effectiveDefX) / 70.0, 0.0), 1.0);
@@ -1306,15 +1669,15 @@
 
             // C5: Central Passing Lane Blockage to Forward Attackers
             // Wave 4: Dynamic Passer Role Clearance (1.4m for AM playmaker vs 2.4m for CB stopper)
-            const forwardAtt = attackers.filter(a => a.x > ballCarrier.x);
+            const forwardAtt = atts.filter(a => a.x > carrier.x);
             let blockedCount = 0;
-            const passerRole = ROLE_CAPABILITIES[ballCarrier.role] || ROLE_CAPABILITIES["AM"];
+            const passerRole = ROLE_CAPABILITIES[carrier.role] || ROLE_CAPABILITIES["AM"];
             const requiredClearance = passerRole.clearance;
 
             forwardAtt.forEach(a => {
                 let isBlocked = false;
                 allDefenders.forEach(d => {
-                    const distToLine = getDistToSegment(d, ballCarrier, a);
+                    const distToLine = getDistToSegment(d, carrier, a);
                     if (distToLine <= requiredClearance) isBlocked = true;
                 });
                 if (isBlocked) blockedCount++;
@@ -1324,9 +1687,9 @@
             // C6: Box Overload Ratio (Penalty area X >= 102, Y in [18, 62])
             // IFAB Offside Law Enforcement: Only ON-SIDE attackers count as an active box overload.
             // Wave 4: Modulated dynamically by Box Finisher factor gamma_box and late arrivals
-            const offsideLineX = Math.max(maxDefX, ballCarrier.x);
+            const offsideLineX = Math.max(maxDefX, carrier.x);
             let weightedAttInBox = 0.0;
-            attackers.forEach(a => {
+            atts.forEach(a => {
                 if (a.x >= 102.0 && a.y >= 18.0 && a.y <= 62.0 && a.x <= (offsideLineX + 0.5)) {
                     const roleCap = ROLE_CAPABILITIES[a.role] || ROLE_CAPABILITIES["CF"];
                     const sprintBoost = Math.max(0, (a.vx || 0) / (roleCap.v_max || 8.5)) * 0.3;
@@ -1334,9 +1697,9 @@
                 }
             });
 
-            const isCarrierInBox = ballCarrier.x >= 102.0 && ballCarrier.y >= 18.0 && ballCarrier.y <= 62.0;
+            const isCarrierInBox = carrier.x >= 102.0 && carrier.y >= 18.0 && carrier.y <= 62.0;
             if (isCarrierInBox) {
-                const carrierRole = ROLE_CAPABILITIES[ballCarrier.role] || ROLE_CAPABILITIES["AM"];
+                const carrierRole = ROLE_CAPABILITIES[carrier.role] || ROLE_CAPABILITIES["AM"];
                 weightedAttInBox += carrierRole.gamma_box;
             }
 
@@ -1349,11 +1712,11 @@
                 // If ball carrier is in box OR has an open passing lane to an onside receiver in the box, full danger!
                 let isConnectedToBox = isCarrierInBox;
                 if (!isConnectedToBox) {
-                    attackers.forEach(a => {
+                    atts.forEach(a => {
                         if (a.x >= 102.0 && a.y >= 18.0 && a.y <= 62.0 && a.x <= (offsideLineX + 0.5)) {
                             let blocked = false;
                             allDefenders.forEach(d => {
-                                if (getDistToSegment(d, ballCarrier, a) <= requiredClearance) blocked = true;
+                                if (getDistToSegment(d, carrier, a) <= requiredClearance) blocked = true;
                             });
                             if (!blocked) isConnectedToBox = true;
                         }
@@ -1363,7 +1726,7 @@
                 if (isConnectedToBox) {
                     c6 = Math.min(1.0, rawRatio);
                 } else {
-                    const boxProximity = Math.min(Math.max((ballCarrier.x - 30.0) / 72.0, 0.0), 1.0);
+                    const boxProximity = Math.min(Math.max((carrier.x - 30.0) / 72.0, 0.0), 1.0);
                     c6 = Math.min(1.0, rawRatio * (0.4 + 0.6 * boxProximity));
                 }
             }
@@ -1411,9 +1774,14 @@
             let lastDef = null;
             let leadAtt = null;
 
-            if (defenders.length > 0 && attackers.length > 0) {
-                lastDef = defenders.reduce((prev, curr) => curr.x > prev.x ? curr : prev, defenders[0]);
-                leadAtt = attackers.reduce((prev, curr) => curr.x > prev.x ? curr : prev, attackers[0]);
+            const defs = (showLookaheadRollout && lookaheadHorizon > 0.0) ? extrapolatePlayerList(defenders, lookaheadHorizon) : defenders;
+            const atts = (showLookaheadRollout && lookaheadHorizon > 0.0) ? extrapolatePlayerList(attackers, lookaheadHorizon) : attackers;
+            const carrier = (showLookaheadRollout && lookaheadHorizon > 0.0 && ballCarrier) ? extrapolatePlayerList([ballCarrier], lookaheadHorizon)[0] : ballCarrier;
+            const gk = (showLookaheadRollout && lookaheadHorizon > 0.0 && goalkeeper) ? extrapolatePlayerList([goalkeeper], lookaheadHorizon)[0] : goalkeeper;
+
+            if (defs.length > 0 && atts.length > 0) {
+                lastDef = defs.reduce((prev, curr) => curr.x > prev.x ? curr : prev, defs[0]);
+                leadAtt = atts.reduce((prev, curr) => curr.x > prev.x ? curr : prev, atts[0]);
 
                 const dx = leadAtt.x - lastDef.x;
                 const dy = leadAtt.y - lastDef.y;
@@ -1454,16 +1822,18 @@
             }
 
             // Effective attack distance: either the ball carrier or any open receiver in the box
-            let minDistanceToGoal = Math.hypot(120.0 - ballCarrier.x, 40.0 - ballCarrier.y);
-            const maxDefX = Math.max(...defenders.map(d => d.x));
-            const offsideLineX = Math.max(maxDefX, ballCarrier.x);
-            const allDef = goalkeeper ? [...defenders, goalkeeper] : defenders;
+            let minDistanceToGoal = Math.hypot(120.0 - carrier.x, 40.0 - carrier.y);
+            const maxDefX = Math.max(...defs.map(d => d.x));
+            const offsideLineX = Math.max(maxDefX, carrier.x);
+            const allDef = gk ? [...defs, gk] : defs;
+            const carrierRole = ROLE_CAPABILITIES[carrier.role] || ROLE_CAPABILITIES["AM"];
+            const requiredClearance = carrierRole.clearance;
 
-            attackers.forEach(a => {
-                if (a.x > ballCarrier.x && a.x <= offsideLineX + 0.5) {
+            atts.forEach(a => {
+                if (a.x > carrier.x && a.x <= offsideLineX + 0.5) {
                     let blocked = false;
                     allDef.forEach(d => {
-                        if (getDistToSegment(d, ballCarrier, a) <= requiredClearance) blocked = true;
+                        if (getDistToSegment(d, carrier, a) <= requiredClearance) blocked = true;
                     });
                     if (!blocked) {
                         const aDist = Math.hypot(120.0 - a.x, 40.0 - a.y);
@@ -1477,14 +1847,14 @@
             // Open-Net Keeper Displacement Check
             openNetHazard = 0.0;
             isOpenNet = false;
-            if (goalkeeper && ballCarrier) {
-                const gkDistToGoal = Math.hypot(120.0 - goalkeeper.x, 40.0 - goalkeeper.y);
+            if (gk && carrier) {
+                const gkDistToGoal = Math.hypot(120.0 - gk.x, 40.0 - gk.y);
                 
                 // Open net activates when dangerous attack point is close to goal (<= 45m)
                 // and keeper is displaced or caught upfield
-                if (minDistanceToGoal <= 45.0 && (minDistanceToGoal < gkDistToGoal || goalkeeper.x < 102.0)) {
+                if (minDistanceToGoal <= 45.0 && (minDistanceToGoal < gkDistToGoal || gk.x < 102.0)) {
                     isOpenNet = true;
-                    const displacement = Math.max(0, 108.0 - goalkeeper.x) / 36.0;
+                    const displacement = Math.max(0, 108.0 - gk.x) / 36.0;
                     openNetHazard = Math.min(Math.max(displacement, 0.4), 1.0) * 1.8;
                     logit += openNetHazard;
                 }
@@ -1721,6 +2091,16 @@
             ctx.fillRect(0, 0, MARGIN_X, canvas.height); // Left
             ctx.fillRect(canvas.width - MARGIN_X, 0, MARGIN_X, canvas.height); // Right
 
+            // 1.5. Dynamic Pitch Control Surface (Wave 5: William Spearman 2018 Softmin Engine)
+            if (showPitchControlSurface) {
+                renderPitchControlSurface();
+                ctx.save();
+                ctx.imageSmoothingEnabled = true;
+                ctx.imageSmoothingQuality = "high";
+                ctx.drawImage(offscreenPitchCanvas, MARGIN_X, MARGIN_Y, FIELD_W, FIELD_H);
+                ctx.restore();
+            }
+
             // 2. Crisp Pitch Markings
             ctx.strokeStyle = "rgba(255, 255, 255, 0.72)";
             ctx.lineWidth = 2;
@@ -1863,6 +2243,32 @@
             ctx.textAlign = "center";
             ctx.fillText(`OFFSIDE: ${(120 - deepestX).toFixed(1)}m`, offsidePx, MARGIN_Y + 17);
 
+            // Wave 5: Extrapolated Dynamic Offside Line at Horizon
+            if (showLookaheadRollout && lookaheadHorizon > 0.0) {
+                const futureDefs = extrapolatePlayerList(defenders, lookaheadHorizon);
+                const futureDeepestX = Math.max(...futureDefs.map(d => d.x));
+                const futOffsidePx = toPx(futureDeepestX, 0).x;
+                ctx.beginPath();
+                ctx.setLineDash([4, 3]);
+                ctx.moveTo(futOffsidePx, MARGIN_Y);
+                ctx.lineTo(futOffsidePx, canvas.height - MARGIN_Y);
+                const isStepUp = (futureDeepestX < deepestX);
+                ctx.strokeStyle = isStepUp ? "rgba(16, 185, 129, 0.95)" : "rgba(244, 63, 94, 0.95)";
+                ctx.lineWidth = 2.5;
+                ctx.stroke();
+                ctx.setLineDash([]);
+
+                const pillColor = isStepUp ? "#10b981" : "#f43f5e";
+                ctx.fillStyle = "rgba(15, 23, 42, 0.9)";
+                ctx.fillRect(futOffsidePx - 65, MARGIN_Y + 28, 130, 18);
+                ctx.strokeStyle = pillColor;
+                ctx.strokeRect(futOffsidePx - 65, MARGIN_Y + 28, 130, 18);
+                ctx.fillStyle = pillColor;
+                ctx.font = "bold 8.5px 'Fira Code', monospace";
+                ctx.textAlign = "center";
+                ctx.fillText(`+${lookaheadHorizon.toFixed(1)}s LINE: ${(120 - futureDeepestX).toFixed(1)}m`, futOffsidePx, MARGIN_Y + 40);
+            }
+
             // Passing Rays from Ball Carrier to Forward Attackers
             if (ballCarrier) {
                 const bPx = toPx(ballCarrier.x, ballCarrier.y);
@@ -1969,6 +2375,65 @@
                     player: a
                 });
             });
+
+            // 5. Draw Lookahead Ghost Outlines & Motion Trails
+            if (showLookaheadRollout && lookaheadHorizon > 0.0) {
+                drawLookaheadGhosts(ctx);
+            }
+        }
+
+        function drawLookaheadGhosts(ctx) {
+            const allPlayers = [
+                ...(goalkeeper ? [goalkeeper] : []),
+                ...defenders,
+                ...attackers
+            ];
+
+            const futurePlayers = extrapolatePlayerList(allPlayers, lookaheadHorizon);
+
+            ctx.save();
+            for (let i = 0; i < allPlayers.length; ++i) {
+                const cur = allPlayers[i];
+                const fut = futurePlayers[i];
+                const curPx = toPx(cur.x, cur.y);
+                const futPx = toPx(fut.x, fut.y);
+
+                const isAtt = attackers.includes(cur);
+                const isGK = (cur === goalkeeper || cur.role === "GK");
+                const color = isGK ? "#eab308" : (isAtt ? "#f43f5e" : "#38bdf8");
+
+                const distMoved = Math.hypot(futPx.x - curPx.x, futPx.y - curPx.y);
+                if (distMoved > 2.0) {
+                    ctx.beginPath();
+                    ctx.setLineDash([3, 3]);
+                    ctx.moveTo(curPx.x, curPx.y);
+                    ctx.lineTo(futPx.x, futPx.y);
+                    ctx.strokeStyle = color;
+                    ctx.lineWidth = 1.5;
+                    ctx.globalAlpha = 0.65;
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+
+                    ctx.beginPath();
+                    ctx.arc(futPx.x, futPx.y, 14 * PLAYER_SCALE, 0, Math.PI * 2);
+                    ctx.strokeStyle = color;
+                    ctx.lineWidth = 1.8;
+                    ctx.setLineDash([2, 3]);
+                    ctx.globalAlpha = 0.85;
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+
+                    ctx.fillStyle = "rgba(15, 23, 42, 0.75)";
+                    ctx.fill();
+
+                    ctx.fillStyle = color;
+                    ctx.font = "bold 8px 'Fira Code', monospace";
+                    ctx.textAlign = "center";
+                    ctx.textBaseline = "middle";
+                    ctx.fillText(`${cur.number || ""}`, futPx.x, futPx.y);
+                }
+            }
+            ctx.restore();
         }
 
         // Draw Authentic Football Goal Net

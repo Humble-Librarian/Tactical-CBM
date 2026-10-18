@@ -252,3 +252,53 @@ class TestZeroPlayerNamesEnforcement:
                     f"Found forbidden player name '{name}' in scripts/pitch_control.py! "
                     f"Must strictly adhere to Position & Role Taxonomy."
                 )
+
+
+class TestNumericalStabilityAndEdgeCases:
+    """Rigorous defensive engineering tests for pitch control edge conditions."""
+
+    def test_single_team_dominance_edge_cases(self):
+        """When only attackers or only defenders exist, control must be 1.0 or 0.0 respectively."""
+        att = [{"x": 60.0, "y": 34.0, "vx": 0.0, "vy": 0.0, "role": "CF"}]
+        defs = [{"x": 60.0, "y": 34.0, "vx": 0.0, "vy": 0.0, "role": "CB"}]
+
+        # Attacker only -> 100% attacking control
+        surf_att_only = compute_pitch_control_surface([], att, grid_shape=(20, 15))
+        assert np.allclose(surf_att_only["p_att"], 1.0, atol=1e-5)
+        assert np.allclose(surf_att_only["p_def"], 0.0, atol=1e-5)
+        assert np.allclose(surf_att_only["certainty"], 1.0, atol=1e-5)
+
+        # Defender only -> 0% attacking control (100% defensive control)
+        surf_def_only = compute_pitch_control_surface(defs, [], grid_shape=(20, 15))
+        assert np.allclose(surf_def_only["p_att"], 0.0, atol=1e-5)
+        assert np.allclose(surf_def_only["p_def"], 1.0, atol=1e-5)
+        assert np.allclose(surf_def_only["certainty"], 1.0, atol=1e-5)
+
+    def test_colocated_identical_players_equal_split(self):
+        """Two opposing players at the exact same location with identical velocity must have 50/50 control."""
+        att = [{"x": 50.0, "y": 30.0, "vx": 2.0, "vy": 1.0, "role": "CM"}]
+        defs = [{"x": 50.0, "y": 30.0, "vx": 2.0, "vy": 1.0, "role": "CM"}]
+
+        surf = compute_pitch_control_surface(defs, att, grid_shape=(20, 15))
+        # Everywhere across the pitch, symmetric identical players must produce identical TTI and 0.5 probability
+        assert np.allclose(surf["p_att"], 0.5, atol=1e-5)
+        assert np.allclose(surf["p_def"], 0.5, atol=1e-5)
+        assert np.allclose(surf["certainty"], 0.0, atol=1e-5)
+
+    def test_extreme_pitch_boundaries_and_coincident_target(self):
+        """Tests zero-distance coincident targets, corner bounds (0,0), (120,68), and stationary players."""
+        pos = np.array([0.0, 0.0])
+        vel = np.array([0.0, 0.0])
+        target_coincident = np.array([0.0, 0.0])
+
+        # Target directly under feet: d_eff <= 1e-4 -> returns exact t_react
+        tau_coincident = calculate_player_tti(pos, vel, target_coincident, role_tag="CM")
+        assert tau_coincident == pytest.approx(ROLE_KINEMATICS["CM"]["t_react"], abs=1e-4)
+
+        # Pitch corner-to-corner sprint (0,0) to (120,68): ~137.9m
+        target_corner = np.array([120.0, 68.0])
+        tau_corner = calculate_player_tti(pos, vel, target_corner, role_tag="W")
+        assert 10.0 < tau_corner < 25.0
+        assert not math.isnan(tau_corner)
+        assert not math.isinf(tau_corner)
+

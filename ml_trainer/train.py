@@ -153,7 +153,15 @@ def train_cbm(
     concept_weights = torch.tensor([1.0, 1.2, 1.2, 1.0, 2.5, 1.2], dtype=torch.float32, device=device)
     concept_weights = concept_weights / concept_weights.mean()
 
-    pos_weight = torch.tensor([12.0]).to(device)
+    # Dynamic pos_weight derived from true training class imbalance ratio:
+    # N_neg / N_pos ratio is typically ~16.0 under modern tracking base rates
+    pos_count = float(np.sum(train_ds.data['y_threat']))
+    total_count = float(len(train_ds))
+    neg_count = total_count - pos_count
+    dynamic_pos_weight = max(1.0, neg_count / max(1.0, pos_count))
+    print(f"Dynamic pos_weight: {dynamic_pos_weight:.2f} (Base rate: {pos_count/total_count*100:.2f}%)")
+
+    pos_weight = torch.tensor([dynamic_pos_weight], device=device)
     criterion_threat = nn.BCEWithLogitsLoss(pos_weight=pos_weight)
 
     optimizer = torch.optim.AdamW(model.parameters(), lr=lr, weight_decay=1e-4)
@@ -161,6 +169,18 @@ def train_cbm(
 
     best_score = -999.0
     best_checkpoint_path = MODELS_DIR / "spatiotemporal_cbm.pt"
+    patience = 3
+    patience_counter = 0
+
+    history = {
+        "epoch": [],
+        "train_loss": [],
+        "c_mse": [],
+        "y_bce": [],
+        "val_mean_r2": [],
+        "val_roc_auc": [],
+        "val_pr_auc": []
+    }
 
     for epoch in range(1, epochs + 1):
         model.train()
@@ -197,15 +217,42 @@ def train_cbm(
 
         val_eval = evaluate_model(model, val_loader, device)
         n_batches = len(train_loader)
+
+        avg_loss = total_loss / n_batches
+        avg_c_loss = c_loss_sum / n_batches
+        avg_y_loss = y_loss_sum / n_batches
+
+        history["epoch"].append(epoch)
+        history["train_loss"].append(avg_loss)
+        history["c_mse"].append(avg_c_loss)
+        history["y_bce"].append(avg_y_loss)
+        history["val_mean_r2"].append(val_eval["mean_r2"])
+        history["val_roc_auc"].append(val_eval["roc_auc"])
+        history["val_pr_auc"].append(val_eval["pr_auc"])
+
         print(f"Epoch {epoch:02d}/{epochs:02d} [{elapsed:.1f}s] | "
-              f"Loss: {total_loss/n_batches:.4f} (C_MSE: {c_loss_sum/n_batches:.4f}, Y_BCE: {y_loss_sum/n_batches:.4f}) | "
-              f"Val R2: {val_eval['mean_r2']:.4f} (C5: {val_eval['r2_scores'][4]:.4f}, C6: {val_eval['r2_scores'][5]:.4f}) | Val ROC-AUC: {val_eval['roc_auc']:.4f} | Val PR-AUC: {val_eval['pr_auc']:.4f}",
+              f"Loss: {avg_loss:.4f} (C_MSE: {avg_c_loss:.4f}, Y_BCE: {avg_y_loss:.4f}) | "
+              f"Val R2: {val_eval['mean_r2']:.4f} (C5: {val_eval['r2_scores'][4]:.4f}, C6: {val_eval['r2_scores'][5]:.4f}) | "
+              f"Val ROC-AUC: {val_eval['roc_auc']:.4f} | Val PR-AUC: {val_eval['pr_auc']:.4f}",
               flush=True)
 
-        combined_score = val_eval['roc_auc'] + 0.5 * val_eval['mean_r2']
+        combined_score = val_eval['pr_auc'] + 0.5 * val_eval['mean_r2']
         if combined_score > best_score:
             best_score = combined_score
+            patience_counter = 0
             torch.save(model.state_dict(), best_checkpoint_path)
+            print(f"  -> Checkpoint saved with new best validation score: {combined_score:.4f}")
+        else:
+            patience_counter += 1
+            if patience_counter >= patience:
+                print(f"Early stopping triggered after {patience} epochs without improvement on validation PR-AUC.")
+                break
+
+    # Export learning history to JSON
+    plots_dir = RESULTS_DIR / "plots"
+    plots_dir.mkdir(parents=True, exist_ok=True)
+    with open(RESULTS_DIR / "training_history.json", "w", encoding="utf-8") as f:
+        json.dump(history, f, indent=2)
 
     # 4. Load Best Checkpoint for Final Post-Hoc Beta Calibration
     print("\n" + "=" * 75)

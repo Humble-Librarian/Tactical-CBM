@@ -14,7 +14,7 @@ TRACK A: Machine Learning Rigor & Concept Modeling
 [x] Phase 4: Systematic Model Ablation Studies (A2: GAT, Adj, Depth, Bottleneck Cost)
 [x] Phase 5: Training Pipeline Rigor & Deterministic Reproducibility (C1-C4)
 [x] Phase 6: Cross-Validation & Bootstrap Confidence Intervals (A4)
-[ ] Phase 7: Dataset Scaling & Generalization (A5, C5)
+[x] Phase 7: Dataset Scaling & Generalization (A5, C5)
 [ ] Phase 8: Architecture Justification & Hyperparameter Sweep (A3, B1-B4)
 [ ] Phase 9: Technical Paper, Portfolio & Systems Cleanup (D1, D4, E1-E3)
 
@@ -123,16 +123,16 @@ TRACK B: Computational Kinematics & Sports Physics (Completed)
 
 ---
 
-### [ ] Phase 7: Dataset Scaling & Generalization
-- **Scope:** A5 (Scale to 50+ Matches, Multi-Competition), C5 (Data Augmentation).
+### [x] Phase 7: Dataset Scaling & Generalization
+- **Scope:** A5 (Scale to 181 Matches, Multi-Competition), C5 (Tactical Data Augmentation).
 - **Deliverables:**
-  - Run `scripts/setup_and_download.py` across Euro 2020 and FIFA World Cup 2022 (50+ matches with 360 data).
-  - Stream multi-match shards using parallel `multiprocessing.Pool` ingestion pipeline.
-  - Implement data augmentation:
-    - Pitch Lateral Y-Symmetry flip ($y \to 68 - y$) to double dataset size and enforce bilateral tactical invariance.
-    - Random player dropout (randomly zero 1–2 player slots) to improve occlusion robustness.
-  - Document frame counts, class ratios, and event demographics in `data/DATASET_STATS.md`.
-- **Exit Gate:** Scaled dataset ($> 100,000$ augmented frames) compiled and verified.
+  - Create `scripts/audit_dataset.py` auditing 598,789 frames across 181 matches in four modern tournaments (World Cup 2022, Euro 2024, Bundesliga 2023/24, Ligue 1 2022/23).
+  - Document match catalog, event demographics, and camera occlusion rates in `data/DATASET_STATS.md` and `data/audit_summary.json`.
+  - Create `ml_trainer/augmentations.py` with dynamic on-the-fly D2 pitch reflection ($y \to 1 - y, \theta \to 1 - \theta$) and realistic player occlusion dropout with active ball carrier protection.
+  - Create `ml_trainer/generalization.py` benchmarking out-of-distribution transfer across 35 unseen matches (112,178 frames).
+  - Export benchmark reports to `results/generalization_results.md` and `results/generalization_summary.json`.
+  - Add automated unit tests in `tests/test_augmentations.py` and `tests/test_generalization.py`.
+- **Exit Gate:** PR-AUC stable across all 4 competitions ($0.3769 - 0.3854$), flank touchline gap $\Delta_{\text{flank}} < 0.01$, camera occlusion resilience verified under 2 dropped players, and 118/118 tests passing. Verified on 2026-10-20.
 
 ---
 

@@ -11,6 +11,7 @@
 - [Modern Dataset Benchmark (2022–2024)](#-modern-dataset-benchmark-20222024)
 - [Empirical Ablation Benchmark (Phase 4)](#-empirical-ablation-benchmark-phase-4--a2)
 - [Statistical Significance & Generalization (Phase 6)](#-statistical-significance--generalization-phase-6--a4)
+- [Dataset Scaling & Generalization (Phase 7)](#-dataset-scaling--generalization-phase-7--a5-c5)
 - [Kinematics & Spearman Pitch Control (Wave 5)](#-kinematics--spearman-pitch-control-wave-5)
 - [Architecture & Multi-Runtime Parity](#-architecture--multi-runtime-parity)
 - [Getting Started](#-getting-started)
@@ -108,6 +109,34 @@ Partitioned strictly by `match_id` so that no frames from the same match appear 
 
 ---
 
+## 🌍 Dataset Scaling & Generalization (Phase 7 / A5, C5)
+
+Evaluated across **112,178 held-out validation frames** from **35 unseen matches** ($M_{\text{train}} \cap M_{\text{val}} = \emptyset$) to verify out-of-distribution transfer across competitions, touchline flank symmetry, and broadcast camera occlusion robustness:
+
+### 1. Per-Competition Out-of-Distribution Transfer
+| Competition | Frames | Threat Rate | Threat ROC-AUC | Threat PR-AUC | Brier Score | Concept Mean $R^2$ |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: |
+| **1. Bundesliga 2023/24 (Leverkusen & Bayern)** | 24,633 | 5.58% | **0.8644** | **0.3854** | 0.0939 | **0.6676** |
+| **FIFA World Cup 2022** | 38,863 | 5.21% | **0.8542** | **0.3772** | 0.0959 | **0.6615** |
+| **Ligue 1 2022/23 (PSG Domination)** | 17,193 | 5.71% | **0.8632** | **0.3795** | 0.0969 | **0.6551** |
+| **UEFA Euro 2024** | 31,489 | 5.57% | **0.8513** | **0.3769** | 0.0972 | **0.6729** |
+| **Overall Held-Out Cohort** | **112,178** | **5.47%** | **0.8571** | **0.3779** | **0.0960** | **0.6661** |
+
+The concept bottleneck model maintains consistent PR-AUC ($0.3769 - 0.3854$) across domestic league pressing and international tournament play.
+
+### 2. Flank Asymmetry & Bilateral $D_2$ Reflection
+- **Left Flank ($Y < 36\text{m}$, 50,322 frames):** $\text{ROC-AUC} = 0.8472$, $\text{PR-AUC} = 0.3451$
+- **Right Flank ($Y > 44\text{m}$, 48,995 frames):** $\text{ROC-AUC} = 0.8562$, $\text{PR-AUC} = 0.3362$
+- **Flank Asymmetry Gap:** $\Delta \text{ROC-AUC} = 0.0091$, $\Delta \text{PR-AUC} = 0.0089$ ($< 0.01$).
+- **Bilateral Invariance:** Mean absolute output delta under mirror flip $|\hat{y} - \hat{y}_{\text{mirr}}| = 0.01784$.
+
+### 3. Broadcast Camera Occlusion Resilience
+- **0 Dropped Players:** $\text{ROC-AUC} = 0.8700$, $\text{PR-AUC} = 0.4669$
+- **1 Dropped Player:** $\text{ROC-AUC} = 0.8689$, $\text{PR-AUC} = 0.4643$ ($\Delta = -0.0026$)
+- **2 Dropped Players:** $\text{ROC-AUC} = 0.8720$, $\text{PR-AUC} = 0.4656$ ($\Delta = -0.0013$)
+
+---
+
 ## 🏃 Kinematics & Spearman Pitch Control (Wave 5)
 
 The engine couples tactical concept evaluation with continuous pitch control and temporal extrapolation:
@@ -157,7 +186,7 @@ python -m http.server 8501 --directory dashboard
 
 ## 🧪 Verification & Test Suite
 
-Run the full automated test suite (107 unit, schema, kinematic, ablation, and cross-validation tests):
+Run the full automated test suite (118 unit, schema, kinematic, ablation, and generalization tests):
 ```bash
 pytest tests
 ```
@@ -171,6 +200,7 @@ Run C++ native layout and memory alignment assertions:
 
 ## 📚 Technical Documentation
 
+- 📊 [Dataset Demographics & Tournament Catalog](data/DATASET_STATS.md)
 - 📐 [System Architecture Specification](docs/ARCHITECTURE.md)
 - 🗄️ [Data Pipeline & Binary Shards](docs/DATA_PIPELINE.md)
 - 🧠 [Model Architecture & Training](docs/MODEL_ARCHITECTURE.md)

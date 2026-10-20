@@ -12,12 +12,18 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 if str(BASE_DIR) not in sys.path:
     sys.path.insert(0, str(BASE_DIR))
 
+from typing import Union, Optional
 from scripts.schema import FRAME_DTYPE, FRAME_BYTE_SIZE
+from ml_trainer.augmentations import TacticalAugmentor
 
 class BinaryShardDataset(Dataset):
-    def __init__(self, bin_path: str, augment: bool = False):
+    def __init__(self, bin_path: str, augment: Union[bool, TacticalAugmentor] = False):
         self.bin_path = Path(bin_path)
-        self.augment = augment
+        if isinstance(augment, bool):
+            self.augmentor = TacticalAugmentor(p_mirror=0.5, p_dropout=0.15) if augment else None
+        else:
+            self.augmentor = augment
+            
         if not self.bin_path.exists():
             raise FileNotFoundError(f"Binary shard not found at: {self.bin_path}")
             
@@ -42,17 +48,15 @@ class BinaryShardDataset(Dataset):
         c_true = torch.from_numpy(rec['c_true'])                # [6]
         y_threat = torch.tensor(rec['y_threat'], dtype=torch.float32)  # scalar
         
-        # D2 Klein Four-Group Lateral Pitch Symmetry Augmentation (DeepMind TacticAI pattern)
-        # Reflects lateral position (y_norm -> 1.0 - y_norm) and angle to goal (angle_norm -> 1.0 - angle_norm)
-        if self.augment and torch.rand(1).item() < 0.5:
-            node_features = node_features.clone()
-            node_features[:, 1] = 1.0 - node_features[:, 1]
-            node_features[:, 3] = 1.0 - node_features[:, 3]
-        
-        return {
+        sample = {
             'node_features': node_features,
             'adj_mask': adj_mask,
             'player_mask': player_mask,
             'c_true': c_true,
             'y_threat': y_threat
         }
+        
+        if self.augmentor is not None:
+            return self.augmentor(sample)
+        
+        return sample

@@ -84,3 +84,39 @@ def test_zero_copy_memory_allocation():
     
     # Total heap allocation for 5,000 frames must be < 500 KB (with .copy() it was > 40 MB)
     assert total_allocated < 500 * 1024, f"Allocated {total_allocated / 1024:.2f} KB, expected < 500 KB (Zero-Copy violation)"
+
+def test_dataset_audit_schema_and_demographics():
+    """Verify Phase 7 Step 1 dataset audit outputs match schema contracts and invariants."""
+    import json
+    data_dir = BASE_DIR / "data"
+    audit_json = data_dir / "audit_summary.json"
+    dataset_md = data_dir / "DATASET_STATS.md"
+    
+    assert audit_json.exists(), "audit_summary.json must exist"
+    assert dataset_md.exists(), "DATASET_STATS.md must exist"
+    assert dataset_md.stat().st_size > 500, "DATASET_STATS.md must be populated"
+    
+    with open(audit_json, "r", encoding="utf-8") as f:
+        data = json.load(f)
+        
+    summary = data.get("summary", {})
+    assert summary.get("total_matches") == 181, f"Expected 181 matches, got {summary.get('total_matches')}"
+    assert summary.get("total_frames", 0) > 500000, f"Expected > 500k frames, got {summary.get('total_frames')}"
+    assert summary.get("total_goals", 0) > 400, "Expected > 400 goals across 181 matches"
+    
+    comps = data.get("competitions", {})
+    expected_comps = [
+        "UEFA Euro 2024",
+        "1. Bundesliga 2023/24 (Leverkusen & Bayern)",
+        "Ligue 1 2022/23 (PSG Domination)",
+        "FIFA World Cup 2022"
+    ]
+    for c in expected_comps:
+        assert c in comps, f"Missing competition: {c}"
+        assert comps[c]["matches"] > 0
+        assert comps[c]["total_frames"] > 50000
+        
+    # Verify player visibility distribution covers realistic occlusion range
+    vis = data.get("player_visibility_distribution", {})
+    assert "20" in vis and vis["20"] > 10000, "Expected > 10k frames with 20 players visible"
+    assert "22" in vis, "Expected 22 player count in visibility distribution"

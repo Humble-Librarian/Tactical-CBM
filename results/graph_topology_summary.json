@@ -1,0 +1,82 @@
+{
+  "Delaunay (d_max=28m) [Canonical]": {
+    "avg_edges": 78.2,
+    "sparsity_pct": 70.87,
+    "build_latency_us": 1580.7,
+    "infer_latency_us": 220.7,
+    "roc_auc": 0.87,
+    "pr_auc": 0.4669,
+    "brier": 0.0918,
+    "concept_mean_r2": 0.674
+  },
+  "k-NN (k=4)": {
+    "avg_edges": 88.6,
+    "sparsity_pct": 66.45,
+    "build_latency_us": 108.2,
+    "infer_latency_us": 147.1,
+    "roc_auc": 0.8697,
+    "pr_auc": 0.4728,
+    "brier": 0.0935,
+    "concept_mean_r2": 0.6484
+  },
+  "k-NN (k=6)": {
+    "avg_edges": 130.0,
+    "sparsity_pct": 50.98,
+    "build_latency_us": 112.6,
+    "infer_latency_us": 118.3,
+    "roc_auc": 0.8738,
+    "pr_auc": 0.4607,
+    "brier": 0.094,
+    "concept_mean_r2": 0.6214
+  },
+  "k-NN (k=8)": {
+    "avg_edges": 169.5,
+    "sparsity_pct": 36.61,
+    "build_latency_us": 126.9,
+    "infer_latency_us": 182.1,
+    "roc_auc": 0.8713,
+    "pr_auc": 0.4472,
+    "brier": 0.0944,
+    "concept_mean_r2": 0.57
+  },
+  "Radius (r=15m)": {
+    "avg_edges": 86.1,
+    "sparsity_pct": 69.04,
+    "build_latency_us": 80.2,
+    "infer_latency_us": 150.9,
+    "roc_auc": 0.8735,
+    "pr_auc": 0.4662,
+    "brier": 0.0935,
+    "concept_mean_r2": 0.6217
+  },
+  "Radius (r=25m)": {
+    "avg_edges": 174.5,
+    "sparsity_pct": 37.59,
+    "build_latency_us": 41.9,
+    "infer_latency_us": 119.3,
+    "roc_auc": 0.8712,
+    "pr_auc": 0.4324,
+    "brier": 0.097,
+    "concept_mean_r2": 0.56
+  },
+  "Bipartite (Att-Def)": {
+    "avg_edges": 148.0,
+    "sparsity_pct": 47.82,
+    "build_latency_us": 269.7,
+    "infer_latency_us": 120.6,
+    "roc_auc": 0.8625,
+    "pr_auc": 0.4238,
+    "brier": 0.0866,
+    "concept_mean_r2": 0.4279
+  },
+  "Fully-Dense Complete": {
+    "avg_edges": 283.5,
+    "sparsity_pct": 0.0,
+    "build_latency_us": 17.1,
+    "infer_latency_us": 134.4,
+    "roc_auc": 0.8647,
+    "pr_auc": 0.4194,
+    "brier": 0.0911,
+    "concept_mean_r2": 0.3625
+  }
+}

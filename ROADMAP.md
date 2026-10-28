@@ -15,7 +15,7 @@ TRACK A: Machine Learning Rigor & Concept Modeling
 [x] Phase 5: Training Pipeline Rigor & Deterministic Reproducibility (C1-C4)
 [x] Phase 6: Cross-Validation & Bootstrap Confidence Intervals (A4)
 [x] Phase 7: Dataset Scaling & Generalization (A5, C5)
-[ ] Phase 8: Architecture Justification & Hyperparameter Sweep (A3, B1-B4)
+[x] Phase 8: Architecture Justification & Hyperparameter Sweep (A3, B1-B4)
 [ ] Phase 9: Technical Paper, Portfolio & Systems Cleanup (D1, D4, E1-E3)
 
 TRACK B: Computational Kinematics & Sports Physics (Completed)
@@ -136,13 +136,13 @@ TRACK B: Computational Kinematics & Sports Physics (Completed)
 
 ---
 
-### [ ] Phase 8: Architectural Justifications & Hyperparameter Sweep
+### [x] Phase 8: Architectural Justifications & Hyperparameter Sweep
 - **Scope:** B1 (Delaunay vs. k-NN/Dense), B2 (Concept Head Topology), B3 (Node Feature Selection), B4 (Temporal Modeling Limitations), A3 (Hyperparameter Sweep).
 - **Deliverables:**
   - [x] **Slice 1 (B1 Graph Topology Benchmark):** Create `ml_trainer/graph_benchmarks.py` evaluating 8 graph constructors across 5,000 held-out frames. Results exported to `results/graph_topology_table.md` & `results/graph_topology_summary.json`. 5 tests in `tests/test_graph_benchmarks.py`.
   - [x] **Slice 2 (A3 Hyperparameter Sweep & Pareto Frontier):** Create `ml_trainer/sweep.py` running coordinate factorial sweep across 11 configurations spanning $\eta \in [5\text{e-}4, 3\text{e-}3]$, $d \in [16, 64]$, $\text{wd} \in [1\text{e-}5, 1\text{e-}3]$, and $\lambda_{\text{concept}} \in [0.5, 2.0]$. Results exported to `results/hyperparameter_table.md` & `results/hyperparameter_sweep.json`. 4 tests in `tests/test_hyperparameter_sweep.py`.
-  - [ ] **Slice 3 (B2-B4 Architecture Rationale Manifesto):** Author `docs/ARCHITECTURE_RATIONALE.md` defending Delaunay Voronoi cell geometry, 6 node features, and single-frame spatial vs. temporal graph trade-offs.
-- **Exit Gate:** 127/127 tests passing; graph topology and hyperparameter sensitivity tables fully documented.
+  - [x] **Slice 3 (B2-B4 Architecture Rationale Manifesto):** Author `docs/ARCHITECTURE_RATIONALE.md` defending Delaunay Voronoi cell geometry, 6 node features, zero player names invariant, and single-frame spatial kinematics vs. temporal video transformers. Verified by 5 contract tests in `tests/test_architecture_rationale.py`.
+- **Exit Gate:** 132/132 tests passing; graph topology and hyperparameter sensitivity tables fully documented; Phase 8 complete. Verified on 2026-10-28.
 
 ---
 

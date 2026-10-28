@@ -186,7 +186,7 @@ python -m http.server 8501 --directory dashboard
 
 ## 🧪 Verification & Test Suite
 
-Run the full automated test suite (127 unit, schema, kinematic, ablation, and generalization tests):
+Run the full automated test suite (132 unit, schema, kinematic, ablation, and generalization tests):
 ```bash
 pytest tests
 ```
@@ -200,6 +200,7 @@ Run C++ native layout and memory alignment assertions:
 
 ## 📚 Technical Documentation
 
+- 📜 [Architecture Rationale & Rigor Defense Manifesto](docs/ARCHITECTURE_RATIONALE.md)
 - 📊 [Dataset Demographics & Tournament Catalog](data/DATASET_STATS.md)
 - 📐 [System Architecture Specification](docs/ARCHITECTURE.md)
 - 🗄️ [Data Pipeline & Binary Shards](docs/DATA_PIPELINE.md)

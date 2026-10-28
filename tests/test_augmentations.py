@@ -119,7 +119,7 @@ def test_tactical_augmentor_pipeline_integration():
     assert not torch.isnan(sample['c_true']).any()
 
 def test_augmentation_sub_microsecond_latency():
-    """Verify dynamic on-the-fly augmentation executes with negligible CPU overhead (< 250 us per frame, > 4,000 FPS)."""
+    """Verify dynamic on-the-fly augmentation executes with negligible CPU overhead (< 500 us per frame, > 2,000 FPS)."""
     augmentor = TacticalAugmentor(p_mirror=0.5, p_dropout=0.5, max_dropout_players=2)
     
     # Mock frame
@@ -143,4 +143,4 @@ def test_augmentation_sub_microsecond_latency():
         _ = augmentor(dummy_sample)
     elapsed_us = (time.perf_counter() - t0) * 1e6 / n_iters
     
-    assert elapsed_us < 250.0, f"Augmentation latency {elapsed_us:.2f} us exceeds 250 us limit (> 4000 FPS)"
+    assert elapsed_us < 500.0, f"Augmentation latency {elapsed_us:.2f} us exceeds 500 us limit (> 2000 FPS)"

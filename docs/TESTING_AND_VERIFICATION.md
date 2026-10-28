@@ -11,7 +11,7 @@ pytest tests
 
 ---
 
-## 2. Test Modules Breakdown (118 Tests Across 17 Suites)
+## 2. Test Modules Breakdown (123 Tests Across 18 Suites)
 
 | Test File | Tests | Focus & Purpose | Key Invariant Asserted |
 | :--- | :---: | :--- | :--- |
@@ -32,6 +32,7 @@ pytest tests
 | [`test_fan_tactical_rigor.py`](file:///d:/Tactical%20CBM%20Engine/tests/test_fan_tactical_rigor.py) | 15 | Real-world tactical archetypes | Sacchi offside traps, Simeone low block, Klopp counter-press |
 | [`test_augmentations.py`](file:///d:/Tactical%20CBM%20Engine/tests/test_augmentations.py) | 6 | Tactical data augmentations | $D_2$ reflection identity ($\text{Mirror}(\text{Mirror}(X)) \equiv X$), ball carrier protection |
 | [`test_generalization.py`](file:///d:/Tactical%20CBM%20Engine/tests/test_generalization.py) | 4 | Cross-competition OOD | Stability across 4 tournaments, flank touchline gap $\Delta_{\text{flank}} < 0.03$ |
+| [`test_graph_benchmarks.py`](file:///d:/Tactical%20CBM%20Engine/tests/test_graph_benchmarks.py) | 5 | Graph topology benchmarks | Voronoi Delaunay symmetry, k-NN degree bounds, radius thresholding |
 
 ---
 
@@ -43,7 +44,7 @@ Every commit to `main` must pass the following two deterministic verification co
    ```bash
    pytest tests
    ```
-   *Gate:* Must pass 118/118 tests with zero warnings or errors.
+   *Gate:* Must pass 123/123 tests with zero warnings or errors.
 
 2. **C++ Native Engine Memory & Numerical Assertions:**
    ```bash

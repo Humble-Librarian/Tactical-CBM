@@ -139,10 +139,10 @@ TRACK B: Computational Kinematics & Sports Physics (Completed)
 ### [ ] Phase 8: Architectural Justifications & Hyperparameter Sweep
 - **Scope:** B1 (Delaunay vs. k-NN/Dense), B2 (Concept Head Topology), B3 (Node Feature Selection), B4 (Temporal Modeling Limitations), A3 (Hyperparameter Sweep).
 - **Deliverables:**
-  - Create `ml_trainer/sweep.py` running structured grid search over learning rate, weight decay, batch size, hidden dimension, and loss coefficients.
-  - Benchmark Delaunay triangulation ($d_{\max} = 28\text{m}$) against $k$-NN ($k \in \{4, 6, 8\}$), distance thresholding ($r \in \{15\text{m}, 25\text{m}\}$), and bipartite graphs.
-  - Provide written technical justification in `docs/ARCHITECTURE_RATIONALE.md` for Delaunay Voronoi cell geometry, 6 node features, and single-frame spatial vs. temporal graph trade-offs.
-- **Exit Gate:** Hyperparameter sensitivity table exported to `results/hyperparameter_sweep.json`.
+  - [x] **Slice 1 (B1 Graph Topology Benchmark):** Create `ml_trainer/graph_benchmarks.py` evaluating 8 graph constructors across 5,000 held-out frames. Results exported to `results/graph_topology_table.md` & `results/graph_topology_summary.json`. 5 tests in `tests/test_graph_benchmarks.py`.
+  - [x] **Slice 2 (A3 Hyperparameter Sweep & Pareto Frontier):** Create `ml_trainer/sweep.py` running coordinate factorial sweep across 11 configurations spanning $\eta \in [5\text{e-}4, 3\text{e-}3]$, $d \in [16, 64]$, $\text{wd} \in [1\text{e-}5, 1\text{e-}3]$, and $\lambda_{\text{concept}} \in [0.5, 2.0]$. Results exported to `results/hyperparameter_table.md` & `results/hyperparameter_sweep.json`. 4 tests in `tests/test_hyperparameter_sweep.py`.
+  - [ ] **Slice 3 (B2-B4 Architecture Rationale Manifesto):** Author `docs/ARCHITECTURE_RATIONALE.md` defending Delaunay Voronoi cell geometry, 6 node features, and single-frame spatial vs. temporal graph trade-offs.
+- **Exit Gate:** 127/127 tests passing; graph topology and hyperparameter sensitivity tables fully documented.
 
 ---
 

@@ -186,7 +186,7 @@ python -m http.server 8501 --directory dashboard
 
 ## 🧪 Verification & Test Suite
 
-Run the full automated test suite (123 unit, schema, kinematic, ablation, and generalization tests):
+Run the full automated test suite (127 unit, schema, kinematic, ablation, and generalization tests):
 ```bash
 pytest tests
 ```

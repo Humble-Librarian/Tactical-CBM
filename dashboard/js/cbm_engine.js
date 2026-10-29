@@ -134,7 +134,7 @@ function computeConceptsFromPitch() {
     });
     const c5 = forwardAtt.length > 0 ? (blockedCount / forwardAtt.length) : 0.0;
 
-    // C6: Box Overload Ratio (Penalty area X >= 102, Y in [18, 62])
+    // C6: Box Overload Ratio (Penalty area X >= 102, Y in [18, 62] with smooth approach kernel)
     const offsideLineX = Math.max(maxDefX, carrier.x);
     let weightedAttInBox = 0.0;
     atts.forEach(a => {
@@ -149,6 +149,11 @@ function computeConceptsFromPitch() {
     if (isCarrierInBox) {
         const carrierRole = ROLE_CAPABILITIES[carrier.role] || ROLE_CAPABILITIES["AM"];
         weightedAttInBox += carrierRole.gamma_box;
+    } else if (carrier.x >= 92.0 && carrier.y >= 18.0 && carrier.y <= 62.0) {
+        // Continuous approach kernel: smooth ramp into box threat to prevent artificial 102m data cliffs
+        const carrierRole = ROLE_CAPABILITIES[carrier.role] || ROLE_CAPABILITIES["AM"];
+        const approachWeight = Math.min(1.0, Math.max(0.0, (carrier.x - 92.0) / 10.0));
+        weightedAttInBox += carrierRole.gamma_box * approachWeight;
     }
 
     const defInBox = allDefenders.filter(d => d.x >= 102.0 && d.y >= 18.0 && d.y <= 62.0).length;
@@ -157,7 +162,7 @@ function computeConceptsFromPitch() {
     if (weightedAttInBox > 0) {
         const rawRatio = defInBox === 0 ? 1.0 : (weightedAttInBox / (weightedAttInBox + defInBox));
         
-        let isConnectedToBox = isCarrierInBox;
+        let isConnectedToBox = isCarrierInBox || carrier.x >= 96.0;
         if (!isConnectedToBox) {
             atts.forEach(a => {
                 if (a.x >= 102.0 && a.y >= 18.0 && a.y <= 62.0 && a.x <= (offsideLineX + 0.5)) {
@@ -227,13 +232,19 @@ function evaluateStage5(concepts) {
         const dvy = (leadAtt.vy || 0) - (lastDef.vy || 0);
         currentClosingSpeed = (dx * dvx + dy * dvy) / dist; // in m/s
 
-        const isLeadOffside = leadAtt.x > (lastDef.x + 0.3);
-        if (isLeadOffside && ((lastDef.vx || 0) < -0.3 || currentClosingSpeed > 0.8)) {
-            isOffsideTrapSnapped = true;
-            logit -= 3.8; // IFAB Rule: Offside play neutralizes goal threat
-        } else if (!isLeadOffside && (lastDef.vx || 0) > 0.4 && currentClosingSpeed < -1.2) {
+        const isCarrierPastLine = carrier && lastDef && carrier.x > (lastDef.x + 0.5);
+        const offsideCutoff = lastDef ? Math.max(lastDef.x, carrier ? carrier.x : 0) : 0;
+        // IFAB Law 11: Only off-ball teammates ahead of BOTH the last defender AND the ball can be offside.
+        const offsideTeammates = atts.filter(a => a !== carrier && a.x > (offsideCutoff + 0.5));
+
+        if (isCarrierPastLine) {
+            // Carrier broke past the defensive line into open space: BREAKAWAY HAZARD
             isBreakawayHazard = true;
-            logit += 0.9;
+            logit += 1.2;
+        } else if (offsideTeammates.length > 0 && !isOpenNet && ((lastDef.vx || 0) < -0.3 || currentClosingSpeed > 0.8)) {
+            // Teammates caught offside by coordinated defensive step-up: suppresses through-ball passing options
+            isOffsideTrapSnapped = true;
+            logit -= 1.0;
         }
     }
 
@@ -278,15 +289,34 @@ function evaluateStage5(concepts) {
         }
     });
 
-    // Open-Net Keeper Displacement Check
+    // Open-Net Keeper Displacement Check (Goalmouth Corridor Coverage)
     openNetHazard = 0.0;
     isOpenNet = false;
     if (gk && carrier) {
-        const gkDistToGoal = Math.hypot(120.0 - gk.x, 40.0 - gk.y);
-        if (minDistanceToGoal <= 45.0 && (minDistanceToGoal < gkDistToGoal || gk.x < 102.0)) {
+        const goalMouth = { x: 120.0, y: 40.0 };
+        const distToGoal = Math.hypot(120.0 - carrier.x, 40.0 - carrier.y);
+        
+        // 1. Check if goalkeeper is positioned to cover the shooting corridor
+        const gkDistToShotLine = getDistToSegment(gk, carrier, goalMouth);
+        const effectiveGkReach = 2.4 + Math.max(0, (120.0 - gk.x) * 0.12);
+        const isGkDisplaced = gkDistToShotLine > effectiveGkReach || gk.x < (carrier.x - 2.0) || Math.abs(gk.y - 40.0) > 8.0;
+
+        // 2. Check if any outfield defender is covering the goal line or corridor
+        let isDefCoveringGoal = false;
+        defs.forEach(d => {
+            if (d.x > carrier.x && d.x >= 112.0 && Math.abs(d.y - 40.0) <= 4.5) {
+                isDefCoveringGoal = true;
+            } else if (getDistToSegment(d, carrier, goalMouth) <= 1.4 && d.x > carrier.x) {
+                isDefCoveringGoal = true;
+            }
+        });
+
+        // 3. If goalmouth is uncovered and carrier has forward shot view within 75m
+        if (isGkDisplaced && !isDefCoveringGoal && carrier.x >= 45.0 && distToGoal <= 75.0) {
             isOpenNet = true;
-            const displacement = Math.max(0, 108.0 - gk.x) / 36.0;
-            openNetHazard = Math.min(Math.max(displacement, 0.4), 1.0) * 1.8;
+            const shotRangeFactor = Math.min(Math.max((75.0 - distToGoal) / 55.0, 0.35), 1.0);
+            const lateralOffsetFactor = Math.min(1.0, Math.max(0.6, (gkDistToShotLine - effectiveGkReach) / 8.0));
+            openNetHazard = shotRangeFactor * lateralOffsetFactor * 2.8;
             logit += openNetHazard;
         }
     }

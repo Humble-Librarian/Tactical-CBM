@@ -41,13 +41,13 @@ Coaches can perform **$O(1)$ real-time counterfactual interventions** (e.g., "Wh
 | **$C_3$** | **Defensive Width Balance** | Lateral defensive spread adjusted for ball-carrier offset | $[0, 1]$ |
 | **$C_4$** | **Ball-Carrier Pressure** | Gegenpressing intensity (nearest defender decay + local swarm count) | $[0, 1]$ |
 | **$C_5$** | **Passing Lane Blockage** | Proportion of passing rays to forward box attackers intercepted by defenders | $[0, 1]$ ($2.2\text{m}$ corridor) |
-| **$C_6$** | **Box Overload Ratio** | Ratio of attacking players to defenders inside the penalty box | $[0, 1]$ |
+| **$C_6$** | **Box Overload Ratio** | Ratio of attacking players to defenders inside the penalty box (continuous approach kernel) | $[0, 1]$ |
 
 ---
 
 ## 📊 Modern Dataset Benchmark (2022–2024)
 
-The engine trains on a curated **181-match modern tactical cohort** ($574,560$ freeze frames) representing modern high lines, inverted fullbacks, and box midfields:
+The engine trains on an **181-match modern tactical cohort** ($574,560$ freeze frames) representing modern high lines, inverted fullbacks, and box midfields:
 
 - **UEFA Euro 2024 (51 matches):** Complete tournament (Spain, Germany, England, France).
 - **1. Bundesliga 2023/24 (34 matches):** Xabi Alonso's unbeaten Bayer Leverkusen & FC Bayern Munich.
@@ -77,13 +77,13 @@ A systematic ablation study across 11 architectural variants evaluates the exact
 
 - **Interpretability Tax:** The unconstrained Direct GNN attains $0.3220$ PR-AUC vs. our CBM's $0.3089$ PR-AUC. Forcing predictions through human concepts costs only $0.0131$ PR-AUC while enabling real-time counterfactual interventions.
 - **Graph Structure Necessity:** Removing GAT drops PR-AUC by $6.16\%$, and removing Delaunay edges drops PR-AUC by $3.27\%$.
-- **Bilinear Synergies (BCIT):** Adding pairwise concept interactions ($C_i W_{ij} C_j$) delivers a $+3.43\%$ PR-AUC lift over a linear sum.
+- **Bilinear Interactions (BCIT):** Adding pairwise concept products ($C_i W_{ij} C_j$) delivers a $+3.43\%$ PR-AUC lift over a linear sum.
 
 ---
 
 ## 📈 Statistical Significance & Generalization (Phase 6 / A4)
 
-To prevent reporting point-estimate artifacts on class-imbalanced tracking data (5.2% threat event frequency), evaluation uses non-parametric bootstrap resampling and zero-leakage cross-match partitions ($M_{\text{train}} \cap M_{\text{val}} = \emptyset$):
+With a 5.2% threat event base rate, evaluation relies on non-parametric bootstrap resampling across strictly partitioned matches without train-val overlap ($M_{\text{train}} \cap M_{\text{val}} = \emptyset$):
 
 ### 1. 1,000-Iteration Stratified Non-Parametric Bootstrap (95% CI)
 Evaluated across 1,000 paired bootstrap iterations on 20,000 held-out tracking samples:
@@ -95,7 +95,7 @@ Evaluated across 1,000 paired bootstrap iterations on 20,000 held-out tracking s
 | **Brier Score** | **0.0919** | **[0.0888, 0.0951]** | 0.0016 |
 | **Concept Mean $R^2$** | **0.6695** | **[0.6642, 0.6748]** | 0.0027 |
 
-The tight $95\%$ bounds confirm that model performance is statistically significant and robust to sample variability.
+The tight $95\%$ confidence bounds confirm that performance remains stable across resampled test slices.
 
 ### 2. 35 Held-Out Match Out-of-Distribution Generalization
 Evaluated across 35 completely unseen matches ($112,178$ test frames) with zero match leakage:
@@ -111,7 +111,7 @@ Partitioned strictly by `match_id` so that no frames from the same match appear 
 
 ## 🌍 Dataset Scaling & Generalization (Phase 7 / A5, C5)
 
-Evaluated across **112,178 held-out validation frames** from **35 unseen matches** ($M_{\text{train}} \cap M_{\text{val}} = \emptyset$) to verify out-of-distribution transfer across competitions, touchline flank symmetry, and broadcast camera occlusion robustness:
+Evaluated across **112,178 held-out validation frames** from **35 unseen matches** ($M_{\text{train}} \cap M_{\text{val}} = \emptyset$) to verify out-of-distribution transfer across competitions, flank symmetry, and simulated broadcast occlusion:
 
 ### 1. Per-Competition Out-of-Distribution Transfer
 | Competition | Frames | Threat Rate | Threat ROC-AUC | Threat PR-AUC | Brier Score | Concept Mean $R^2$ |
@@ -143,7 +143,9 @@ The engine couples tactical concept evaluation with continuous pitch control and
 - **William Spearman (2018) Kinematics:** 4-phase ballistic Time-To-Intercept (reaction latency, turn inertia, acceleration, max sprint).
 - **Gumbel Extreme-Value Softmin Field:** Continuous $60 \times 40$ pitch control probability surface ($P_{\text{att}} + P_{\text{def}} \equiv 1.0$) with Log-Sum-Exp numerical stabilization.
 - **Dynamic Offside Wavefront:** Forward rollout ($t + 0.5\text{s}, t + 1.0\text{s}, t + 2.0\text{s}$) capturing step-up traps and passing windows.
-- **Zero-Allocation 60 FPS Browser HUD:** Rendered via packed 32-bit pixel buffers and an 8,192-entry Sigmoid lookup table.
+- **Goalmouth Corridor & Open Net Hazard:** Calculates unobstructed angular shooting sightlines to goalposts $(120, 36.34)$ and $(120, 43.66)$. Detects open nets when lateral goalkeeper displacement exceeds effective reach ($2.4\text{m}$), applying distance-decay scaling up to $75\text{m}$.
+- **IFAB Law 11 Breakaway Parity:** Distinguishes active solo ball-carrier breakaways from offside off-ball receiving teammates, avoiding false offside penalties during transitions.
+- **Zero-Allocation 60 FPS Browser HUD:** Rendered via packed 32-bit pixel buffers, authentic player jersey silhouettes, modular UI scripts, and an 8,192-entry Sigmoid lookup table.
 
 ---
 
@@ -151,8 +153,8 @@ The engine couples tactical concept evaluation with continuous pitch control and
 
 All geometric algorithms maintain verified cross-runtime mathematical parity ($|\Delta| < 10^{-5}$) across three execution targets:
 1. **Python Training Runtime:** [`scripts/geometry.py`](file:///d:/Tactical%20CBM%20Engine/scripts/geometry.py) and [`scripts/pitch_control.py`](file:///d:/Tactical%20CBM%20Engine/scripts/pitch_control.py).
-2. **C++ Native Runtime:** [`cpp_engine/include/geometry.hpp`](file:///d:/Tactical%20CBM%20Engine/cpp_engine/include/geometry.hpp) with Andrew's Monotone Chain 2D convex hull.
-3. **WebAssembly / Browser Runtime:** [`dashboard/tactical_geometry.wasm`](file:///d:/Tactical%20CBM%20Engine/dashboard/tactical_geometry.wasm) executed in [`dashboard/index.html`](file:///d:/Tactical%20CBM%20Engine/dashboard/index.html).
+2. **C++ Native Runtime:** [`cpp_engine/include/geometry.hpp`](file:///d:/Tactical%20CBM%20Engine/cpp_engine/include/geometry.hpp) with Andrew's Monotone Chain 2D convex hull and `std::clamp`.
+3. **WebAssembly / Browser Runtime:** [`dashboard/tactical_geometry.wasm`](file:///d:/Tactical%20CBM%20Engine/dashboard/tactical_geometry.wasm) executed in [`dashboard/index.html`](file:///d:/Tactical%20CBM%20Engine/dashboard/index.html). The custom bytecode compiler (`scripts/compile_geometry_wasm.py`) enforces strict single-precision floating-point bounds via `0x97` (`f32.max` with $0.0$) and `0x96` (`f32.min` with $1.0$).
 
 ---
 
@@ -173,12 +175,13 @@ python scripts/build_shards.py --workers 8
 ```
 
 ### 3. Launch Interactive Canvas Dashboard
+The dashboard uses a modular frontend architecture (`dashboard/css/`, `dashboard/js/`) served with cache-busting headers:
 ```bash
 # Compile WebAssembly geometry module
 python scripts/compile_geometry_wasm.py
 
 # Launch local dashboard server
-python -m http.server 8501 --directory dashboard
+python dashboard/app.py --port 8501
 # Open http://localhost:8501 in your browser
 ```
 
@@ -186,7 +189,7 @@ python -m http.server 8501 --directory dashboard
 
 ## 🧪 Verification & Test Suite
 
-Run the full automated test suite (132 unit, schema, kinematic, ablation, and generalization tests):
+Run the full automated test suite across all 132 test cases:
 ```bash
 pytest tests
 ```

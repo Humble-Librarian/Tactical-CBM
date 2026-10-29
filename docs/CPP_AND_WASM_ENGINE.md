@@ -38,6 +38,14 @@ Rather than requiring large Emscripten build toolchains, the engine contains an 
   4. `c4_pressure(min_dist, count_within_6m)`: Computes Gegenpress pressure intensity.
   5. `stage5_eval(c1, c2, c3, c4, c5, c6)`: Evaluates linear threat head dot product.
 
+### 3.1 Numerical Clamping Opcode Specification
+
+To maintain exact unit intervals $[0, 1]$ without runtime overhead, the WebAssembly generator emits numeric opcodes:
+- `0x97` (`f32.max`): Clamps negative values against `f32.const 0.0`.
+- `0x96` (`f32.min`): Bounds upper values against `f32.const 1.0`.
+
+This matches C++17 `std::clamp(val, 0.0f, 1.0f)` and Python `np.clip(val, 0.0, 1.0)` with exact single-precision floating-point parity.
+
 Compile via:
 ```bash
 python scripts/compile_geometry_wasm.py

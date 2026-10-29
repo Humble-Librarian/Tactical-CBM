@@ -70,15 +70,15 @@ def build_wasm_binary() -> bytes:
     # 4. Code Section (Section 10) - Function bodies
     # Opcode helpers:
     # local.get: 0x20, f32.const: 0x43, f32.sub: 0x93, f32.div: 0x95, f32.mul: 0x94, f32.add: 0x92
-    # f32.min: 0x97, f32.max: 0x98, f32.abs: 0x8b, end: 0x0b
+    # f32.min: 0x96, f32.max: 0x97, f32.abs: 0x8b, end: 0x0b
 
     def f32_const(val: float) -> bytes:
         return bytes([0x43]) + struct.pack('<f', val)
 
     def clamp01_instructions() -> bytes:
         # stack has val -> returns clamp01(val)
-        # val max 0.0 -> min 1.0
-        return f32_const(0.0) + bytes([0x98]) + f32_const(1.0) + bytes([0x97])
+        # val max 0.0 (0x97) -> min 1.0 (0x96)
+        return f32_const(0.0) + bytes([0x97]) + f32_const(1.0) + bytes([0x96])
 
     # Func 0: c1_line_height(max_x) -> clamp01((120.0 - max_x) / 70.0)
     b0 = (
@@ -117,9 +117,9 @@ def build_wasm_binary() -> bytes:
     # term1 = (6.0 - min(min_dist, 6.0)) / 6.0 * 0.7
     # term2 = min(count_within_6m / 3.0, 1.0) * 0.3
     b3 = (
-        f32_const(6.0) + bytes([0x20, 0x00]) + f32_const(6.0) + bytes([0x97, 0x93]) + # 6.0 - min(dist, 6)
+        f32_const(6.0) + bytes([0x20, 0x00]) + f32_const(6.0) + bytes([0x96, 0x93]) + # 6.0 - min(dist, 6)
         f32_const(6.0) + bytes([0x95]) + f32_const(0.7) + bytes([0x94]) +               # * 0.7 / 6.0
-        bytes([0x20, 0x01]) + f32_const(3.0) + bytes([0x95]) + f32_const(1.0) + bytes([0x97]) + f32_const(0.3) + bytes([0x94]) +
+        bytes([0x20, 0x01]) + f32_const(3.0) + bytes([0x95]) + f32_const(1.0) + bytes([0x96]) + f32_const(0.3) + bytes([0x94]) +
         bytes([0x92]) + # term1 + term2
         clamp01_instructions() +
         bytes([0x0b])

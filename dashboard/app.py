@@ -20,6 +20,12 @@ class CustomHandler(SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=str(DASHBOARD_DIR), **kwargs)
 
+    def end_headers(self):
+        self.send_header('Cache-Control', 'no-cache, no-store, must-revalidate')
+        self.send_header('Pragma', 'no-cache')
+        self.send_header('Expires', '0')
+        super().end_headers()
+
 def start_server(open_browser: bool = False):
     print("=" * 65)
     print("STAGE 5: TACTICAL-CBM INTERACTIVE DASHBOARD")

@@ -193,7 +193,7 @@ $$P_{\text{att}}(\mathbf{r}) = \frac{\exp\left(-\frac{\min_{i \in \text{att}} t_
 | Dimension | Multi-Second Video Transformer | Tactical-CBM Engine (Ours) |
 | :--- | :---: | :---: |
 | **Input Requirement** | 125 continuous frames (5s @ 25 FPS) | 1 instantaneous frame + velocity vectors |
-| **Tracking Occlusion Resilience** | Fragile (sequence break on dropouts) | Robust (single-frame mask handling) |
+| **Tracking Occlusion Resilience** | Fragile (sequence break on dropouts) | Resilient (single-frame mask handling) |
 | **Parameter Footprint** | $12\text{M} - 85\text{M}$ parameters | **14,672 parameters (15K)** |
 | **Inference Hardware** | Discrete GPU required (CUDA) | **Pure CPU (Single-thread or WASM)** |
 | **Per-Frame Latency** | $80\text{ms} - 250\text{ms}$ | **$15\,\mu\text{s}$ (6,500+ FPS)** |
@@ -202,7 +202,22 @@ $$P_{\text{att}}(\mathbf{r}) = \frac{\exp\left(-\frac{\min_{i \in \text{att}} t_
 
 ---
 
-## 5. Architectural Invariants Summary
+## 5. Goalmouth Corridor Obstruction and Open-Net Mechanics
+
+In football analytics, defining an open goal using radial distance to the goal center causes false negatives when a goalkeeper is displaced laterally. A goalkeeper standing near the corner flag or touchline may remain within 10 meters of the goalmouth while leaving the target uncovered.
+
+Tactical-CBM evaluates shooting corridors between the ball carrier and the goalmouth posts:
+1. **Goalmouth Geometry:** Posts are anchored at $(120.0, 36.34)$ and $(120.0, 43.66)$ on standard $120 \times 80\,\text{m}$ pitch coordinates.
+2. **Perpendicular Corridor Intercept:** For a defending player or goalkeeper at position $(x_d, y_d)$, the distance to the shooting segment between carrier $(x_c, y_c)$ and goal center $(120.0, 40.0)$ is determined via vector projection.
+3. **Goalkeeper Reach Sphere:** Effective goalkeeper reach is parameterized at $r_{\text{gk}} = 2.4\,\text{m}$. If the goalkeeper lies outside this corridor and is displaced laterally relative to the shooting angle, the net is flagged unguarded.
+4. **Distance Decay:** Shooting threat decays linearly beyond the penalty box up to $75\,\text{m}$:
+   $$\lambda_{\text{open}} = \operatorname{clamp}\left(1.0 - \frac{d - 16.5}{60.0}, 0.0, 1.0\right)$$
+   This accounts for long-range shot conversion probabilities while penalizing displaced goalkeepers.
+5. **IFAB Law 11 Compliance:** An attacker carrying the ball past the defensive line cannot be offside by definition. Offside checks evaluate whether the ball carrier struck a pass to an off-ball attacker in an offside position, preventing false offside penalties during solo breakaways.
+
+---
+
+## 6. Architectural Invariants Summary
 
 Every future mutation to the Tactical-CBM codebase must respect these four core invariants:
 
@@ -226,7 +241,7 @@ Browser WebAssembly execution must maintain 60 FPS without memory allocation.
 
 ---
 
-## 6. Empirical Reference Citations
+## 7. Empirical Reference Citations
 - **Graph Topology Benchmark:** [`results/graph_topology_table.md`](file:///d:/Tactical%20CBM%20Engine/results/graph_topology_table.md)
 - **Hyperparameter Sensitivity Sweep:** [`results/hyperparameter_table.md`](file:///d:/Tactical%20CBM%20Engine/results/hyperparameter_table.md)
 - **Model Ablations Suite:** [`results/ablation_table.md`](file:///d:/Tactical%20CBM%20Engine/results/ablation_table.md)

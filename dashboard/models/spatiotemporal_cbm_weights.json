@@ -1,0 +1,57 @@
+{
+  "model_architecture": "SpatioTemporalCBM_DenseGATv2_BCIT",
+  "parameters": {
+    "linear_weights": [
+      -0.9558616876602173,
+      0.354203999042511,
+      -0.382374107837677,
+      0.7319360375404358,
+      0.09278469532728195,
+      0.8927278518676758
+    ],
+    "pairwise_interactions": {
+      "C1_x_C2": -0.8005,
+      "C1_x_C3": -0.9859,
+      "C1_x_C4": -0.3413,
+      "C1_x_C5": -1.001,
+      "C1_x_C6": -0.1321,
+      "C2_x_C3": 0.1221,
+      "C2_x_C4": 1.0226,
+      "C2_x_C5": 0.5658,
+      "C2_x_C6": 1.0285,
+      "C3_x_C4": 0.6322,
+      "C3_x_C5": -0.1285,
+      "C3_x_C6": 0.8812,
+      "C4_x_C5": 0.7819,
+      "C4_x_C6": 0.9892,
+      "C5_x_C6": 0.9122
+    },
+    "bias": -0.17385758459568024,
+    "beta_calibration": {
+      "a": 1.0947082436841218,
+      "b": 1.0239690510137995,
+      "c": -2.2244995941843992
+    },
+    "optimal_f05_threshold": 0.3858216404914856,
+    "threshold_at_p50": 0.34888601303100586
+  },
+  "concepts": [
+    "C1: Defensive Line Height",
+    "C2: Defensive Compactness",
+    "C3: Flank Overload",
+    "C4: Gegenpress Ball Pressure",
+    "C5: Channel Space",
+    "C6: Box Dominance"
+  ],
+  "validation_metrics": {
+    "mean_r2": 0.6660746137301127,
+    "roc_auc": 0.8571059298896139,
+    "pr_auc": 0.37793647728105734,
+    "calibrated_brier_score": 0.040948931127786636,
+    "ece_percent": 0.14,
+    "precision_at_f05": 53.6,
+    "recall_at_f05": 28.6,
+    "precision_at_p50": 50.0,
+    "recall_at_p50": 32.5
+  }
+}

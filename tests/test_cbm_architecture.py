@@ -437,11 +437,16 @@ def test_wave4_python_javascript_role_and_closing_speed_parity():
     from ml_trainer.model import ROLE_TAXONOMY
     import re
 
-    # Read dashboard/index.html
+    # Read dashboard/index.html (and modular dashboard scripts if separated)
     html_path = BASE_DIR / "dashboard" / "index.html"
     assert html_path.exists()
     with open(html_path, "r", encoding="utf-8") as f:
         html_content = f.read()
+
+    js_physics = BASE_DIR / "dashboard" / "js" / "pitch_physics.js"
+    if js_physics.exists():
+        with open(js_physics, "r", encoding="utf-8") as f:
+            html_content += "\n" + f.read()
 
     # Verify that all 8 roles are defined in JS ROLE_CAPABILITIES
     for role_tag, data in ROLE_TAXONOMY.items():

@@ -1,0 +1,147 @@
+/**
+ * Tactical-CBM Engine - Modern Dark Glassmorphism Design System
+ * Theme tokens, typography, glassmorphism layers, neon glows, and micro-animations.
+ * Adheres to UI/UX Pro Max and Make-Interfaces-Feel-Better standards:
+ * - Concentric border radii (outer = inner + padding)
+ * - Tabular numbers for dynamic telemetry
+ * - Specific transition properties (no transition: all)
+ * - High-contrast WCAG AAA OLED dark theme
+ * - No emoji icons (bespoke SVGs throughout)
+ */
+
+:root {
+    /* Color Palette - Deep Obsidian & Studio Slate */
+    --bg-base: #060810;
+    --bg-surface: #0a0f1d;
+    --glass-bg: rgba(13, 20, 36, 0.72);
+    --glass-card: rgba(16, 25, 46, 0.62);
+    --glass-card-hover: rgba(24, 37, 68, 0.82);
+    --glass-border: rgba(255, 255, 255, 0.08);
+    --glass-border-focus: rgba(56, 189, 248, 0.45);
+    --glass-border-active: rgba(56, 189, 248, 0.75);
+    
+    /* Pitch Turf - Velvety Stadium Emerald */
+    --pitch-dark-1: #0a2e1b;
+    --pitch-dark-2: #0d3822;
+    --pitch-border: #061f12;
+    --pitch-markings: rgba(255, 255, 255, 0.78);
+    
+    /* Tactical Team Enamels */
+    --team-def: #2563eb;
+    --team-def-glow: rgba(37, 99, 235, 0.40);
+    --team-att: #e11d48;
+    --team-att-glow: rgba(225, 29, 72, 0.40);
+    --team-gk: #f59e0b;
+    --team-gk-glow: rgba(245, 158, 11, 0.40);
+
+    /* Broadcast Telemetry Accents */
+    --accent-blue: #38bdf8;
+    --accent-blue-glow: rgba(56, 189, 248, 0.35);
+    --accent-cyan: #06b6d4;
+    --accent-emerald: #10b981;
+    --accent-emerald-glow: rgba(16, 185, 129, 0.35);
+    --accent-amber: #f59e0b;
+    --accent-amber-glow: rgba(245, 158, 11, 0.35);
+    --accent-rose: #f43f5e;
+    --accent-rose-glow: rgba(244, 63, 94, 0.35);
+    --accent-violet: #8b5cf6;
+    
+    /* Typography */
+    --text-primary: #f8fafc;
+    --text-secondary: #94a3b8;
+    --text-tertiary: #64748b;
+    --text-muted: #475569;
+    
+    /* Elevation & Layered Shadows */
+    --shadow-sm: 0 2px 6px rgba(0, 0, 0, 0.30);
+    --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.40);
+    --shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.55);
+    --shadow-glow-blue: 0 0 16px rgba(56, 189, 248, 0.28);
+    --shadow-glow-emerald: 0 0 16px rgba(16, 185, 129, 0.28);
+    --shadow-glow-rose: 0 0 16px rgba(244, 63, 94, 0.28);
+    
+    /* Concentric Border Radii */
+    --radius-xs: 4px;
+    --radius-sm: 6px;
+    --radius-md: 10px;
+    --radius-lg: 14px;
+    --radius-xl: 18px;
+    --radius-full: 9999px;
+    
+    /* Frosted Blur Filter */
+    --glass-blur: blur(20px) saturate(190%);
+
+    /* Specific Micro-Interaction Transitions */
+    --transition-fast: color 150ms cubic-bezier(0.16, 1, 0.3, 1), background-color 150ms ease, border-color 150ms ease, transform 150ms ease, box-shadow 150ms ease;
+    --transition-normal: color 200ms cubic-bezier(0.16, 1, 0.3, 1), background-color 200ms ease, border-color 200ms ease, transform 200ms ease, box-shadow 200ms ease;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+    background-color: var(--bg-base);
+    background-image: 
+        radial-gradient(at 12% 10%, rgba(56, 189, 248, 0.05) 0px, transparent 45%),
+        radial-gradient(at 88% 85%, rgba(16, 185, 129, 0.04) 0px, transparent 45%),
+        radial-gradient(at 50% 50%, rgba(15, 23, 42, 0.55) 0px, transparent 100%);
+    color: var(--text-primary);
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow: hidden;
+}
+
+/* Monospace telemetry font with tabular numbers */
+.mono {
+    font-family: 'Fira Code', ui-monospace, monospace;
+    font-variant-numeric: tabular-nums;
+}
+
+/* Custom Sleek Scrollbar */
+::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(13, 20, 36, 0.40);
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(56, 189, 248, 0.22);
+    border-radius: var(--radius-full);
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(56, 189, 248, 0.45);
+}
+
+/* Accessible focus ring */
+:focus-visible {
+    outline: 2px solid var(--accent-blue);
+    outline-offset: 2px;
+}
+
+/* Keyframe animations */
+@keyframes pulseGlow {
+    0%, 100% {
+        opacity: 1;
+        box-shadow: 0 0 10px var(--accent-emerald);
+    }
+    50% {
+        opacity: 0.55;
+        box-shadow: 0 0 4px var(--accent-emerald);
+    }
+}
+
+@keyframes laserShimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+}

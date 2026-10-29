@@ -12,9 +12,11 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent.parent
 DASHBOARD_DIR = BASE_DIR / "dashboard"
 
+from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
+
 PORT = 8501
 
-class CustomHandler(http.server.SimpleHTTPRequestHandler):
+class CustomHandler(SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=str(DASHBOARD_DIR), **kwargs)
 
@@ -23,14 +25,16 @@ def start_server(open_browser: bool = False):
     print("STAGE 5: TACTICAL-CBM INTERACTIVE DASHBOARD")
     print("=" * 65)
     print(f"Serving dashboard from: {DASHBOARD_DIR}")
-    print(f"URL: http://localhost:{PORT}")
+    print(f"URL: http://127.0.0.1:{PORT}")
     print("Press Ctrl+C to stop the server.")
     print("=" * 65)
     
     if open_browser:
-        webbrowser.open(f"http://localhost:{PORT}")
+        webbrowser.open(f"http://127.0.0.1:{PORT}")
         
-    with socketserver.TCPServer(("", PORT), CustomHandler) as httpd:
+    server_address = ("0.0.0.0", PORT)
+    ThreadingHTTPServer.allow_reuse_address = True
+    with ThreadingHTTPServer(server_address, CustomHandler) as httpd:
         try:
             httpd.serve_forever()
         except KeyboardInterrupt:

@@ -1,0 +1,393 @@
+/**
+ * Tactical-CBM Engine - Pitch Stage & Interactive Canvas Styles
+ * Streamlined Broadcast-grade UI: Unifies multi-tier toolbars into clean floating command bars.
+ */
+
+/* Unified Top Pitch Command Bar */
+.pitch-command-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 6px 6px 6px;
+    flex-shrink: 0;
+    flex-wrap: wrap;
+}
+
+.command-bar-left,
+.command-bar-right {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: nowrap;
+}
+
+/* Formation Selector & Styled Select */
+select#formationSelect {
+    background: rgba(15, 23, 42, 0.88);
+    border: 1px solid var(--glass-border);
+    color: var(--text-primary);
+    padding: 5px 10px;
+    border-radius: var(--radius-sm);
+    font-size: 0.74rem;
+    font-weight: 500;
+    cursor: pointer;
+    outline: none;
+    transition: var(--transition-fast);
+    box-shadow: var(--shadow-sm);
+    max-width: 200px;
+}
+
+select#formationSelect:hover {
+    border-color: var(--glass-border-focus);
+    background: rgba(22, 33, 58, 0.95);
+}
+
+select#formationSelect:focus {
+    border-color: var(--accent-blue);
+    box-shadow: 0 0 10px var(--accent-blue-glow);
+}
+
+/* Compact Icon Action Buttons */
+.icon-btn {
+    background: rgba(26, 36, 56, 0.75);
+    border: 1px solid var(--glass-border);
+    color: var(--text-secondary);
+    padding: 5px 9px;
+    border-radius: var(--radius-sm);
+    font-size: 0.72rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition-fast);
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    user-select: none;
+    white-space: nowrap;
+}
+
+.icon-btn:hover {
+    background: rgba(40, 56, 88, 0.90);
+    border-color: var(--glass-border-focus);
+    color: var(--text-primary);
+    transform: translateY(-1px);
+}
+
+.icon-btn:active {
+    transform: scale(0.96);
+}
+
+/* Kinematic Offside & Velocity HUD Badges */
+.hud-status-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(8, 12, 24, 0.60);
+    padding: 3px 8px;
+    border-radius: var(--radius-full);
+    border: 1px solid var(--glass-border);
+}
+
+.hud-badge {
+    padding: 2px 7px;
+    border-radius: var(--radius-full);
+    font-weight: 700;
+    font-size: 0.64rem;
+    letter-spacing: 0.04em;
+    font-family: 'Fira Code', monospace;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.hud-badge-neutral {
+    background: rgba(56, 189, 248, 0.12);
+    color: var(--accent-blue);
+    border: 1px solid rgba(56, 189, 248, 0.30);
+}
+
+.hud-badge-trap {
+    background: rgba(16, 185, 129, 0.16);
+    color: var(--accent-emerald);
+    border: 1px solid rgba(16, 185, 129, 0.40);
+    box-shadow: 0 0 8px var(--accent-emerald-glow);
+}
+
+.hud-badge-breakaway {
+    background: rgba(244, 63, 94, 0.16);
+    color: var(--accent-rose);
+    border: 1px solid rgba(244, 63, 94, 0.40);
+    box-shadow: 0 0 8px var(--accent-rose-glow);
+}
+
+.hud-badge-opennet {
+    background: rgba(244, 63, 94, 0.22);
+    color: #ffffff;
+    border: 1px solid #f43f5e;
+    box-shadow: 0 0 12px var(--accent-rose-glow);
+}
+
+.hud-details {
+    color: var(--text-tertiary);
+    font-family: 'Fira Code', monospace;
+    font-variant-numeric: tabular-nums;
+    font-size: 0.68rem;
+    white-space: nowrap;
+}
+
+/* Temporal & Pitch Control Toggles */
+.toggle-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    cursor: pointer;
+    user-select: none;
+    font-size: 0.70rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    background: rgba(20, 29, 48, 0.65);
+    padding: 4px 8px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--glass-border);
+    transition: var(--transition-fast);
+    white-space: nowrap;
+}
+
+.toggle-pill:hover {
+    color: var(--text-primary);
+    border-color: var(--glass-border-focus);
+    background: rgba(30, 44, 72, 0.80);
+}
+
+.toggle-pill input[type="checkbox"] {
+    accent-color: var(--accent-blue);
+    cursor: pointer;
+    width: 12px;
+    height: 12px;
+}
+
+/* Timeline Control Group */
+.timeline-ctrl-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(10, 16, 30, 0.70);
+    padding: 3px 8px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--glass-border);
+}
+
+.timeline-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 2px 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-xs);
+    transition: var(--transition-fast);
+}
+
+.timeline-btn:hover {
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.timeline-slider {
+    width: 70px;
+    height: 4px;
+    accent-color: var(--accent-emerald);
+    cursor: pointer;
+}
+
+.timeline-readout {
+    font-family: 'Fira Code', monospace;
+    font-variant-numeric: tabular-nums;
+    font-size: 0.66rem;
+    color: var(--accent-emerald);
+    min-width: 55px;
+    text-align: right;
+}
+
+.window-badge {
+    background: rgba(16, 185, 129, 0.12);
+    color: var(--accent-emerald);
+    border: 1px solid rgba(16, 185, 129, 0.35);
+    font-family: 'Fira Code', monospace;
+    font-variant-numeric: tabular-nums;
+    font-size: 0.66rem;
+    padding: 3px 7px;
+    border-radius: var(--radius-sm);
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.window-badge-closed {
+    background: rgba(244, 63, 94, 0.12);
+    color: var(--accent-rose);
+    border-color: rgba(244, 63, 94, 0.35);
+}
+
+/* Pitch Canvas Wrapper (Hero Element) */
+.pitch-canvas-wrapper {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    background: #06180e;
+    box-shadow: inset 0 0 48px rgba(0, 0, 0, 0.85), 0 8px 24px rgba(0, 0, 0, 0.45);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+canvas#pitchCanvas {
+    display: block;
+    cursor: default;
+    border-radius: var(--radius-xs);
+    max-width: 100%;
+    max-height: 100%;
+}
+
+/* Compact Bottom Inspector Dock */
+.player-control-panel {
+    background: rgba(12, 18, 32, 0.85);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-sm);
+    padding: 4px 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 6px;
+    flex-shrink: 0;
+    gap: 8px;
+    backdrop-filter: var(--glass-blur);
+}
+
+.panel-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    overflow-x: hidden;
+    flex: 1;
+    min-width: 0;
+}
+
+.selected-player-pill {
+    font-size: 0.70rem;
+    font-weight: 600;
+    color: var(--accent-blue);
+    white-space: nowrap;
+    font-family: 'Fira Code', monospace;
+    font-variant-numeric: tabular-nums;
+    flex-shrink: 0;
+}
+
+.role-chips-group {
+    display: flex;
+    gap: 3px;
+    flex-shrink: 0;
+}
+
+.role-chip {
+    background: rgba(24, 34, 54, 0.65);
+    border: 1px solid var(--glass-border);
+    color: var(--text-secondary);
+    padding: 2px 7px;
+    border-radius: var(--radius-xs);
+    font-size: 0.65rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition-fast);
+    white-space: nowrap;
+}
+
+.role-chip:hover {
+    color: var(--text-primary);
+    border-color: var(--glass-border-focus);
+    background: rgba(36, 50, 78, 0.80);
+}
+
+.role-chip:active {
+    transform: scale(0.96);
+}
+
+.role-chip.active {
+    background: linear-gradient(135deg, rgba(56, 189, 248, 0.25), rgba(37, 99, 235, 0.35));
+    color: #ffffff;
+    border-color: var(--accent-blue);
+    box-shadow: 0 0 8px var(--accent-blue-glow);
+}
+
+.panel-right {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+.velocity-readout {
+    font-family: 'Fira Code', monospace;
+    font-variant-numeric: tabular-nums;
+    font-size: 0.68rem;
+    color: var(--accent-amber);
+    white-space: nowrap;
+}
+
+.velocity-btn {
+    background: rgba(24, 34, 54, 0.75);
+    border: 1px solid var(--glass-border);
+    color: var(--text-primary);
+    padding: 3px 8px;
+    border-radius: var(--radius-xs);
+    font-size: 0.66rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition-fast);
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.velocity-btn:hover {
+    background: rgba(40, 56, 88, 0.90);
+    border-color: var(--glass-border-focus);
+}
+
+.velocity-btn:active {
+    transform: scale(0.96);
+}
+
+/* Compact Floating Legend Strip */
+.pitch-legend-bar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding-left: 8px;
+    border-left: 1px solid rgba(255, 255, 255, 0.10);
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.64rem;
+    color: var(--text-tertiary);
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.legend-swatch {
+    width: 7px;
+    height: 7px;
+    border-radius: var(--radius-full);
+}
+
+.legend-blue { background: #2563eb; box-shadow: 0 0 5px rgba(37, 99, 235, 0.6); }
+.legend-gold { background: #f59e0b; box-shadow: 0 0 5px rgba(245, 158, 11, 0.6); }
+.legend-red  { background: #e11d48; box-shadow: 0 0 5px rgba(225, 29, 72, 0.6); }
+.legend-hull { background: rgba(56, 189, 248, 0.35); border: 1px dashed #38bdf8; }
+.legend-offside { background: #f43f5e; }

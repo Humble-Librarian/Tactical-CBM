@@ -48,17 +48,17 @@
     
     /* Typography */
     --text-primary: #f8fafc;
-    --text-secondary: #94a3b8;
-    --text-tertiary: #64748b;
-    --text-muted: #475569;
+    --text-secondary: #cbd5e1;
+    --text-tertiary: #94a3b8;
+    --text-muted: #8492a6;
     
     /* Elevation & Layered Shadows */
     --shadow-sm: 0 2px 6px rgba(0, 0, 0, 0.30);
     --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.40);
     --shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.55);
-    --shadow-glow-blue: 0 0 16px rgba(56, 189, 248, 0.28);
-    --shadow-glow-emerald: 0 0 16px rgba(16, 185, 129, 0.28);
-    --shadow-glow-rose: 0 0 16px rgba(244, 63, 94, 0.28);
+    --shadow-glow-blue: 0 4px 14px rgba(0, 0, 0, 0.45);
+    --shadow-glow-emerald: 0 4px 14px rgba(0, 0, 0, 0.45);
+    --shadow-glow-rose: 0 4px 14px rgba(0, 0, 0, 0.45);
     
     /* Concentric Border Radii */
     --radius-xs: 4px;

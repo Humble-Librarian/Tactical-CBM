@@ -8,6 +8,7 @@
 .threat-card {
     background: linear-gradient(135deg, #131d35 0%, #0b1120 100%);
     border: 1px solid #1e293b;
+    border-left: 4px solid var(--accent-blue);
     border-radius: 12px;
     padding: 12px 14px;
     display: flex;
@@ -17,17 +18,7 @@
     overflow: hidden;
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
     flex-shrink: 0;
-}
-
-.threat-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 4px;
-    height: 100%;
-    background-color: var(--accent-blue);
-    transition: background-color 0.3s ease;
+    transition: border-left-color 0.3s ease;
 }
 
 .threat-info {
@@ -89,7 +80,7 @@
     gap: 3px;
     font-family: 'Fira Code', monospace;
     font-variant-numeric: tabular-nums;
-    font-size: 0.68rem;
+    font-size: 0.72rem;
     background: rgba(15, 23, 42, 0.85);
     padding: 8px 10px;
     border-radius: 8px;

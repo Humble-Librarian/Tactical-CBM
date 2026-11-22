@@ -7,8 +7,7 @@
 /* Threat Status Card */
 .threat-card {
     background: linear-gradient(135deg, #131d35 0%, #0b1120 100%);
-    border: 1px solid #1e293b;
-    border-left: 4px solid var(--accent-blue);
+    border: 1px solid rgba(56, 189, 248, 0.25);
     border-radius: 12px;
     padding: 12px 14px;
     display: flex;
@@ -18,7 +17,7 @@
     overflow: hidden;
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
     flex-shrink: 0;
-    transition: border-left-color 0.3s ease;
+    transition: border-color 0.3s ease;
 }
 
 .threat-info {

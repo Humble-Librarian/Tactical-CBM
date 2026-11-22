@@ -1,0 +1,14 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "overused-font",
+        "value": "inter",
+        "createdAt": "2026-11-22T10:38:12.343Z",
+        "reason": "UI system font stack intentionally includes Inter for clean telemetry readability"
+      }
+    ]
+  }
+}

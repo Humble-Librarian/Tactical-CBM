@@ -1,0 +1,18 @@
+# Exclude training data, Python/C++ pipelines, and large artifacts from Vercel uploads
+.agents/
+.impeccable/
+.pytest_cache/
+bin/
+cpp_engine/
+data/
+docs/
+ml_trainer/
+models/
+results/
+scratch/
+scripts/
+tests/
+dashboard/app.py
+README.md
+ROADMAP.md
+LICENSE.md

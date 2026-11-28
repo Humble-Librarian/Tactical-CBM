@@ -7,7 +7,7 @@ cpp_engine/
 data/
 docs/
 ml_trainer/
-models/
+/models/
 results/
 scratch/
 scripts/

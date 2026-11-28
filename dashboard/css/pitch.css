@@ -48,6 +48,11 @@ select#formationSelect:focus {
     box-shadow: 0 0 10px var(--accent-blue-glow);
 }
 
+select#formationSelect:focus-visible {
+    outline: 2px solid var(--accent-blue);
+    outline-offset: 2px;
+}
+
 /* Compact Icon Action Buttons */
 .icon-btn {
     background: rgba(26, 36, 56, 0.75);

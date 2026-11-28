@@ -17,6 +17,7 @@ if str(BASE_DIR) not in sys.path:
     sys.path.insert(0, str(BASE_DIR))
 
 from scripts.schema import FRAME_DTYPE, FRAME_BYTE_SIZE, MAX_PLAYERS, NODE_FEAT_DIM
+from scripts.kalman_tracker import TacticalKalmanTracker
 from scripts.geometry import (
     compute_c1_line_height,
     compute_c2_compactness,
@@ -61,10 +62,9 @@ def process_match(match_id: int) -> List[np.ndarray]:
             
     records = []
     
-    # State tracking for Bounded Short-Horizon Possession State Cache (BSPSC)
-    last_possession_id = None
+    # State tracking for Bounded Kinematic Kalman Occlusion Recovery
     last_event_time = None
-    cached_opponents = []  # List of ([x, y], is_keeper)
+    kalman_tracker = TacticalKalmanTracker()
     
     for frame_id, f in enumerate(frames_360):
         ev_uuid = f.get("event_uuid")
@@ -85,10 +85,6 @@ def process_match(match_id: int) -> List[np.ndarray]:
             curr_time = float(ev.get("minute", 0) * 60 + ev.get("second", 0))
             
         dt = (curr_time - last_event_time) if (last_event_time is not None and curr_time >= last_event_time) else 999.0
-        
-        # Invalidate cache on possession turnover or if temporal gap exceeds 2.0s
-        if possession_id != last_possession_id or dt > 2.0:
-            cached_opponents = []
         
         # Calculate Y label: Shot occurs within next 10 actions by attacking team
         window_end = min(ev_idx + 10, n_events)
@@ -126,36 +122,28 @@ def process_match(match_id: int) -> List[np.ndarray]:
             if is_actor:
                 actor_loc = [x, y]
 
-        # Bounded Short-Horizon State Cache (BSPSC):
-        # If camera frustum is truncated (fewer than 10 outfield defenders observed)
-        # and we have recently cached defenders from the same possession sequence (dt <= 2.0s),
-        # carry forward unobserved defenders clamped to pitch boundaries [0, 120] x [0, 80].
-        if len(cached_opponents) > 0 and len(outfield_opponent_locs) < 10 and 0.0 < dt <= 2.0:
+        # Bounded Kinematic Kalman Occlusion Recovery:
+        # Update multi-player Kalman tracks on current freeze_frame detections, then
+        # extrapolate recently occluded defenders (dt <= 2.0s) when the camera frustum
+        # observes fewer than 10 outfield defenders.
+        tracked_players = kalman_tracker.step(freeze_frame, curr_time, possession_id=possession_id)
+        if len(outfield_opponent_locs) < 10 and 0.0 < dt <= 2.0:
             curr_opp_coords = np.array(opponent_locs, dtype=np.float32) if len(opponent_locs) > 0 else np.empty((0, 2), dtype=np.float32)
-            for c_loc, c_is_keeper in cached_opponents:
+            for tx, ty, t_is_tm, t_is_keeper, is_extrap in tracked_players:
+                if not is_extrap or t_is_tm:
+                    continue
                 if len(outfield_opponent_locs) >= 10:
                     break
-                # Only carry over if not already matched near a detected opponent (< 4m)
                 if len(curr_opp_coords) > 0:
-                    dists = np.hypot(curr_opp_coords[:, 0] - c_loc[0], curr_opp_coords[:, 1] - c_loc[1])
+                    dists = np.hypot(curr_opp_coords[:, 0] - tx, curr_opp_coords[:, 1] - ty)
                     if np.min(dists) <= 4.0:
                         continue
-                cx = float(np.clip(c_loc[0], 0.0, 120.0))
-                cy = float(np.clip(c_loc[1], 0.0, 80.0))
-                opponent_locs.append([cx, cy])
-                if not c_is_keeper:
-                    outfield_opponent_locs.append([cx, cy])
-                players_data.append((cx, cy, False, False))
+                opponent_locs.append([tx, ty])
+                if not t_is_keeper:
+                    outfield_opponent_locs.append([tx, ty])
+                players_data.append((tx, ty, False, False))
 
-        # Update cache for next frame
-        last_possession_id = possession_id
         last_event_time = curr_time
-        cached_opponents = []
-        for p in freeze_frame:
-            if not p.get("teammate", False):
-                loc = p.get("location")
-                if loc and len(loc) >= 2:
-                    cached_opponents.append(([float(loc[0]), float(loc[1])], bool(p.get("keeper", False))))
                 
         # Must have at least 3 opponents to evaluate defensive geometry
         if len(opponent_locs) < 3:

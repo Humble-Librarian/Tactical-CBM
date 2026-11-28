@@ -90,3 +90,57 @@ def test_wasm_binary_integrity():
     with open(wasm_path, "rb") as f:
         magic = f.read(8)
     assert magic == b"\x00asm\x01\x00\x00\x00", "Must have valid WebAssembly 1.0 magic header"
+
+
+def test_build_shards_kalman_occlusion_recovery(tmp_path, monkeypatch):
+    """Assert build_shards.process_match uses TacticalKalmanTracker to recover occluded defenders."""
+    import json
+    import scripts.build_shards as build_shards
+
+    events_dir = tmp_path / "events"
+    ts_dir = tmp_path / "three-sixty"
+    events_dir.mkdir()
+    ts_dir.mkdir()
+
+    match_id = 999999
+    # Two consecutive events in the same possession separated by 1.0s
+    events = [
+        {"id": "ev1", "team": {"id": 1}, "type": {"name": "Pass"}, "possession": 10, "timestamp": "00:01:00.000"},
+        {"id": "ev2", "team": {"id": 1}, "type": {"name": "Carry"}, "possession": 10, "timestamp": "00:01:01.000"},
+    ]
+
+    # Frame 1 observes 4 attackers + 5 defenders (9 players >= 8 frustum threshold)
+    base_attackers = [
+        {"location": [70.0, 40.0], "teammate": True, "actor": True, "keeper": False},
+        {"location": [85.0, 30.0], "teammate": True, "actor": False, "keeper": False},
+        {"location": [88.0, 50.0], "teammate": True, "actor": False, "keeper": False},
+        {"location": [75.0, 25.0], "teammate": True, "actor": False, "keeper": False},
+    ]
+    defenders_f1 = [
+        {"location": [90.0, 35.0], "teammate": False, "actor": False, "keeper": False},
+        {"location": [92.0, 45.0], "teammate": False, "actor": False, "keeper": False},
+        {"location": [95.0, 30.0], "teammate": False, "actor": False, "keeper": False},
+        {"location": [96.0, 52.0], "teammate": False, "actor": False, "keeper": False},
+        {"location": [110.0, 40.0], "teammate": False, "actor": False, "keeper": True},
+    ]
+    # Frame 2 drops defender at [96.0, 52.0] due to camera occlusion (still 8 players >= 8)
+    defenders_f2 = defenders_f1[:3] + defenders_f1[4:]
+
+    frames_360 = [
+        {"event_uuid": "ev1", "freeze_frame": base_attackers + defenders_f1},
+        {"event_uuid": "ev2", "freeze_frame": base_attackers + defenders_f2},
+    ]
+
+    with open(events_dir / f"{match_id}.json", "w", encoding="utf-8") as f:
+        json.dump(events, f)
+    with open(ts_dir / f"{match_id}.json", "w", encoding="utf-8") as f:
+        json.dump(frames_360, f)
+
+    monkeypatch.setattr(build_shards, "EVENTS_DIR", events_dir)
+    monkeypatch.setattr(build_shards, "THREESIXTY_DIR", ts_dir)
+
+    records = build_shards.process_match(match_id)
+    assert len(records) == 2
+    assert int(np.sum(records[0]["player_mask"])) == 9
+    # Frame 2 observed 8 players, and Kalman recovery must restore the occluded 9th defender
+    assert int(np.sum(records[1]["player_mask"])) == 9

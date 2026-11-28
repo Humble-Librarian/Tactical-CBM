@@ -149,10 +149,10 @@ TRACK B: Computational Kinematics & Sports Physics (Completed)
 ### [ ] Phase 9: Technical Paper, Portfolio & Systems Cleanup
 - **Scope:** D1 (Reframe Claims), D4 (Kalman Tracker Integration), E1 (Professional README), E2 (Results Section), E3 (Technical Paper / Write-Up).
 - **Deliverables:**
-  - Refactor `README.md` language: remove marketing hype and present rigorous engineering metrics (*"Real-time CPU inference at 6,500 FPS, 15K-parameter interpretable GNN"*).
-  - Integrate `scripts/kalman_tracker.py` into ingestion pipeline and evaluate tracking recovery fidelity.
-  - Embed comprehensive Baselines, Ablations, Calibration Curves, and PR Curves into `README.md`.
-  - Author a 4-page academic-grade technical write-up in `docs/TECHNICAL_REPORT.md` (Problem Formulation, CBM Formulation, Dense-GAT Architecture, Experiments, Limitations).
+  - [x] Refactor `README.md` language: remove marketing hype and present rigorous engineering metrics (*"14,672-parameter Concept Bottleneck GAT, ~228.7 µs CPU / >6,500 FPS C++/WASM"*).
+  - [x] Integrate `scripts/kalman_tracker.py` into ingestion pipeline (`scripts/build_shards.py`) with unit test verification in `tests/test_kalman_and_wasm_geometry.py`.
+  - [x] Embed comprehensive Baselines, Ablations, Calibration Curves, PR Curves, and Phase 8 sweep/topology highlights into `README.md`.
+  - [ ] Author a 4-page academic-grade technical write-up in `docs/TECHNICAL_REPORT.md` (Problem Formulation, CBM Formulation, Dense-GAT Architecture, Experiments, Limitations).
 - **Exit Gate:** Clean, publication-grade repository and complete technical report ready for senior ML/DL interview defense.
 
 ---

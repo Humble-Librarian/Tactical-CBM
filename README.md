@@ -1,7 +1,6 @@
 # Tactical CBM Engine ⚽⚡
 
-> **Explainable AI (Concept Bottleneck Model) & Real-Time Tactical Evaluation Engine for Modern Football.**  
-> Built with **PyTorch, C++17, WebAssembly, and StatsBomb 360** tracking data. Designed for reproducible ML experimental rigor and zero-copy consumer hardware inference.
+> **14,672-parameter Concept Bottleneck Graph Attention Network** for football tactical threat prediction, running at **~228.7 µs/frame (~4,370 FPS) on single-thread CPU** and **>6,500 FPS in C++17/WebAssembly**, trained on **574,560 StatsBomb 360 freeze frames** across 181 matches (**0.8563** held-out ROC-AUC, **0.3854** PR-AUC, **0.0454** calibrated Brier Score).
 
 ---
 
@@ -9,9 +8,12 @@
 - [What is Tactical-CBM?](#-what-is-tactical-cbm)
 - [The 6 Canonical Concepts](#-the-6-canonical-concepts)
 - [Modern Dataset Benchmark (2022–2024)](#-modern-dataset-benchmark-20222024)
+- [Baselines Benchmark (Phase 2)](#-baselines-benchmark-phase-2--a1)
+- [Probability Calibration & Error Analysis (Phase 3)](#-probability-calibration--error-analysis-phase-3--a6-a7)
 - [Empirical Ablation Benchmark (Phase 4)](#-empirical-ablation-benchmark-phase-4--a2)
 - [Statistical Significance & Generalization (Phase 6)](#-statistical-significance--generalization-phase-6--a4)
 - [Dataset Scaling & Generalization (Phase 7)](#-dataset-scaling--generalization-phase-7--a5-c5)
+- [Graph Topology & Hyperparameter Sweep (Phase 8)](#-graph-topology--hyperparameter-sweep-phase-8--a3-b1)
 - [Kinematics & Spearman Pitch Control (Wave 5)](#-kinematics--spearman-pitch-control-wave-5)
 - [Architecture & Multi-Runtime Parity](#-architecture--multi-runtime-parity)
 - [Getting Started](#-getting-started)
@@ -54,6 +56,40 @@ The engine trains on an **181-match modern tactical cohort** ($574,560$ freeze f
 - **Ligue 1 2022/23 (32 matches):** Complete Paris Saint-Germain domestic dominance.
 - **FIFA World Cup 2022 (64 matches):** Global elite tournament and transition meta.
 - **Binary Shard Storage:** $462,382$ training frames ($1,141.21\text{ MB}$) / $112,178$ validation frames ($276.87\text{ MB}$) in zero-copy memory-mapped format.
+
+---
+
+## 📏 Baselines Benchmark (Phase 2 / A1)
+
+All models are evaluated on the identical 181-match split ($462,382$ train / $112,178$ validation frames, $5.23\%$ threat prior):
+
+| Model / Architecture | Features | ROC-AUC | PR-AUC | Brier Score | Optimal F1 | Latency ($\mu$s/frame) |
+| :--- | :--- | :---: | :---: | :---: | :---: | :---: |
+| **Baseline 0: Stratified Random Prior** | None (Prior) | 0.5000 | 0.0547 | 0.0517 | 0.1037 | 0.00 $\mu$s |
+| **Baseline 1: Logistic Regression** | 6 Concepts | 0.8101 | 0.2434 | 0.1649 | 0.3398 | 0.09 $\mu$s |
+| **Baseline 2: LightGBM GBDT** | 6 Concepts | 0.8293 | 0.3029 | 0.1498 | 0.3724 | 1.73 $\mu$s |
+| **Baseline 3: Logistic Regression** | 132-dim Raw Nodes | 0.8367 | 0.2958 | 0.1598 | 0.3742 | 0.69 $\mu$s |
+| **Baseline 4: Mean-Pooled 2-Layer MLP** | 6-dim Mean Pool | 0.8351 | 0.3095 | 0.1560 | 0.3840 | 0.08 $\mu$s |
+
+See [`results/baselines_table.md`](file:///d:/Tactical%20CBM%20Engine/results/baselines_table.md) for full log-loss and feature details.
+
+---
+
+## 🎯 Probability Calibration & Error Analysis (Phase 3 / A6, A7)
+
+Class-balanced training (`pos_weight` $\approx 16.0$) inflates raw Brier Score ($0.1649$) and Expected Calibration Error ($30.73\%$). Applying **Beta Calibration** (Kull et al., 2017) with monotonic convex bounds ($a \ge 0, b \ge 0$) on the **Bilinear Concept Interaction Tensor (BCIT)** head restores well-calibrated probabilities while preserving rank ordering:
+
+| Model | Calibrator | ROC-AUC | PR-AUC | Brier Score | ECE (%) | Murphy Reliability |
+| :--- | :--- | :---: | :---: | :---: | :---: | :---: |
+| **Linear Baseline** | None (Raw) | 0.8101 | 0.2434 | 0.1649 | 30.73% | 0.11892 |
+| **Linear Baseline** | Beta Calibration | 0.8101 | 0.2434 | 0.0458 | 0.44% | 0.00014 |
+| **Bilinear Concept Head (BCIT)** | None (Raw) | 0.8116 | 0.2612 | 0.0455 | 0.49% | 0.00018 |
+| **Bilinear Concept Head (BCIT)** | **Beta Calibration** | **0.8116** | **0.2612** | **0.0454** | **0.31%** | **0.00007** |
+
+![Reliability Diagram](results/plots/reliability_diagram.png)
+![Precision-Recall Curve](results/plots/pr_curve.png)
+
+See [`results/calibration_benchmark.md`](file:///d:/Tactical%20CBM%20Engine/results/calibration_benchmark.md) and [`results/error_analysis.md`](file:///d:/Tactical%20CBM%20Engine/results/error_analysis.md) for Murphy decomposition and top false-positive/false-negative attribution.
 
 ---
 
@@ -134,6 +170,13 @@ The concept bottleneck model maintains consistent PR-AUC ($0.3769 - 0.3854$) acr
 - **0 Dropped Players:** $\text{ROC-AUC} = 0.8700$, $\text{PR-AUC} = 0.4669$
 - **1 Dropped Player:** $\text{ROC-AUC} = 0.8689$, $\text{PR-AUC} = 0.4643$ ($\Delta = -0.0026$)
 - **2 Dropped Players:** $\text{ROC-AUC} = 0.8720$, $\text{PR-AUC} = 0.4656$ ($\Delta = -0.0013$)
+
+---
+
+## 🕸️ Graph Topology & Hyperparameter Sweep (Phase 8 / A3, B1)
+
+- **Delaunay vs. k-NN / Dense Graphs (5,000 held-out frames):** Canonical Delaunay ($d_{\max}=28\text{m}$) averages **78.2 edges** (**70.87% sparsity**) vs. 283.5 for fully-dense graphs, achieving **0.8700 ROC-AUC**, **0.4669 PR-AUC**, and **0.6740 Concept $R^2$** (vs. $0.3625$ Concept $R^2$ for fully-dense). See [`results/graph_topology_table.md`](file:///d:/Tactical%20CBM%20Engine/results/graph_topology_table.md).
+- **11-Run Hyperparameter Sweep:** Sweeping $\eta \in [5\text{e-}4, 3\text{e-}3]$, $d \in \{16, 32, 64\}$, $\text{wd} \in [1\text{e-}5, 1\text{e-}3]$, and $\lambda_{\text{concept}} \in [0.5, 2.0]$ identifies `H2` ($\eta=3\text{e-}3, d=32$, PR-AUC `0.3404`), `H7` ($\lambda_{\text{concept}}=2.0$, Mean $R^2$ `0.2709`), and `H10` ($d=16, \eta=3\text{e-}3$, PR-AUC `0.3508`, `175.9` $\mu$s) on the Pareto frontier, with `H0` ($d=32$, 14,672 params) balancing capacity and edge latency. See [`results/hyperparameter_table.md`](file:///d:/Tactical%20CBM%20Engine/results/hyperparameter_table.md).
 
 ---
 
